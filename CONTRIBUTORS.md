@@ -8,7 +8,7 @@
   * Main developer
   
 * **Bohdan Petruschak**
-  * Testingand and Intensive using
+  * Testing and Intensive using
   * Improvement ideas
   * VBS script to save Excel's to txt files
 
