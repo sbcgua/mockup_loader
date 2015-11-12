@@ -1,0 +1,180 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Mockup loader by sbcgua</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Mockup loader</h1>
+        <p>SAP ABAP tool for unit testing</p>
+
+        <p class="view"><a href="https://github.com/sbcgua/mockup_loader">View the Project on GitHub <small>sbcgua/mockup_loader</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/sbcgua/mockup_loader/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/sbcgua/mockup_loader/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/sbcgua/mockup_loader">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="mockup-loader-for-abap-unit-testing" class="anchor" href="#mockup-loader-for-abap-unit-testing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Mockup Loader for ABAP unit testing</h1>
+
+<h2>
+<a id="about-the-tool" class="anchor" href="#about-the-tool" aria-hidden="true"><span class="octicon octicon-link"></span></a>About the tool</h2>
+
+<p>The tool is created to simplify data preparation/loading for SAP ABAP unit tests. In one of our projects we had to prepare much tables data for unit tests. For example, a set of content from <code>BKPF</code>, <code>BSEG</code>, <code>BSET</code> tables (FI document). The output of the methods under test is also often a table or a complex structure. </p>
+
+<p>Hard-coding all of that data was not an option - too much to code, difficult to maintain and terrible code readability. So we decided to write a tool which would get the data from TAB delimited <code>.txt</code> files, which, in turn, would be prepared in Excel in a convenient way. Certain objectives were set:</p>
+
+<ul>
+<li>all the test data should be combined together in one file (zip)</li>
+<li>... and uploaded to SAP - test data should be a part of the dev package (W3MI binary object would fit)</li>
+<li>loading routine should identify the file structure (fields) automatically and verify its compatibility with a target container (structure or table) </li>
+<li>it should also be able to safely skip fields, missing in <code>.txt</code> file, if required (<em>non strict</em> mode) e.g. when processing structures (like FI document) with too many fields, most of which are irrelevant to a specific test.</li>
+</ul>
+
+<div class="highlight highlight-source-abap"><pre><span class="pl-c">" Test class (o_ml is mockup_loader instance)</span>
+...
+<span class="pl-k">call method</span> o_ml-&gt;load_data <span class="pl-c">" Load test data (structure) from mockup</span>
+ <span class="pl-k"> exporting</span> i_obj      <span class="pl-k"> = </span><span class="pl-s">'TEST1/bkpf'</span>
+ <span class="pl-k"> importing</span> e_container<span class="pl-k"> = </span>ls_bkpf.
+
+<span class="pl-k">call method</span> o_ml-&gt;load_data <span class="pl-c">" Load test data (table) from mockup</span>
+ <span class="pl-k"> exporting</span> i_obj      <span class="pl-k"> = </span><span class="pl-s">'TEST1/bseg'</span>
+            i_strict   <span class="pl-k"> = </span>abap_false
+ <span class="pl-k"> importing</span> e_container<span class="pl-k"> = </span>lt_bseg.
+
+...
+
+<span class="pl-k">call method</span> o_test_object-&gt;some_processing <span class="pl-c">" Call to the code being tested</span>
+ <span class="pl-k"> exporting</span> i_bkpf  <span class="pl-k"> = </span>ls_bkpf
+            it_bseg <span class="pl-k"> = </span>lt_bseg
+ <span class="pl-k"> importing</span> e_result<span class="pl-k"> = </span>l_result. 
+
+assert_equals(...).
+</pre></div>
+
+<p>The first part of the code takes TAB delimited text file <code>bkpf.txt</code> in TEST1 directory of ZIP file uploaded as binary object via SMW0 transaction...</p>
+
+<pre><code>BUKRS BELNR GJAHR BUZEI BSCHL KOART ...
+1000  10    2015  1     40    S     ...
+1000  10    2015  2     50    S     ...
+</code></pre>
+
+<p>... and puts it (with proper ALPHA exits and etc) to an internal table with <code>BSEG</code> line type.  </p>
+
+<h3>
+<a id="storeretrieve" class="anchor" href="#storeretrieve" aria-hidden="true"><span class="octicon octicon-link"></span></a>Store/Retrieve</h3>
+
+<p>Later another objective was identified: some code is quite difficult to test when it has a <em>select</em> in the middle. Of course, good code design would assume isolation of DB operations from business logic code, but it is not always possible. So we needed to create a way to substitute <em>selects</em> in code to a simple call, which would take the prepared test data instead if test environment was identified. We came up with the solution we called "Store". </p>
+
+<div class="highlight highlight-source-abap"><pre><span class="pl-c">" Test class (o_ml is mockup_loader instance)</span>
+...
+<span class="pl-k">call method</span> o_ml-&gt;store <span class="pl-c">" Store some data with 'BKPF' label</span>
+ <span class="pl-k"> exporting</span> i_name<span class="pl-k"> = </span><span class="pl-s">'BKPF'</span>
+            i_data<span class="pl-k"> = </span>ls_bkpf. <span class="pl-c">" One line structure</span>
+...
+
+<span class="pl-c">" Working class method</span>
+...
+<span class="pl-k">if</span> some_test_env_indicator<span class="pl-k"> = </span>abap_false. <span class="pl-c">" Production environment</span>
+  <span class="pl-c">" Do DB selects here </span>
+
+<span class="pl-k">else</span>.                                    <span class="pl-c">" Test environment</span>
+ <span class="pl-k"> call method</span> zcl_mockup_loader=&gt;retrieve
+   <span class="pl-k"> exporting</span> i_name <span class="pl-k"> = </span><span class="pl-s">'BKPF'</span>
+   <span class="pl-k"> importing</span> e_data <span class="pl-k"> = </span>ls_fi_doc_header
+   <span class="pl-k"> exceptions others</span><span class="pl-k"> = </span>4.
+<span class="pl-k">endif</span>. 
+
+<span class="pl-k">if</span> sy-subrc<span class="pl-k"> is </span>not<span class="pl-k"> initial</span>.
+  <span class="pl-c">" Data not selected -&gt; do error handling</span>
+<span class="pl-k">endif</span>.
+</pre></div>
+
+<p>In case of multiple test cases it can also be convenient to load a number of table records and then <strong>filter</strong> it based on some key field, available in the working code. This option is also possible:</p>
+
+<div class="highlight highlight-source-abap"><pre><span class="pl-c">" Test class</span>
+...
+<span class="pl-k">call method</span> o_ml-&gt;store <span class="pl-c">" Store some data with 'BKPF' label</span>
+ <span class="pl-k"> exporting</span> i_name  <span class="pl-k"> = </span><span class="pl-s">'BKPF'</span>
+            i_tabkey<span class="pl-k"> = </span><span class="pl-s">'BELNR'</span>  <span class="pl-c">" Key field for the stored table</span>
+            i_data  <span class="pl-k"> = </span>lt_bkpf. <span class="pl-c">" Table with MANY different documents</span>
+...
+
+<span class="pl-c">" Working class method</span>
+...
+<span class="pl-k">if</span> some_test_env_indicator<span class="pl-k"> = </span>abap_false. <span class="pl-c">" Production environment</span>
+  <span class="pl-c">" Do DB selects here </span>
+
+<span class="pl-k">else</span>.                                    <span class="pl-c">" Test environment</span>
+ <span class="pl-k"> call method</span> zcl_mockup_loader=&gt;retrieve
+   <span class="pl-k"> exporting</span> i_name <span class="pl-k"> = </span><span class="pl-s">'BKPF'</span>
+              i_sift <span class="pl-k"> = </span>l_document_number <span class="pl-c">" Filter key from real local variable</span>
+   <span class="pl-k"> importing</span> e_data <span class="pl-k"> = </span>ls_fi_doc_header  <span class="pl-c">" Still a flat structure here</span>
+   <span class="pl-k"> exceptions others</span><span class="pl-k"> = </span>4.
+<span class="pl-k">endif</span>. 
+
+<span class="pl-k">if</span> sy-subrc<span class="pl-k"> is </span>not<span class="pl-k"> initial</span>.
+  <span class="pl-c">" Data not selected -&gt; error handling</span>
+<span class="pl-k">endif</span>.
+</pre></div>
+
+<p>As the final result we can perform completely dynamic unit tests in our projects, covering most of code, including <em>DB select</em> related code <strong>without</strong> actually accessing the database. Of course, it is not only the mockup loader which ensures that. This requires accurate design of the project code, separating DB selection and processing code. But the mockup loader and "store" functionality makes it more convenient.  </p>
+
+<p><img src="https://raw.githubusercontent.com/sbcgua/mockup_loader/master/illustration.png" alt="Illustration"></p>
+
+<h2>
+<a id="excel-to-txt-vb-script" class="anchor" href="#excel-to-txt-vb-script" aria-hidden="true"><span class="octicon octicon-link"></span></a>Excel to TXT VB script</h2>
+
+<p>We have much data prepared in Excel files. Many files, many sheets in each. It is boring and time consuming to copy them all to text (although Ctrl+C in Excel actually copies TAB delimited text which greatly simplifies the matter for small cases). So we created a VB script which does the work automatically. It is available in the repository.</p>
+
+<h2>
+<a id="contributors" class="anchor" href="#contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributors</h2>
+
+<p>Contributors are described in <a href="/CONTRIBUTORS.md">CONTRIBUTORS.md</a>. You are welcomed to suggest ideas and code improvements ! :)</p>
+
+<p>Main development team members are:</p>
+
+<ul>
+<li>Alexander Tsybulsky</li>
+<li>Svetlana Shlapak</li>
+<li>Bohdan Petrushchak</li>
+</ul>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>The code is licensed under MIT License. Please see <a href="/LICENSE">LICENSE</a> for details.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/sbcgua">sbcgua</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-69735403-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
