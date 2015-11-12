@@ -1,0 +1,1722 @@
+<?xml version="1.0" encoding="utf-8"?>
+<nugget name="ZMOCKUP_LOADER">
+ <CLAS CLSNAME="ZCL_MOCKUP_LOADER" VERSION="1" LANGU="E" DESCRIPT="Mockup loader" CATEGORY="00" EXPOSURE="0" STATE="1" RELEASE="0" CLSFINAL="X" CLSCCINCL="X" FIXPT="X" UNICODE="X" CLSBCCAT="00" WITH_UNIT_TESTS="X" DURATION_TYPE="0 " RISK_LEVEL="0 ">
+  <types CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="TT_STRING" VERSION="1" LANGU="E" EXPOSURE="0" STATE="1" EDITORDER="1 " TYPTYPE="4" SRCROW1="4 " SRCCOLUMN1="4 " SRCROW2="4 " SRCCOLUMN2="33 " TYPESRC_LENG="32 " TYPESRC="tt_string type table of string
+"/>
+  <types CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="TY_STORE" VERSION="1" LANGU="E" EXPOSURE="0" STATE="1" EDITORDER="2 " TYPTYPE="4" SRCROW1="6 " SRCCOLUMN1="4 " SRCROW2="10 " SRCCOLUMN2="18 " TYPESRC_LENG="137 " TYPESRC="begin of ty_store,
+      name    type char40,
+      tabkey  type abap_compname,
+      data    type ref to data,
+    end of ty_store
+"/>
+  <types CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="TT_STORE" VERSION="1" LANGU="E" EXPOSURE="0" STATE="1" EDITORDER="3 " TYPTYPE="4" SRCROW1="12 " SRCCOLUMN1="4 " SRCROW2="12 " SRCCOLUMN2="34 " TYPESRC_LENG="33 " TYPESRC="tt_store type table of ty_store
+"/>
+  <localImplementation>* Local definitions and classes</localImplementation>
+  <localTypes>*&quot;* use this source file for any type of declarations (class
+*&quot;* definitions, interfaces or type declarations) you need for
+*&quot;* components in the private section</localTypes>
+  <localMacros>*&quot;* use this source file for any macro definitions you need
+*&quot;* in the implementation part of the class</localMacros>
+  <localTestClasses>*/--------------------------------------------------------------------------------\
+*| This file is part of Mockup loader                                             |
+*|                                                                                |
+*| The MIT License (MIT)                                                          |
+*|                                                                                |
+*| Copyright (c) 2015 SBCG Team (www.sbcg.com.ua), Alexander Tsybulsky            |
+*|                                                                                |
+*| Permission is hereby granted, free of charge, to any person obtaining a copy   |
+*| of this software and associated documentation files (the &quot;Software&quot;), to deal  |
+*| in the Software without restriction, including without limitation the rights   |
+*| to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      |
+*| copies of the Software, and to permit persons to whom the Software is          |
+*| furnished to do so, subject to the following conditions:                       |
+*|                                                                                |
+*| The above copyright notice and this permission notice shall be included in all |
+*| copies or substantial portions of the Software.                                |
+*|                                                                                |
+*| THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     |
+*| IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       |
+*| FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    |
+*| AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         |
+*| LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  |
+*| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  |
+*| SOFTWARE.                                                                      |
+*\--------------------------------------------------------------------------------/
+*/--------------------------------------------------------------------------------\
+*| CONTRIBUTORS                                                                   |
+*|--------------------------------------------------------------------------------|
+*| Leading developers : Alexander Tsybulsky (atsybulsky@sbcg.com.ua)              |
+*|                      Svetlana Shlapak    (sshlapak@sbcg.com.ua)                |
+*| Testing and ideas:   Bohdan Petruschak   (b.petrushchak@sbcg.com.ua)           |
+*|--------------------------------------------------------------------------------|
+*| project homepage: https://github.com/sbcgua/mockup_loader                      |
+*\--------------------------------------------------------------------------------/
+
+**********************************************************************
+* MACRO
+**********************************************************************
+  define test_parse.
+    clear dummy.
+    read table lo_struc_descr-&gt;components into ls_component with key name = &apos;&amp;1&apos;.
+    call method o-&gt;parse_field
+      exporting
+        is_component = ls_component
+        i_data       = &amp;2
+      importing
+        e_field      = dummy-&amp;1.
+  end-of-definition.
+
+  define test_positive.
+    test_parse &amp;1 &amp;2.
+    assert_equals( act = dummy-&amp;1 exp = &amp;3 ).
+  end-of-definition.
+
+  define test_negative.
+    test_parse &amp;1 &amp;2.
+    assert_differs( act = dummy-&amp;1 exp = &amp;3 ).
+  end-of-definition.
+
+**********************************************************************
+* Test Class definition
+**********************************************************************
+
+class lcl_test_mockup_loader definition for testing
+  duration short
+  inheriting from cl_aunit_assert  risk level harmless.
+
+* ================
+  public section.
+
+    types:
+      begin of ty_dummy,
+        mandt    type mandt,
+        tdate    type datum,
+        tchar    type char8,
+        tstring  type string,
+        talpha   type belnr_d,
+        tdecimal type wrbtr,
+        tnumber  type gjahr,
+        tinteger type i,
+      end of ty_dummy.
+
+    types:
+      tt_dummy type table of ty_dummy.
+
+* ================
+  private section.
+
+    data o type ref to zcl_mockup_loader.  &quot;class under test
+
+    class-methods: class_setup.
+    methods: setup.
+
+    methods: read_zip for testing.
+    methods: integrated_test for testing.
+
+    methods: parse_data for testing.
+    methods: parse_field for testing.
+    methods: empty_lines for testing.
+    methods: map_file_structure for testing.
+
+    methods: store_retrieve for testing.
+    methods: retrieve_types for testing.
+    methods: store_retrieve_with_key for testing.
+    methods: load_and_store for testing.
+
+    methods: get_dummy_data
+              importing
+                i_strict       type abap_bool default abap_true
+              exporting
+                e_dummy_struc  type ty_dummy
+                e_dummy_tab    type tt_dummy
+                e_dummy_string type string.
+
+endclass.       &quot;lcl_test_mockup_loader
+
+* Friends
+class zcl_mockup_loader definition local friends lcl_test_mockup_loader.
+
+**********************************************************************
+* Implementation
+**********************************************************************
+
+class lcl_test_mockup_loader implementation.
+
+**********************************************************************
+* Setup methods
+**********************************************************************
+  method class_setup.
+    zcl_mockup_loader=&gt;class_set_source( i_type = &apos;MIME&apos; i_path = &apos;ZMOCKUP_LOADER_UNIT_TEST&apos; ).
+  endmethod.       &quot;class_setup
+
+  method setup.
+    data lo_ex type ref to zcx_mockup_loader_error.
+
+    try.
+      o = zcl_mockup_loader=&gt;get_instance( ).
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+  endmethod.       &quot;setup
+
+**********************************************************************
+* Dummy data generation
+**********************************************************************
+  method get_dummy_data.
+    data l_string type string.
+
+    if i_strict = abap_true.
+      l_string = &apos;MANDT\tTDATE\tTCHAR\tTSTRING\tTALPHA\tTDECIMAL\tTNUMBER\tTINTEGER\n&apos;
+              &amp;&amp; &apos;\t01.01.2015\tTrololo1\tString1\t100000\t1234567,81\t2015\t1111\n&apos;
+              &amp;&amp; &apos;\t02.01.2015\tTrololo2\tString2\t200000\t1234567,82\t2016\t2222\n&apos; .
+    else.
+      l_string = &apos;TDATE\tTSTRING\tTCHAR\tTDECIMAL\tTNUMBER\n&apos;
+              &amp;&amp; &apos;01.01.2015\tString1\tTrololo1\t1234567,81\t2015\n&apos;
+              &amp;&amp; &apos;02.01.2015\tString2\tTrololo2\t1234567,82\t2016\n&apos; .
+    endif.
+
+    replace all occurrences of &apos;\t&apos; in l_string with cl_abap_char_utilities=&gt;horizontal_tab.
+    replace all occurrences of &apos;\n&apos; in l_string with cl_abap_char_utilities=&gt;cr_lf.
+
+    clear e_dummy_tab.
+
+    e_dummy_struc-tdate    = &apos;20150101&apos;.
+    e_dummy_struc-tchar    = &apos;Trololo1&apos;.
+    e_dummy_struc-tstring  = &apos;String1&apos;.
+    e_dummy_struc-tdecimal = &apos;1234567.81&apos;.
+    e_dummy_struc-tnumber  = 2015.
+    if i_strict = abap_true.
+      e_dummy_struc-tinteger = 1111.
+      e_dummy_struc-talpha   = &apos;0000100000&apos;.
+    endif.
+    append e_dummy_struc to e_dummy_tab.
+
+    e_dummy_struc-tdate    = &apos;20150102&apos;.
+    e_dummy_struc-tchar    = &apos;Trololo2&apos;.
+    e_dummy_struc-tstring  = &apos;String2&apos;.
+    e_dummy_struc-tdecimal = &apos;1234567.82&apos;.
+    e_dummy_struc-tnumber  = 2016.
+    if i_strict = abap_true.
+      e_dummy_struc-tinteger = 2222.
+      e_dummy_struc-talpha   = &apos;0000200000&apos;.
+    endif.
+    append e_dummy_struc to e_dummy_tab.
+
+    read table e_dummy_tab into e_dummy_struc index 1.
+    e_dummy_string = l_string.
+
+  endmethod.       &quot; get_dummy_data
+
+**********************************************************************
+* Simple integrated test - most basic usage of the class
+**********************************************************************
+  method integrated_test.
+    data:
+          dummy_act      type ty_dummy,
+          dummy_exp      type ty_dummy,
+          dummy_tab_act  type tt_dummy,
+          dummy_tab_exp  type tt_dummy,
+          lo_ex          type ref to zcx_mockup_loader_error.
+
+    call method get_dummy_data
+      importing
+        e_dummy_struc = dummy_exp
+        e_dummy_tab   = dummy_tab_exp.
+
+    &quot; Strict ********************************************************
+    try.
+      call method o-&gt;load_data
+        exporting i_obj       = &apos;testdir/testfile_complete&apos;
+        importing e_container = dummy_tab_act.
+
+      assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+
+      call method o-&gt;load_data
+        exporting i_obj       = &apos;testdir/testfile_complete&apos;
+        importing e_container = dummy_act.
+
+      assert_equals( act = dummy_act exp = dummy_exp ).
+
+      call method o-&gt;load_data &quot; No MANDT field in file
+        exporting i_obj       = &apos;testdir/testfile_no_mandt&apos;
+        importing e_container = dummy_tab_act.
+
+      assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+    &quot; NOT Strict ****************************************************
+    call method get_dummy_data
+      exporting i_strict = abap_false
+      importing
+        e_dummy_tab   = dummy_tab_exp.
+
+    try.
+      call method o-&gt;load_data
+        exporting i_obj       = &apos;testdir/testfile_no_strict&apos;
+                  i_strict    = abap_false
+        importing e_container = dummy_tab_act.
+
+      assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+  endmethod.       &quot; integrated_test
+
+**********************************************************************
+* Test of data parser - dummy data is supplied to the tested method
+**********************************************************************
+  method parse_data.
+    data:
+          dummy_val      type char40,
+          dummy_act      type ty_dummy,
+          dummy_tab_act  type tt_dummy,
+          dummy_htab     type hashed table of ty_dummy with unique key tdate,
+          dummy_stab     type sorted table of ty_dummy with unique key tdate,
+          dummy_exp      type ty_dummy,
+          dummy_tab_exp  type tt_dummy,
+          l_string       type string,
+          lo_ex          type ref to zcx_mockup_loader_error.
+
+    &quot; Strict parsing *********************************
+    call method get_dummy_data
+      importing
+        e_dummy_struc  = dummy_exp
+        e_dummy_tab    = dummy_tab_exp
+        e_dummy_string = l_string.
+
+    try.
+      call method o-&gt;parse_data
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_act.
+
+      call method o-&gt;parse_data
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_tab_act.
+
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+    assert_equals( act = dummy_act     exp = dummy_exp ).
+    assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+
+    &quot; Parse to sorted and hashed tables ***************
+    try.
+      call method o-&gt;parse_data
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_stab.
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+    assert_equals( act = dummy_stab exp = dummy_tab_exp ).
+
+    try.
+      call method o-&gt;parse_data
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_htab.
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+    assert_equals( act = dummy_htab exp = dummy_tab_exp ).
+
+    &quot; NOT STRICT parsing ******************************
+    call method get_dummy_data
+      exporting
+        i_strict       = abap_false
+      importing
+        e_dummy_tab    = dummy_tab_exp
+        e_dummy_string = l_string.
+
+    try.
+      call method o-&gt;parse_data
+        exporting i_rawdata   = l_string
+                  i_strict    = &apos;&apos;
+        importing e_container = dummy_tab_act.
+
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+    assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+
+    &quot; Fields out of bound (more fields than in header) ***
+    clear lo_ex.
+    call method get_dummy_data importing e_dummy_string = l_string.
+    replace first occurrence of &apos;1111&apos; in l_string
+      with &apos;1111&apos; &amp;&amp; cl_abap_char_utilities=&gt;horizontal_tab &amp;&amp; &apos;EXCESS_FIELD&apos;.
+
+    try.
+      call method o-&gt;parse_data
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_tab_act.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( lo_ex ).
+    assert_equals( exp = &apos;&gt;H&apos; act = lo_ex-&gt;code ).
+
+    &quot; Fields out of bound (less fields than in header) ***
+    clear lo_ex.
+    call method get_dummy_data importing e_dummy_string = l_string.
+    replace first occurrence of cl_abap_char_utilities=&gt;horizontal_tab &amp;&amp; &apos;1111&apos;
+      in l_string with &apos;&apos;.
+
+    try.
+      call method o-&gt;parse_data
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_tab_act.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( lo_ex ).
+    assert_equals( exp = &apos;&lt;H&apos; act = lo_ex-&gt;code ).
+
+    &quot; Parse to field (not table or structure) *************
+    clear lo_ex.
+    call method get_dummy_data importing e_dummy_string = l_string.
+
+    try.
+      call method o-&gt;parse_data
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_val.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( lo_ex ).
+    assert_equals( exp = &apos;DT&apos; act = lo_ex-&gt;code ).
+
+  endmethod.       &quot;parse_Data
+
+**********************************************************************
+* Individual field parsing test
+**********************************************************************
+  method parse_field.
+    data:
+          dummy          type ty_dummy,
+          lo_struc_descr type ref to cl_abap_structdescr,
+          ls_component   type abap_compdescr,
+          lo_ex          type ref to zcx_mockup_loader_error.
+
+    lo_struc_descr ?= cl_abap_structdescr=&gt;describe_by_data( dummy ).
+
+    &quot; Positive tests ******************************
+    try.
+      test_positive TDATE    &apos;01.01.2015&apos;      &apos;20150101&apos;.
+      test_positive TCHAR    &apos;ABC&apos;             &apos;ABC&apos;.
+      test_positive TSTRING  &apos;The string test&apos; &apos;The string test&apos;.
+      test_positive TALPHA   &apos;100000&apos;          &apos;0000100000&apos;.
+      test_positive TDECIMAL &apos;1234,12&apos;         &apos;1234.12&apos;.
+      test_negative TDECIMAL &apos;1234.12&apos;         &apos;1234.12&apos;.
+      test_positive TNUMBER  &apos;2015&apos;            &apos;2015&apos;.
+      test_positive TINTEGER &apos;123&apos;             123.
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+    &quot; Negative tests (1) **************************
+    clear lo_ex.
+    try.  test_parse TDATE &apos;01.012015&apos;.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( act = lo_ex ).
+    assert_equals( exp = &apos;PF&apos; act = lo_ex-&gt;code ).
+
+    &quot; Negative tests (2) **************************
+    clear lo_ex.
+    try.  test_parse TNUMBER &apos;20ha&apos;.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( act = lo_ex ).
+    assert_equals( exp = &apos;PF&apos; act = lo_ex-&gt;code ).
+
+  endmethod.       &quot;parse_Field
+
+**********************************************************************
+* ZIP file read test - gets data from SMW0 ZMOCKUP_LOADER_UNIT_TEST
+**********************************************************************
+  method read_zip.
+    data:
+          l_filename type string,
+          l_str      type string,
+          lo_ex      type ref to zcx_mockup_loader_error.
+
+    assert_not_initial( act = lines( o-&gt;o_zip-&gt;files ) ).
+
+    l_filename = &apos;testdir/testfile_complete.txt&apos;.
+
+    &quot; Positive ***************************************
+    try.
+      call method o-&gt;read_zip
+        exporting i_name    = l_filename
+        importing e_rawdata = l_str.
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+    assert_not_initial( act = l_str ).
+
+    &quot; Negative ***************************************
+    l_filename = l_filename &amp;&amp; &apos;XYZ&apos;.
+    try.
+      call method o-&gt;read_zip
+        exporting i_name    = l_filename
+        importing e_rawdata = l_str.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( lo_ex ).
+    assert_equals( exp = &apos;ZF&apos; act = lo_ex-&gt;code ).
+
+  endmethod.        &quot; read_zip
+
+**********************************************************************
+* Identification of empty lines in the text files
+**********************************************************************
+  method empty_lines.
+    data:
+          dummy_tab_exp type tt_dummy,
+          dummy_tab_act type tt_dummy,
+          l_string      type string,
+          lo_ex         type ref to zcx_mockup_loader_error.
+
+    call method get_dummy_data
+      importing
+        e_dummy_tab    = dummy_tab_exp
+        e_dummy_string = l_string.
+
+    &quot; Add empty line at the end *****************************
+    l_string = l_string &amp;&amp; cl_abap_char_utilities=&gt;cr_lf.
+
+    try.
+      call method o-&gt;parse_data
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_tab_act.
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+    assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+
+    &quot; Add empty line in the middle ***************************
+    replace first occurrence of cl_abap_char_utilities=&gt;cr_lf in l_string
+      with cl_abap_char_utilities=&gt;cr_lf &amp;&amp; cl_abap_char_utilities=&gt;cr_lf.
+    clear lo_ex.
+
+    try.
+      call method o-&gt;parse_data
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_tab_act.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( lo_ex ).
+    assert_equals( exp = &apos;LE&apos; act = lo_ex-&gt;code ).
+
+    &quot; Add empty line at the beginning ************************
+    l_string = cl_abap_char_utilities=&gt;cr_lf &amp;&amp; l_string.
+    clear lo_ex.
+
+    try.
+      call method o-&gt;parse_data
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_tab_act.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( lo_ex ).
+    assert_equals( exp = &apos;HE&apos; act = lo_ex-&gt;code ).
+
+  endmethod.       &quot;empty_lines
+
+**********************************************************************
+* Test check of in and out data types
+**********************************************************************
+  method map_file_structure.
+    data:
+          dummy_tab_exp type tt_dummy,
+          dummy_tab_act type tt_dummy,
+          l_string      type string,
+          l_string_bak  type string,
+          lo_ex         type ref to zcx_mockup_loader_error.
+
+    call method get_dummy_data
+      importing
+        e_dummy_tab    = dummy_tab_exp
+        e_dummy_string = l_string_bak.
+
+    &quot; Duplicate field names *******************************
+    clear lo_ex. l_string = l_string_bak.
+    replace first occurrence of &apos;TCHAR&apos; in l_string with &apos;TDATE&apos;.
+
+    try. o-&gt;parse_data( exporting i_rawdata   = l_string importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( lo_ex ).
+    assert_equals( exp = &apos;DN&apos; act = lo_ex-&gt;code ).
+
+    &quot; Empty field names ***********************************
+    clear lo_ex. l_string = l_string_bak.
+    replace first occurrence of &apos;TCHAR&apos; in l_string with &apos;&apos;.
+
+    try. o-&gt;parse_data( exporting i_rawdata   = l_string importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( lo_ex ).
+    assert_equals( exp = &apos;EN&apos; act = lo_ex-&gt;code ).
+
+    &quot; Unknown field in text *******************************
+    clear lo_ex. l_string = l_string_bak.
+    replace first occurrence of &apos;TCHAR&apos; in l_string with &apos;UNKNOWN&apos;.
+
+    try. o-&gt;parse_data( exporting i_rawdata   = l_string importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( lo_ex ).
+    assert_equals( exp = &apos;MC&apos; act = lo_ex-&gt;code ).
+
+    &quot; More fields than in target structure ****************
+    clear lo_ex. l_string = l_string_bak.
+    replace first occurrence of &apos;TINTEGER&apos; in l_string
+      with &apos;TINTEGER&apos; &amp;&amp; cl_abap_char_utilities=&gt;horizontal_tab &amp;&amp; &apos;EXCESS_FIELD&apos;.
+
+    try. o-&gt;parse_data( exporting i_rawdata   = l_string importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( lo_ex ).
+    assert_equals( exp = &apos;CN&apos; act = lo_ex-&gt;code ).
+
+    &quot; Empty field at the end ******************************
+    clear lo_ex. l_string = l_string_bak.
+    replace first occurrence of &apos;TINTEGER&apos; in l_string
+      with &apos;TINTEGER&apos; &amp;&amp; cl_abap_char_utilities=&gt;horizontal_tab.
+
+    try. o-&gt;parse_data( exporting i_rawdata   = l_string importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( lo_ex ).
+    assert_equals( exp = &apos;EN&apos; act = lo_ex-&gt;code ).
+
+    &quot; Empty field at the end of data line ******************
+    clear lo_ex. l_string = l_string_bak.
+    replace first occurrence of &apos;1111&apos; in l_string
+      with &apos;1111&apos; &amp;&amp; cl_abap_char_utilities=&gt;horizontal_tab.
+
+    try. o-&gt;parse_data( exporting i_rawdata   = l_string importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( lo_ex ).
+    assert_equals( exp = &apos;&gt;H&apos; act = lo_ex-&gt;code ).
+
+
+  endmethod.       &quot;map_file_structure
+
+**********************************************************************
+* STORE tests - basic functionality
+**********************************************************************
+  method store_retrieve.
+    data:
+          dummy_exp      type ty_dummy,
+          dummy_tab_exp  type tt_dummy,
+          dummy_act      type ty_dummy,
+          dummy_tab_act  type tt_dummy,
+          lo_ex          type ref to zcx_mockup_loader_error.
+
+    call method get_dummy_data
+      importing
+        e_dummy_struc = dummy_exp
+        e_dummy_tab   = dummy_tab_exp.
+
+    &quot; Instance method ********************************
+    try.
+      o-&gt;store( i_name = &apos;STRUC&apos; i_data = dummy_exp ).
+      o-&gt;store( i_name = &apos;TAB&apos;   i_data = dummy_tab_exp ).
+
+      call method o-&gt;_retrieve
+        exporting i_name  = &apos;STRUC&apos;
+        importing e_data = dummy_act.
+
+      call method o-&gt;_retrieve
+        exporting i_name  = &apos;TAB&apos;
+        importing e_data = dummy_tab_act.
+
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+    assert_equals( act = dummy_act      exp = dummy_exp ).
+    assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
+
+    &quot; Instance method - NEGATIVE **********************
+    try.
+      call method o-&gt;_retrieve
+        exporting i_name  = &apos;NOT_EXISTING&apos;
+        importing e_data = dummy_act.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( act = lo_ex ).
+    assert_equals( exp = &apos;NF&apos; act = lo_ex-&gt;code ).
+
+    &quot; Static method ***********************************
+    clear: dummy_act, dummy_tab_act.
+
+    call method zcl_mockup_loader=&gt;retrieve
+      exporting i_name  = &apos;STRUC&apos;
+      importing e_data = dummy_act
+      exceptions others = 4.
+
+    call method zcl_mockup_loader=&gt;retrieve
+      exporting i_name  = &apos;TAB&apos;
+      importing e_data = dummy_tab_act
+      exceptions others = 4.
+
+    assert_subrc(  act = sy-subrc ).
+    assert_equals( act = dummy_act      exp = dummy_exp ).
+    assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
+
+    &quot; Static method - NEGATIVE ************************
+    call method zcl_mockup_loader=&gt;retrieve
+      exporting i_name  = &apos;NOT_EXISTING&apos;
+      importing e_data = dummy_act
+      exceptions others = 4.
+
+    assert_subrc(  act = sy-subrc       exp = 4 ).
+    assert_equals( act = sy-msgno       exp = 500 ). &quot; 0M(500) -&gt; &amp; &amp; &amp; &amp;
+
+  endmethod.       &quot;store_retrieve
+
+**********************************************************************
+* STORE RETRIEVE types checking test
+**********************************************************************
+  method retrieve_types.
+    data:
+          lo_ex     type ref to zcx_mockup_loader_error,
+          l_src     type bset_tab,
+          l_dst_tab type bset_tab,
+          l_dst_tt  type table of bset,
+          l_dst_ts  type sorted table of bset with unique key bukrs,
+          l_dst_str type bset,
+          l_dst_dif type table of bkpf.
+
+    append initial line to l_src.
+    try. o-&gt;store( i_name = &apos;DATA&apos; i_data = l_src ).
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+    &quot; Store to different kinds of same table *******************
+    try.
+      call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = l_dst_tab.
+      call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = l_dst_tt.
+      call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = l_dst_ts.
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+    &quot; Store to structure ***************************************
+    try. call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = l_dst_str.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( act = lo_ex ).
+    assert_equals( exp = &apos;TT&apos; act = lo_ex-&gt;code ).
+
+    &quot; Store to table with different structure ******************
+    clear lo_ex.
+    try. call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = l_dst_dif.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( act = lo_ex ).
+    assert_equals( exp = &apos;TS&apos; act = lo_ex-&gt;code ).
+
+  endmethod.       &quot;retrieve_types
+
+**********************************************************************
+* STORE RETRIEVE with table key and sieving (filtering)
+**********************************************************************
+  method store_retrieve_with_key.
+    data:
+          dummy_exp      type ty_dummy,
+          dummy_tab_exp  type tt_dummy,
+          dummy_act      type ty_dummy,
+          dummy_tab_act  type tt_dummy,
+          ls_bset        type bset,
+          lo_ex          type ref to zcx_mockup_loader_error.
+
+    call method get_dummy_data
+      importing
+        e_dummy_struc = dummy_exp
+        e_dummy_tab   = dummy_tab_exp.
+
+    try. o-&gt;store( i_name = &apos;TAB&apos; i_data = dummy_tab_exp i_tabkey = &apos;TNUMBER&apos; ).
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+    delete dummy_tab_exp index 1.
+
+    &quot; Positive *****************************************
+    try.
+      call method o-&gt;_retrieve
+        exporting i_name   = &apos;TAB&apos;
+                  i_sift   = &apos;2015&apos;
+        importing e_data   = dummy_act.
+
+      call method o-&gt;_retrieve
+        exporting i_name   = &apos;TAB&apos;
+                  i_sift   = &apos;2016&apos;
+        importing e_data   = dummy_tab_act.
+
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+    assert_equals( act = dummy_act      exp = dummy_exp ).
+    assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
+
+    &quot; Retrieve to wrong structure **********************
+    clear lo_ex.
+    try.
+      call method o-&gt;_retrieve
+        exporting i_name   = &apos;TAB&apos;
+                  i_sift   = &apos;2015&apos;
+        importing e_data   = ls_bset.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( act = lo_ex ).
+    assert_equals( exp = &apos;TS&apos; act = lo_ex-&gt;code ).
+
+    &quot; Retrieve - no data selected **********************
+    clear lo_ex.
+    try.
+      call method o-&gt;_retrieve
+        exporting i_name   = &apos;TAB&apos;
+                  i_sift   = &apos;2000&apos;
+        importing e_data   = dummy_tab_act. &quot; Table
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( act = lo_ex ).
+    assert_equals( exp = &apos;04&apos; act = lo_ex-&gt;code ).
+
+    clear lo_ex.
+    try.
+      call method o-&gt;_retrieve
+        exporting i_name   = &apos;TAB&apos;
+                  i_sift   = &apos;2000&apos;
+        importing e_data   = dummy_act.    &quot; Structure
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( act = lo_ex ).
+    assert_equals( exp = &apos;04&apos; act = lo_ex-&gt;code ).
+
+
+    &quot; Save structure ************************************
+    clear lo_ex.
+    try. o-&gt;store( i_name = &apos;STRUC&apos; i_data = dummy_exp i_tabkey = &apos;TNUMBER&apos; ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( act = lo_ex ).
+    assert_equals( exp = &apos;TO&apos; act = lo_ex-&gt;code ).
+
+    &quot; Tab key that does not exist in the structure ******
+    clear lo_ex.
+    try. o-&gt;store( i_name = &apos;TAB&apos; i_data = dummy_tab_exp i_tabkey = &apos;UNDEFINED&apos; ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( act = lo_ex ).
+    assert_equals( exp = &apos;FM&apos; act = lo_ex-&gt;code ).
+
+  endmethod.       &quot;store_retrieve_with_key
+
+**********************************************************************
+* LOAD AND STORE at once
+**********************************************************************
+  method load_and_store.
+    data:
+          dummy_tab_exp  type tt_dummy,
+          dummy_tab_act  type tt_dummy,
+          lo_ex          type ref to zcx_mockup_loader_error.
+
+    call method get_dummy_data
+      importing e_dummy_tab   = dummy_tab_exp.
+
+    &quot; Positive test ************************************
+
+    try.
+      call method o-&gt;load_and_store
+        exporting i_obj       = &apos;testdir/testfile_complete&apos;
+                  i_name      = &apos;TAB&apos;
+                  i_type      = &apos;LCL_TEST_MOCKUP_LOADER=&gt;TT_DUMMY&apos;.
+
+      call method o-&gt;_retrieve
+        exporting i_name   = &apos;TAB&apos;
+        importing e_data   = dummy_tab_act.
+
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
+    endtry.
+
+    assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
+
+    &quot; Negative: type that not exists ********************
+
+    clear lo_ex.
+    try.
+      call method o-&gt;load_and_store
+        exporting i_obj       = &apos;testdir/testfile_complete&apos;
+                  i_name      = &apos;TAB&apos;
+                  i_type      = &apos;************&apos;.
+
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( act = lo_ex ).
+    assert_equals( exp = &apos;WT&apos; act = lo_ex-&gt;code ).
+
+  endmethod.       &quot;load_and_store
+
+endclass.       &quot;lcl_Test_Mockup_Loader</localTestClasses>
+  <typeUsage CLSNAME="ZCL_MOCKUP_LOADER" TYPEGROUP="ABAP" VERSION="1" TPUTYPE="0" IMPLICIT="X"/>
+  <forwardDeclaration>ABAP</forwardDeclaration>
+  <typeClasDef CLSNAME="ZCL_MOCKUP_LOADER" TYPEGROUP="CL_ABAP_ZIP" VERSION="1" TPUTYPE="1" IMPLICIT="X"/>
+  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="AT_STORE" VERSION="1" LANGU="E" DESCRIPT="Store table" EXPOSURE="0" STATE="1" EDITORDER="3 " ATTDECLTYP="0" ATTEXPVIRT="0" TYPTYPE="1" TYPE="TT_STORE" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="GO_INSTANCE" VERSION="1" LANGU="E" DESCRIPT="Mockup loader" EXPOSURE="0" STATE="1" EDITORDER="1 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="3" TYPE="ZCL_MOCKUP_LOADER" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="G_MOCKUP_LOAD_PATH" VERSION="1" LANGU="E" DESCRIPT="Mockup load path/key" EXPOSURE="0" STATE="1" EDITORDER="4 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="1" TYPE="STRING" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="G_MOCKUP_LOAD_TYPE" VERSION="1" LANGU="E" DESCRIPT="Mockup load source type" EXPOSURE="0" STATE="1" EDITORDER="5 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="1" TYPE="CHAR4" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="O_ZIP" VERSION="1" LANGU="E" DESCRIPT="Zip Utility" EXPOSURE="0" STATE="1" EDITORDER="2 " ATTDECLTYP="0" ATTEXPVIRT="0" TYPTYPE="3" TYPE="CL_ABAP_ZIP" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="CLASS_CONSTRUCTOR" VERSION="1" LANGU="E" DESCRIPT="Class constructor" EXPOSURE="2" STATE="1" EDITORDER="10 " DISPID="0 " MTDTYPE="2" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
+   <source>method class_constructor.
+  class_set_source( i_type = &apos;MIME&apos; i_path = &apos;&apos; ). &quot; Defaults
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="CLASS_SET_SOURCE" VERSION="1" LANGU="E" DESCRIPT="Set alternative load path" EXPOSURE="2" STATE="1" EDITORDER="9 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="CLASS_SET_SOURCE" SCONAME="I_PATH" VERSION="1" LANGU="E" DESCRIPT="Load path" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="CLASS_SET_SOURCE" SCONAME="I_TYPE" VERSION="1" LANGU="E" DESCRIPT="Load source" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CHAR4"/>
+   <source>method class_set_source.
+  check i_type = &apos;MIME&apos; or i_type = &apos;FILE&apos;. &quot;TODO some more sophisticated error handling
+
+  g_mockup_load_type = i_type.
+  g_mockup_load_path = i_path.
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="FREE_INSTANCE" VERSION="1" LANGU="E" DESCRIPT="Free singleton instance" EXPOSURE="2" STATE="1" EDITORDER="8 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
+   <source>method free_instance.
+  if go_instance is not initial.
+    free go_instance.
+  endif.
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="GET_INSTANCE" VERSION="1" LANGU="E" DESCRIPT="Get instance" EXPOSURE="2" STATE="1" EDITORDER="1 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="GET_INSTANCE" SCONAME="RO_INSTANCE" VERSION="1" LANGU="E" DESCRIPT="Mockup loader" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="3" PARPASSTYP="0" TYPTYPE="3" TYPE="ZCL_MOCKUP_LOADER"/>
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="GET_INSTANCE" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method get_instance.
+
+  if go_instance is initial.
+    create object go_instance.
+    call method go_instance-&gt;initialize.
+  endif.
+
+  ro_instance = go_instance.
+
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="INITIALIZE" VERSION="1" LANGU="E" DESCRIPT="Initialize" EXPOSURE="0" STATE="1" EDITORDER="2 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="INITIALIZE" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method initialize.
+  data: l_key       type wwwdatatab,
+        l_xstring   type xstring,
+        l_size      type int4,
+        lt_w3mime   type table of w3mime,
+        ls_w3mime   type w3mime.
+
+  &quot; Load data
+  case g_mockup_load_type.
+  when &apos;MIME&apos;. &quot; Load from SMW0
+    l_key-relid = &apos;MI&apos;.
+    l_key-objid = g_mockup_load_path.
+
+    call function &apos;WWWDATA_IMPORT&apos;
+      exporting
+        key    = l_key
+      tables
+        mime   = lt_w3mime[]
+      exceptions
+        others = 1.
+
+    if sy-subrc is not initial.
+      zcx_mockup_loader_error=&gt;raise( msg = &apos;SMW0 data import error&apos; code = &apos;RE&apos; ).  &quot;#EC NOTEXT
+    endif.
+
+    describe table lt_w3mime lines l_size.
+    l_size = sy-tleng * sy-tfill.
+
+  when &apos;FILE&apos;. &quot; Load from frontend
+    call function &apos;GUI_UPLOAD&apos;
+    exporting
+      filename   = g_mockup_load_path
+      filetype   = &apos;BIN&apos;
+    importing
+      filelength = l_size
+    tables
+      data_tab   = lt_w3mime
+    exceptions
+      others = 1.
+
+    if sy-subrc is not initial.
+      zcx_mockup_loader_error=&gt;raise( msg = |Cannot upload file: { g_mockup_load_path }| code = &apos;RE&apos; ). &quot;#EC NOTEXT
+    endif.
+
+  when others.
+    if sy-subrc is not initial.
+      zcx_mockup_loader_error=&gt;raise( msg = &apos;Wrong source type&apos; code = &apos;WS&apos; ). &quot;#EC NOTEXT
+    endif.
+
+  endcase.
+
+  &quot; Convert to XString
+  call function &apos;SCMS_BINARY_TO_XSTRING&apos;
+    exporting
+      input_length = l_size
+    importing
+      buffer       = l_xstring
+    tables
+      binary_tab   = lt_w3mime[]
+    exceptions
+      failed       = 1.
+
+  if sy-subrc is not initial.
+    zcx_mockup_loader_error=&gt;raise( &apos;Binary to string error&apos; ). &quot;#EC NOTEXT
+  endif.
+
+  &quot; Extract zip
+  if o_zip is initial.
+    create object o_zip.
+  endif.
+
+  call method o_zip-&gt;load
+    exporting  zip    = l_xstring
+    exceptions others = 4.
+
+  if sy-subrc is not initial or lines( o_zip-&gt;files ) = 0.
+    zcx_mockup_loader_error=&gt;raise( msg = &apos;ZIP load failed&apos; code = &apos;ZE&apos; ).  &quot;#EC NOTEXT
+  endif.
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_AND_STORE" VERSION="1" LANGU="E" DESCRIPT="Load table from ZIP" EXPOSURE="2" STATE="1" EDITORDER="3 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_AND_STORE" SCONAME="I_OBJ" VERSION="1" LANGU="E" DESCRIPT="Mockup class" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_AND_STORE" SCONAME="I_STRICT" VERSION="1" LANGU="E" DESCRIPT="Strict structure analysis" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_BOOL" PARVALUE="ABAP_TRUE"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_AND_STORE" SCONAME="I_NAME" VERSION="1" LANGU="E" DESCRIPT="Store place label" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CHAR40"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_AND_STORE" SCONAME="I_TYPE" VERSION="1" LANGU="E" DESCRIPT="Type to load" CMPTYPE="1" MTDTYPE="0" EDITORDER="4 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CSEQUENCE"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_AND_STORE" SCONAME="I_TABKEY" VERSION="1" LANGU="E" DESCRIPT="Table key for filtering" CMPTYPE="1" MTDTYPE="0" EDITORDER="5 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_COMPNAME" PAROPTIONL="X"/>
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_AND_STORE" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method load_and_store.
+  data:
+        lo_type  type ref to cl_abap_typedescr,
+        lo_dtype type ref to cl_abap_datadescr,
+        lr_data  type ref to data.
+
+  field-symbols &lt;data&gt; type data.
+
+  &quot; Create container to load zip data to
+  call method cl_abap_typedescr=&gt;describe_by_name
+    exporting  p_name      = i_type
+    receiving  p_descr_ref = lo_type
+    exceptions others      = 4.
+
+  if sy-subrc is not initial.
+    zcx_mockup_loader_error=&gt;raise( msg = |Type { i_type } not found|  code = &apos;WT&apos; ). &quot;#EC NOTEXT
+  endif.
+
+  lo_dtype ?= lo_type.
+
+  create data lr_data type handle lo_dtype.
+  assign lr_data-&gt;* to &lt;data&gt;.
+  if &lt;data&gt; is not assigned.
+    zcx_mockup_loader_error=&gt;raise( &apos;Data cannot be assigned&apos; ). &quot;#EC NOTEXT
+  endif.
+
+  &quot; Load from zip and store
+  call method load_data
+    exporting
+      i_obj       = i_obj
+      i_strict    = i_strict
+    importing
+      e_container = &lt;data&gt;.
+
+  call method _store
+    exporting
+      i_name     = i_name
+      i_data_ref = lr_data
+      i_tabkey   = i_tabkey.
+
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_DATA" VERSION="1" LANGU="E" DESCRIPT="Load table from ZIP" EXPOSURE="2" STATE="1" EDITORDER="4 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_DATA" SCONAME="I_OBJ" VERSION="1" LANGU="E" DESCRIPT="Mockup class" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_DATA" SCONAME="I_STRICT" VERSION="1" LANGU="E" DESCRIPT="Strict structure analysis" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_BOOL" PARVALUE="ABAP_TRUE"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_DATA" SCONAME="E_CONTAINER" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="ANY"/>
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_DATA" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method load_data.
+  data l_rawdata  type string.
+
+  if e_container is not supplied.
+    zcx_mockup_loader_error=&gt;raise( msg = &apos;No container supplied&apos; code = &apos;NC&apos; ). &quot;#EC NOTEXT
+  endif.
+
+  call method me-&gt;read_zip
+    exporting i_name    = i_obj &amp;&amp; &apos;.txt&apos;
+    importing e_rawdata = l_rawdata.
+
+  call method me-&gt;parse_data
+    exporting
+      i_rawdata   = l_rawdata
+      i_strict    = i_strict
+    importing
+      e_container = e_container.
+
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_RAW" VERSION="1" LANGU="E" DESCRIPT="Load structure from ZIP" EXPOSURE="2" STATE="1" EDITORDER="2 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_RAW" SCONAME="I_OBJ" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_RAW" SCONAME="I_EXT" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING" PAROPTIONL="X"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_RAW" SCONAME="E_CONTENT" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="XSTRING"/>
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_RAW" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method load_raw.
+  data l_filename type string.
+
+  if e_content is not supplied.
+    zcx_mockup_loader_error=&gt;raise( msg = &apos;No container supplied&apos; code = &apos;NC&apos; ). &quot;#EC NOTEXT
+  endif.
+
+  if i_ext is initial.
+    l_filename = i_obj &amp;&amp; &apos;.txt&apos;.
+  else.
+    l_filename = i_obj &amp;&amp; i_ext.
+  endif.
+
+  call method o_zip-&gt;get
+    exporting name    = l_filename
+    importing content = e_content.
+
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="MAP_FILE_STRUCTURE" VERSION="1" LANGU="E" DESCRIPT="Analyse structure" EXPOSURE="0" STATE="1" EDITORDER="1 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="MAP_FILE_STRUCTURE" SCONAME="I_LINE" VERSION="1" LANGU="E" DESCRIPT="Header data line" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="MAP_FILE_STRUCTURE" SCONAME="IO_STRUC_DESCR" VERSION="1" LANGU="E" DESCRIPT="Runtime Type Services" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="3" TYPE="CL_ABAP_STRUCTDESCR"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="MAP_FILE_STRUCTURE" SCONAME="I_STRICT" VERSION="1" LANGU="E" DESCRIPT="Checkbox" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_BOOL"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="MAP_FILE_STRUCTURE" SCONAME="ET_MAP" VERSION="1" LANGU="E" DESCRIPT="Field mapping" CMPTYPE="1" MTDTYPE="0" EDITORDER="4 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="INT4_TABLE"/>
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="MAP_FILE_STRUCTURE" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method map_file_structure.
+  data:
+        l_tabcnt     type i,
+        l_fieldcnt   type i,
+        lt_fields    type tt_string,
+        l_field_name type string,
+        lt_dupcheck  type tt_string.
+
+  split i_line at cl_abap_char_utilities=&gt;horizontal_tab into table lt_fields.
+
+  &quot; Check if the line ends with TAB
+  find all occurrences of cl_abap_char_utilities=&gt;horizontal_tab in i_line match count l_tabcnt.
+  if l_tabcnt = lines( lt_fields ). &quot; Line ends with TAB, last empty field is not added to table, see help for &apos;split&apos;
+    zcx_mockup_loader_error=&gt;raise( msg = &apos;Empty field at the end&apos; code = &apos;EN&apos; ).   &quot;#EC NOTEXT
+  endif.
+
+  &quot; Compare number of fields, check structure similarity
+  if i_strict = abap_true.
+    l_fieldcnt = lines( lt_fields ).
+
+    &quot; MANDT field may be skipped
+    read table io_struc_descr-&gt;components with key name = &apos;MANDT&apos; transporting no fields.
+    if sy-subrc is initial. &quot; Found in strcuture components
+      read table lt_fields with key table_line = &apos;MANDT&apos; transporting no fields.
+      if sy-subrc is not initial. &quot; But not found in the file
+        add 1 to l_fieldcnt.
+      endif.
+    endif.
+
+    if l_fieldcnt &lt;&gt; lines( io_struc_descr-&gt;components ).
+      zcx_mockup_loader_error=&gt;raise( msg = &apos;Different columns number&apos; code = &apos;CN&apos; ).   &quot;#EC NOTEXT
+    endif.
+  endif.
+
+  &quot; Check duplicate field names in incoming structure
+  lt_dupcheck[] = lt_fields[].
+  sort lt_dupcheck[].
+  delete adjacent duplicates from lt_dupcheck[].
+  if lines( lt_dupcheck ) &lt;&gt; lines( lt_fields ).
+    zcx_mockup_loader_error=&gt;raise( msg = &apos;Duplicate field names found&apos; code = &apos;DN&apos; ).   &quot;#EC NOTEXT
+  endif.
+
+  &quot; Compare columns names and make map
+  loop at lt_fields into l_field_name.
+    if l_field_name is initial. &quot; Check empty fields
+      zcx_mockup_loader_error=&gt;raise( msg = &apos;Empty field name found&apos; code = &apos;EN&apos; ).   &quot;#EC NOTEXT
+    endif.
+
+    read table io_struc_descr-&gt;components with key name = l_field_name transporting no fields.
+    if sy-subrc is initial.
+      append sy-tabix to et_map.
+    else.
+      zcx_mockup_loader_error=&gt;raise( msg = |Column { l_field_name } not found in target structure| code = &apos;MC&apos; ). &quot;#EC NOTEXT
+    endif.
+  endloop.
+
+endmethod.                    &quot;analyse_structure</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_APPLY_EXIT" VERSION="1" LANGU="E" DESCRIPT="Apply conversion exit" EXPOSURE="0" STATE="1" EDITORDER="3 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_APPLY_EXIT" SCONAME="I_DATA" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_APPLY_EXIT" SCONAME="I_CONVEXIT" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_APPLY_EXIT" SCONAME="E_FIELD" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="ANY"/>
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_APPLY_EXIT" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method parse_apply_exit.
+  data l_fmname type rs38l_fnam value &apos;CONVERSION_EXIT_XXXXX_INPUT&apos;.
+
+  replace first occurrence of &apos;XXXXX&apos; in l_fmname with i_convexit.
+
+  call function &apos;FUNCTION_EXISTS&apos;
+    exporting
+      funcname           = l_fmname
+    exceptions
+      function_not_exist = 1
+      others             = 2.
+
+  if sy-subrc &lt;&gt; 0.
+    zcx_mockup_loader_error=&gt;raise( msg = &apos;Conversion exit not found&apos; code = &apos;EM&apos; ). &quot;#EC NOTEXT
+  endif.
+
+  call function l_fmname
+    exporting  input  = i_data
+    importing  output = e_field
+    exceptions others = 1.
+
+  if sy-subrc &lt;&gt; 0.
+    zcx_mockup_loader_error=&gt;raise( msg = &apos;Conversion exit failed&apos; code = &apos;EF&apos; ). &quot;#EC NOTEXT
+  endif.
+
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_DATA" VERSION="1" LANGU="E" DESCRIPT="Parse data structure (temporary)" EXPOSURE="0" STATE="1" EDITORDER="4 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_DATA" SCONAME="I_RAWDATA" VERSION="1" LANGU="E" DESCRIPT="Data to parse" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_DATA" SCONAME="I_STRICT" VERSION="1" LANGU="E" DESCRIPT="Strict structure analysis" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_BOOL" PARVALUE="ABAP_TRUE"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_DATA" SCONAME="E_CONTAINER" VERSION="1" LANGU="E" DESCRIPT="Output container" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="ANY"/>
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_DATA" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method parse_data.
+  data:
+        lt_lines       type table of string,
+        ls_line        type string,
+        lt_map         type int4_table,
+
+        lo_type_descr  type ref to cl_abap_typedescr,
+        lo_table_descr type ref to cl_abap_tabledescr,
+        lo_struc_descr type ref to cl_abap_structdescr,
+        ref_tab_line   type ref to data.
+
+  field-symbols:
+                 &lt;table&gt;      type any table,
+                 &lt;container&gt;  type any.
+
+  clear e_container.
+
+  &quot; Identify container type and create temp container
+  lo_type_descr = cl_abap_typedescr=&gt;describe_by_data( e_container ).
+  case lo_type_descr-&gt;kind.
+  when &apos;T&apos;. &quot; Table
+    lo_table_descr ?= lo_type_descr.
+    lo_struc_descr ?= lo_table_descr-&gt;get_table_line_type( ).
+    create data ref_tab_line type handle lo_struc_descr.
+    assign ref_tab_line-&gt;* to &lt;container&gt;.
+    assign e_container     to &lt;table&gt;.
+  when &apos;S&apos;. &quot; Structure
+    lo_struc_descr ?= lo_type_descr.
+    assign e_container to &lt;container&gt;.
+  when others. &quot; Not a table or structure ?
+    zcx_mockup_loader_error=&gt;raise( msg = &apos;Table or structure containers only&apos; code = &apos;DT&apos; ). &quot;#EC NOTEXT
+  endcase.
+
+  &quot; Read and process header line
+  split i_rawdata at cl_abap_char_utilities=&gt;cr_lf into table lt_lines.
+  read table lt_lines into ls_line index 1.
+  if sy-subrc &lt;&gt; 0.
+    zcx_mockup_loader_error=&gt;raise( msg = &apos;No header line found in the file&apos; code = &apos;NH&apos; ). &quot;#EC NOTEXT
+  endif.
+  if ls_line is initial.
+    zcx_mockup_loader_error=&gt;raise( msg = &apos;Header line is empty&apos;  code = &apos;HE&apos; ). &quot;#EC NOTEXT
+  endif.
+
+  delete lt_lines index 1.
+
+  call method me-&gt;map_file_structure
+    exporting
+      i_line         = ls_line
+      io_struc_descr = lo_struc_descr
+      i_strict       = i_strict
+    importing
+      et_map         = lt_map.
+
+  &quot; Main data parsing loop
+  loop at lt_lines into ls_line.
+    if ls_line is initial. &quot; Check empty lines
+      check sy-tabix &lt; lines( lt_lines ). &quot; Last line of a file may be empty, others - not
+      zcx_mockup_loader_error=&gt;raise( msg = |Empty line { sy-tabix + 1 } cannot be parsed|  code = &apos;LE&apos; ). &quot;#EC NOTEXT
+    endif.
+
+    call method parse_line
+      exporting
+        i_line         = ls_line
+        io_struc_descr = lo_struc_descr
+        it_map         = lt_map
+        i_index        = sy-tabix + 1
+      importing
+        es_container   = &lt;container&gt;.
+
+    &quot; Only first line goes to structure and then exits
+    if lo_type_descr-&gt;kind = &apos;S&apos;. &quot; Structure
+      exit.
+    else. &quot; Table
+      insert &lt;container&gt; into table &lt;table&gt;.
+    endif.
+
+  endloop.
+
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_FIELD" VERSION="1" LANGU="E" DESCRIPT="Parse 1 field" EXPOSURE="0" STATE="1" EDITORDER="6 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_FIELD" SCONAME="IS_COMPONENT" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_COMPDESCR"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_FIELD" SCONAME="I_DATA" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_FIELD" SCONAME="E_FIELD" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="ANY"/>
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_FIELD" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method parse_field.
+  data l_mask type string.
+
+  case is_component-type_kind.
+    when &apos;D&apos;. &quot; Date
+      call function &apos;CONVERT_DATE_TO_INTERNAL&apos;
+        exporting
+          date_external            = i_data
+          accept_initial_date      = &apos;X&apos;
+        importing
+          date_internal            = e_field
+        exceptions
+          date_external_is_invalid = 1
+          others                   = 2.
+
+    when &apos;C&apos;. &quot; Char + convexits
+      describe field e_field edit mask l_mask.
+      if l_mask is initial.
+        e_field = i_data.
+      else.
+        shift l_mask left deleting leading &apos;=&apos;.
+        call method me-&gt;parse_apply_exit
+          exporting
+            i_data     = i_data
+            i_convexit = l_mask
+          importing
+            e_field    = e_field.
+      endif.
+
+    when &apos;g&apos;. &quot; String
+      e_field = i_data.
+
+    when &apos;P&apos;. &quot; Amount
+      call function &apos;HRCM_STRING_TO_AMOUNT_CONVERT&apos;
+        exporting
+          string              = i_data
+          decimal_separator   = &apos;,&apos;
+          thousands_separator = &apos;.&apos;
+        importing
+          betrg               = e_field
+        exceptions
+          convert_error       = 1
+          others              = 2.
+
+    when &apos;N&apos; or &apos;I&apos;. &quot; Integer number
+      if i_data co &apos;0123456789&apos;.
+        e_field = i_data.
+      else.
+        sy-subrc = 4.
+      endif.
+
+  endcase.
+
+  if sy-subrc is not initial.
+    zcx_mockup_loader_error=&gt;raise( msg = |Field: { is_component-name }| code = &apos;PF&apos; ). &quot;#EC NOTEXT
+  endif.
+
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_LINE" VERSION="1" LANGU="E" DESCRIPT="Parse one data line" EXPOSURE="0" STATE="1" EDITORDER="5 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_LINE" SCONAME="I_LINE" VERSION="1" LANGU="E" DESCRIPT="Data line" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_LINE" SCONAME="IT_MAP" VERSION="1" LANGU="E" DESCRIPT="Fields map" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="INT4_TABLE"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_LINE" SCONAME="IO_STRUC_DESCR" VERSION="1" LANGU="E" DESCRIPT="Target structure" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="3" TYPE="CL_ABAP_STRUCTDESCR"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_LINE" SCONAME="I_INDEX" VERSION="1" LANGU="E" DESCRIPT="Line number" CMPTYPE="1" MTDTYPE="0" EDITORDER="4 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="INT4"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_LINE" SCONAME="ES_CONTAINER" VERSION="1" LANGU="E" DESCRIPT="Destination container" CMPTYPE="1" MTDTYPE="0" EDITORDER="5 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="ANY"/>
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_LINE" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" DESCRIPT="Exception class for mockup loader" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method parse_line.
+  data:
+        l_tabcnt       type i,
+        lt_fields      type table of string,
+        ls_field       type string,
+        ls_component   type abap_compdescr,
+        l_index        type int4.
+
+  field-symbols &lt;field&gt; type any.
+
+  clear es_container.
+  split i_line at cl_abap_char_utilities=&gt;horizontal_tab into table lt_fields.
+
+  &quot; Count TABs, if line ends with TAB last empty field is not added to table, see help for &apos;split&apos;
+  find all occurrences of cl_abap_char_utilities=&gt;horizontal_tab in i_line match count l_tabcnt.
+  add 1 to l_tabcnt. &quot; Number of fields in the line
+
+  &quot; Check field number is the same as in header
+  if l_tabcnt &gt; lines( it_map ).
+    zcx_mockup_loader_error=&gt;raise( msg = |More fields than in header @{ i_index }| code = &apos;&gt;H&apos; ). &quot;#EC NOTEXT
+  elseif l_tabcnt &lt; lines( it_map ).
+    zcx_mockup_loader_error=&gt;raise( msg = |Less fields than in header @{ i_index }| code = &apos;&lt;H&apos; ). &quot;#EC NOTEXT
+  endif.
+
+  &quot; Move data to table line
+  loop at lt_fields into ls_field.
+    read table it_map into l_index index sy-tabix. &quot; Read map
+
+    read table io_struc_descr-&gt;components into ls_component index l_index. &quot; Get component
+    if sy-subrc is not initial.
+      zcx_mockup_loader_error=&gt;raise( &apos;No component found?!&apos; ). &quot;#EC NOTEXT
+    endif.
+
+    check ls_component-name ne &apos;MANDT&apos;. &quot; Skip client fields
+
+    assign component ls_component-name of structure es_container to &lt;field&gt;.
+    if &lt;field&gt; is not assigned.
+      zcx_mockup_loader_error=&gt;raise( &apos;Field assign failed?!&apos; ). &quot;#EC NOTEXT
+    endif.
+
+    call method parse_field
+      exporting
+        is_component = ls_component
+        i_data       = ls_field
+      importing
+        e_field      = &lt;field&gt;.
+
+  endloop.
+
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PURGE" VERSION="1" LANGU="E" DESCRIPT="Retrieve data from store" EXPOSURE="2" STATE="1" EDITORDER="5 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PURGE" SCONAME="I_NAME" VERSION="1" LANGU="E" DESCRIPT="Character field of length 40" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CHAR40"/>
+   <source>method purge.
+  data l_store type ty_store.
+
+  if i_name = &apos;*&apos;. &quot; Delete all
+    loop at at_store into l_store.
+      free l_store-data.
+    endloop.
+    clear at_store.
+
+  else.            &quot; Delete specific record
+    read table at_store with key name = i_name into l_store.
+    check sy-subrc is initial.
+    delete at_store index sy-tabix.
+    free l_store-data.
+  endif.
+
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="READ_ZIP" VERSION="1" LANGU="E" DESCRIPT="Read ZIP file" EXPOSURE="0" STATE="1" EDITORDER="7 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="READ_ZIP" SCONAME="I_NAME" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="READ_ZIP" SCONAME="E_RAWDATA" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="READ_ZIP" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method read_zip.
+  data:
+        l_xstring type xstring,
+        lo_conv   type ref to cl_abap_conv_in_ce,
+        l_ex      type ref to cx_root.
+
+  call method o_zip-&gt;get
+    exporting  name            = i_name
+    importing  content         = l_xstring
+    exceptions zip_index_error = 1.
+
+  if sy-subrc is not initial.
+    zcx_mockup_loader_error=&gt;raise( msg = |Cannot read { i_name }| code = &apos;ZF&apos; ). &quot;#EC NOTEXT
+  endif.
+
+  shift l_xstring left deleting leading  cl_abap_char_utilities=&gt;byte_order_mark_little in byte mode.
+
+  try.
+    lo_conv = cl_abap_conv_in_ce=&gt;create( encoding = &apos;4103&apos; ). &quot; UTF16
+    lo_conv-&gt;convert( exporting input = l_xstring importing data = e_rawdata ).
+  catch cx_root into l_ex.
+    zcx_mockup_loader_error=&gt;raise( msg = &apos;Codepage conversion error&apos; code = &apos;CP&apos; ). &quot;#EC NOTEXT
+  endtry.
+
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="RETRIEVE" VERSION="1" LANGU="E" DESCRIPT="Retrieve data from store" EXPOSURE="2" STATE="1" EDITORDER="6 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="RETRIEVE" SCONAME="I_NAME" VERSION="1" LANGU="E" DESCRIPT="Character field of length 40" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CHAR40"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="RETRIEVE" SCONAME="I_SIFT" VERSION="1" LANGU="E" DESCRIPT="Filter with tab key" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CLIKE" PAROPTIONL="X"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="RETRIEVE" SCONAME="E_DATA" VERSION="1" LANGU="E" DESCRIPT="Place to retrieve store to" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="ANY"/>
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="RETRIEVE" SCONAME="RETRIEVE_ERROR" VERSION="1" LANGU="E" DESCRIPT="ZCL_MOCKUP_LOADER-&gt;RETRIEVE() FAILED" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method retrieve.
+  data lo_ex type ref to zcx_mockup_loader_error.
+
+  try .
+    get_instance( )-&gt;_retrieve(
+      exporting i_name = i_name
+                i_sift = i_sift
+      importing e_data = e_data ).
+
+  catch zcx_mockup_loader_error into lo_ex.
+
+    &quot; Switch to non-class exceptions to ensure better code readability
+    &quot; and compatibility with substituted select results
+    &quot; e.g. zcl_mockup_loader=&gt;retrieve( ... ). if sy_subrc is not initial ...
+    call method cl_message_helper=&gt;set_msg_vars_for_if_t100_msg exporting text = lo_ex.
+    message id sy-msgid type sy-msgty number sy-msgno raising retrieve_error
+      with sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+
+  endtry.
+
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="STORE" VERSION="1" LANGU="E" DESCRIPT="Save data to store" EXPOSURE="2" STATE="1" EDITORDER="7 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="STORE" SCONAME="I_NAME" VERSION="1" LANGU="E" DESCRIPT="Store place label" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CHAR40"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="STORE" SCONAME="I_DATA" VERSION="1" LANGU="E" DESCRIPT="Data to store" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ANY"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="STORE" SCONAME="I_TABKEY" VERSION="1" LANGU="E" DESCRIPT="Table key for filtering" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_COMPNAME" PAROPTIONL="X"/>
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="STORE" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method store.
+  data          lr_data type ref to data.
+  field-symbols &lt;data&gt;  type any.
+
+  &quot; Create clone container
+  create data lr_data like i_data.
+  assign lr_data-&gt;* to &lt;data&gt;.
+  if &lt;data&gt; is not assigned.
+    zcx_mockup_loader_error=&gt;raise( &apos;Data cannot be assigned&apos; ). &quot;#EC NOTEXT
+  endif.
+
+  &lt;data&gt; = i_data. &quot; Copy data to container
+
+  call method _store
+    exporting
+      i_name     = i_name
+      i_data_ref = lr_data
+      i_tabkey   = i_tabkey.
+
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="_RETRIEVE" VERSION="1" LANGU="E" DESCRIPT="Retrieve data from store HELPER" EXPOSURE="0" STATE="1" EDITORDER="9 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="_RETRIEVE" SCONAME="I_NAME" VERSION="1" LANGU="E" DESCRIPT="Character field of length 40" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CHAR40"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="_RETRIEVE" SCONAME="I_SIFT" VERSION="1" LANGU="E" DESCRIPT="Filter with tab key" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CLIKE" PAROPTIONL="X"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="_RETRIEVE" SCONAME="E_DATA" VERSION="1" LANGU="E" DESCRIPT="Place to retrieve store to" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="ANY"/>
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="_RETRIEVE" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method _retrieve.
+  data:
+        l_store     type ty_store,
+        r_data_tab  type ref to data,
+        ld_src      type ref to cl_abap_typedescr,
+        ld_dst      type ref to cl_abap_typedescr,
+        ld_tab      type ref to cl_abap_tabledescr,
+        ld_src_line type ref to cl_abap_structdescr,
+        ld_dst_line type ref to cl_abap_structdescr.
+
+  field-symbols:
+        &lt;line&gt;    type any,
+        &lt;tabkey&gt;  type any,
+        &lt;src_tab&gt; type any table,
+        &lt;tmp_tab&gt; type standard table,
+        &lt;data&gt;    type any.
+
+  clear e_data.
+
+  &quot; Find store
+  read table at_store with key name = i_name into l_store.
+  if sy-subrc is not initial.
+    zcx_mockup_loader_error=&gt;raise( msg = |Cannot find store { i_name }| code = &apos;NF&apos; ). &quot;#EC NOTEXT
+  endif.
+
+  assign l_store-data-&gt;* to &lt;data&gt;.
+  if &lt;data&gt; is not assigned.
+    zcx_mockup_loader_error=&gt;raise( &apos;Data cannot be assigned&apos; ). &quot;#EC NOTEXT
+  endif.
+
+  &quot; Ensure types are the same
+  ld_src = cl_abap_typedescr=&gt;describe_by_data( &lt;data&gt; ).
+  ld_dst = cl_abap_typedescr=&gt;describe_by_data( e_data ).
+
+  if ld_src-&gt;kind = &apos;T&apos;.
+    ld_tab      ?= ld_src.
+    ld_src_line ?= ld_tab-&gt;get_table_line_type( ).
+  endif.
+
+  &quot; If types are not equal try going deeper to table line structure
+  if ld_src-&gt;absolute_name ne ld_dst-&gt;absolute_name.
+    if ld_src-&gt;kind = &apos;T&apos; and ld_dst-&gt;kind = &apos;T&apos;. &quot; Table =&gt; Table
+      ld_tab      ?= ld_dst.
+      ld_dst_line ?= ld_tab-&gt;get_table_line_type( ).
+    elseif i_sift is not initial and ld_src-&gt;kind = &apos;T&apos; and ld_dst-&gt;kind = &apos;S&apos;. &quot; Table + filter =&gt; Structure
+      ld_dst_line ?= ld_dst.
+    else.
+      zcx_mockup_loader_error=&gt;raise( msg = |Types differ for store { i_name }| code = &apos;TT&apos; ). &quot;#EC NOTEXT
+    endif.
+
+    if ld_src_line-&gt;absolute_name ne ld_dst_line-&gt;absolute_name.
+      zcx_mockup_loader_error=&gt;raise( msg = |Types differ for store { i_name }| code = &apos;TS&apos; ). &quot;#EC NOTEXT
+    endif.
+  endif.
+
+  &quot; Copy or sift (filter with tabkey) values
+  if i_sift is initial.
+    e_data = &lt;data&gt;.
+
+  else. &quot; Assuming ld_src-&gt;kind = &apos;T&apos; -&gt; see STORE
+    assert ld_src-&gt;kind = &apos;T&apos;.
+    assert ld_dst-&gt;kind ca &apos;ST&apos;.
+    assign l_store-data-&gt;* to &lt;src_tab&gt;.
+
+    case ld_dst-&gt;kind.
+    when &apos;T&apos;. &quot; Table
+      &quot; Create temporary table (needed because DST table can be hashed or sorted)
+      ld_tab = cl_abap_tabledescr=&gt;create(
+                  p_line_type  = ld_src_line
+                  p_table_kind = cl_abap_tabledescr=&gt;tablekind_std
+                  p_unique     = abap_false ).
+
+      create data r_data_tab type handle ld_tab.
+      assign r_data_tab-&gt;* to &lt;tmp_tab&gt;.
+
+      loop at &lt;src_tab&gt; assigning &lt;line&gt;.
+        assign component l_store-tabkey of structure &lt;line&gt; to &lt;tabkey&gt;.
+        if &lt;tabkey&gt; is not assigned.
+          zcx_mockup_loader_error=&gt;raise( msg = &apos;Tabkey field not found&apos; code = &apos;FM&apos; ). &quot;#EC NOTEXT
+        endif.
+        check &lt;tabkey&gt; = i_sift.
+        append &lt;line&gt; to &lt;tmp_tab&gt;.
+      endloop.
+
+      e_data = &lt;tmp_tab&gt;.
+      free r_data_tab.
+
+    when &apos;S&apos;. &quot; Structure
+      read table &lt;src_tab&gt; into e_data with key (l_store-tabkey) = i_sift. &quot;#EC CI_ANYSEQ
+    endcase.
+  endif.
+
+  if e_data is initial.
+    zcx_mockup_loader_error=&gt;raise( msg = &apos;No data returned&apos; code = &apos;04&apos; ). &quot;#EC NOTEXT
+  endif.
+
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="_STORE" VERSION="1" LANGU="E" DESCRIPT="Save data to store HELPER" EXPOSURE="0" STATE="1" EDITORDER="8 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="_STORE" SCONAME="I_NAME" VERSION="1" LANGU="E" DESCRIPT="Store place label" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CHAR40"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="_STORE" SCONAME="I_DATA_REF" VERSION="1" LANGU="E" DESCRIPT="Data to store" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="3" TYPE="DATA"/>
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="_STORE" SCONAME="I_TABKEY" VERSION="1" LANGU="E" DESCRIPT="Table key for filtering" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_COMPNAME" PAROPTIONL="X"/>
+   <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="_STORE" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method _store.
+  data:
+        l_store       type ty_store,
+        lo_type       type ref to cl_abap_typedescr,
+        lo_tab_type   type ref to cl_abap_tabledescr,
+        lo_str_type   type ref to cl_abap_structdescr.
+
+  &quot; Check if tabkey exists
+  if i_tabkey is not initial.
+    lo_type = cl_abap_typedescr=&gt;describe_by_data_ref( i_data_ref ).
+    if lo_type-&gt;kind &lt;&gt; &apos;T&apos;. &quot; Not table ?
+      zcx_mockup_loader_error=&gt;raise( msg = &apos;Tabkey is relevant for tables only&apos; code = &apos;TO&apos; ). &quot;#EC NOTEXT
+    endif.
+
+    lo_tab_type ?= lo_type. lo_str_type ?= lo_tab_type-&gt;get_table_line_type( ).
+
+    read table lo_str_type-&gt;components with key name = i_tabkey transporting no fields.
+    if sy-subrc &lt;&gt; 0.
+      zcx_mockup_loader_error=&gt;raise( msg = &apos;Tabkey field not found&apos; code = &apos;FM&apos; ). &quot;#EC NOTEXT
+    endif.
+  endif.
+
+  &quot; Store data
+  l_store-name   = i_name.
+  l_store-tabkey = i_tabkey.
+  l_store-data   = i_data_ref.
+
+  me-&gt;purge( i_name ).
+  append l_store to me-&gt;at_store.
+
+endmethod.</source>
+  </method>
+ </CLAS>
+ <CLAS CLSNAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" DESCRIPT="Exception class for mockup loader" CATEGORY="40" EXPOSURE="2" STATE="1" RELEASE="0" CLSFINAL="X" CLSCCINCL="X" FIXPT="X" UNICODE="X" RSTAT="K" CLSBCCAT="00" MSG_ID="0M" DURATION_TYPE="0 " RISK_LEVEL="0 " REFCLSNAME="CX_STATIC_CHECK">
+  <implementing CLSNAME="ZCX_MOCKUP_LOADER_ERROR" REFCLSNAME="IF_T100_MESSAGE" VERSION="1" EXPOSURE="2" STATE="1" RELTYPE="1" EDITORDER="1 "/>
+  <localImplementation>*&quot;* use this source file for the definition and implementation of
+*&quot;* local helper classes, interface definitions and type
+*&quot;* declarations</localImplementation>
+  <localTypes>*&quot;* use this source file for any type of declarations (class
+*&quot;* definitions, interfaces or type declarations) you need for
+*&quot;* components in the private section</localTypes>
+  <localMacros>*&quot;* use this source file for any macro definitions you need
+*&quot;* in the implementation part of the class</localMacros>
+  <attribute CLSNAME="ZCX_MOCKUP_LOADER_ERROR" CMPNAME="CODE" VERSION="1" LANGU="E" DESCRIPT="Tech code for unit tests" EXPOSURE="2" STATE="1" EDITORDER="4 " ATTDECLTYP="0" ATTRDONLY="X" ATTEXPVIRT="0" TYPTYPE="1" TYPE="CHAR2" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <attribute CLSNAME="ZCX_MOCKUP_LOADER_ERROR" CMPNAME="METHNAME" VERSION="1" LANGU="E" DESCRIPT="Method where exception happened" EXPOSURE="2" STATE="1" EDITORDER="2 " ATTDECLTYP="0" ATTRDONLY="X" ATTEXPVIRT="0" TYPTYPE="1" TYPE="SCX_ATTRNAME" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <attribute CLSNAME="ZCX_MOCKUP_LOADER_ERROR" CMPNAME="MSG" VERSION="1" LANGU="E" DESCRIPT="Text description" EXPOSURE="2" STATE="1" EDITORDER="3 " ATTDECLTYP="0" ATTRDONLY="X" ATTEXPVIRT="0" TYPTYPE="1" TYPE="SCX_ATTRNAME" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <attribute CLSNAME="ZCX_MOCKUP_LOADER_ERROR" CMPNAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" EXPOSURE="2" STATE="1" EDITORDER="1 " ATTDECLTYP="2" ATTEXPVIRT="0" TYPTYPE="4" SRCROW1="12 " SRCCOLUMN1="4 " SRCROW2="19 " SRCCOLUMN2="33 " LOCKED="X" TYPESRC_LENG="323 " TYPESRC="begin of ZCX_MOCKUP_LOADER_ERROR,
+      msgid type symsgid value &apos;0M&apos;,
+      msgno type symsgno value &apos;500&apos;,
+      attr1 type scx_attrname value &apos;METHNAME&apos;,
+      attr2 type scx_attrname value &apos;MSG&apos;,
+      attr3 type scx_attrname value &apos;&apos;,
+      attr4 type scx_attrname value &apos;&apos;,
+    end of ZCX_MOCKUP_LOADER_ERROR
+"/>
+  <inheritance CLSNAME="ZCX_MOCKUP_LOADER_ERROR" REFCLSNAME="CX_STATIC_CHECK" VERSION="1" STATE="1"/>
+  <method CLSNAME="ZCX_MOCKUP_LOADER_ERROR" CMPNAME="RAISE" VERSION="1" LANGU="E" DESCRIPT="Raise the exception" EXPOSURE="2" STATE="1" EDITORDER="2 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCX_MOCKUP_LOADER_ERROR" CMPNAME="RAISE" SCONAME="MSG" VERSION="1" LANGU="E" DESCRIPT="Error description" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCX_MOCKUP_LOADER_ERROR" CMPNAME="RAISE" SCONAME="CODE" VERSION="1" LANGU="E" DESCRIPT="Error code" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CHAR2" PAROPTIONL="X"/>
+   <exception CLSNAME="ZCX_MOCKUP_LOADER_ERROR" CMPNAME="RAISE" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" DESCRIPT="Exception class for mockup loader" MTDTYPE="0" EDITORDER="1 "/>
+   <source>method RAISE.
+  data:
+        l_methname  type string,
+        sys_call    type sys_calls,
+        sys_stack   type sys_callst.
+
+  &quot; Get stack information
+  call function &apos;SYSTEM_CALLSTACK&apos;
+    exporting max_level    = 2
+    importing et_callstack = sys_stack.
+
+  read table sys_stack into sys_call index 2.
+  l_methname = sys_call-eventname &amp;&amp; &apos;():&apos;.
+
+  raise exception type zcx_mockup_loader_error
+    exporting
+      methname = l_methname
+      msg = msg
+      code = code.
+
+endmethod.</source>
+  </method>
+ </CLAS>
+ <DEVC DEVCLASS="ZMOCKUP_LOADER" CTEXT="Mockup loader for unit tests" LANGUAGE="E" MASTERLANG="E" KORRFLAG="X" PDEVCLASS="ZSBS" DLVUNIT="HOME" NAMESPACE="/0CUST/" CREATED_BY="USER1" CREATED_ON="20151031" CHANGED_BY="USER1" CHANGED_ON="20151031" PROJECT_GUID="00000000000000000000000000000000"/>
+</nugget>

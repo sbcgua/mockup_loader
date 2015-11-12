@@ -1,5 +1,7 @@
 # Mockup Loader for ABAP unit testing#
 
+*Version: 0.1*
+
 ## Contents ##
 
 <!-- start toc -->
@@ -149,7 +151,10 @@ A nugget is available to install the code with SAPLink. SAPLink does not support
         * `MSG type SCX_ATTRNAME`
         * `CODE type CHAR2`
     2. Go to Texts tab, choose exception id `ZCX_MOCKUP_LOADER_ERROR` (the only one there) and press Message Test button. Set `Message class = 0M, Message number = 500, Attrib1 = METHNAME, Attrib2 = MSG`. This message is one of standard messages with text "& & & &".
-    3. Create a static public method `RAISE`. Copy the content of the `lib/zcx_mockup_loader_error-raise.abap` there
+    3. Create a static public method `RAISE`. Copy the content of the `lib/zcx_mockup_loader_error-raise.abap` there. 
+        * Add importing parameter `MSG type STRING`
+        * Add optional importing parameter `CODE type CHAR2`
+        * Add `ZCX_MOCKUP_LOADER_ERROR` to the exceptions section 
     4. Activate   
 4. Optionally upload unit tests. 
     1. Create a **test class** for the `ZCL_MOCKUP_LOADER`. Copy the content of `test/zcl_mockup_loader-unit_test.abap` there and activate.
@@ -184,7 +189,7 @@ So we created a script which does the work automatically. How to use it:
 7. Each file is processed according to points 1-3 and each sheet is saved as `.txt` file (in UTF16 encoding) to `uncompressed/EXCELFILENAME/` directory, where `EXCELFILENAME` is the name of the Excel file.
 8. After everything is finished the "uncompressed" directory is compressed to a zip file and placed to the same directory where script is.
 
-### Command line ###        
+### Command line parameters ###        
 
 The script also supports command line parameters and can be executed with `cscript.exe` (preferable - then execution log is output to console). We use `.bat` files like this for example: 
 
