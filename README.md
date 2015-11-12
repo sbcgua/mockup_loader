@@ -189,7 +189,7 @@ So we created a script which does the work automatically. How to use it:
 7. Each file is processed according to points 1-3 and each sheet is saved as `.txt` file (in UTF16 encoding) to `uncompressed/EXCELFILENAME/` directory, where `EXCELFILENAME` is the name of the Excel file.
 8. After everything is finished the "uncompressed" directory is compressed to a zip file and placed to the same directory where script is.
 
-### Command line parameters ###        
+### Command line parameters ###
 
 The script also supports command line parameters and can be executed with `cscript.exe` (preferable - then execution log is output to console). We use `.bat` files like this for example: 
 
