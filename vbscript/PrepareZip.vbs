@@ -7,6 +7,7 @@ Dim gxlApp                      ' Excel instance
 Dim gSourceFolderPath           ' Path to the working directry (where XLS files are)
 Dim gTargetRoot                 ' Path to uncompressed TXT temp folder
 Dim gZipFileName                ' Path to zip file
+Dim gIncludeDir                 ' Path to included directory
 Dim gFilesToProcess             ' Found Excel files and their statuses
 Dim gbConsole                   ' Is console environment (cscript, not wscript)
 Dim gbOpenOnly                  ' Process open only files
@@ -25,6 +26,7 @@ Sub Main()
     gSourceFolderPath = getSourceFolder()
     gTargetRoot       = gSourceFolderPath & "\" & "uncompressed"
     gZipFileName      = gSourceFolderPath & "\" & "mockup.zip"
+    gIncludeDir       = ""
     ParseCmdLineParams()
 
     ' Identify console
@@ -38,13 +40,14 @@ Sub Main()
     debug "Src: " & gSourceFolderPath
     debug "Dst: " & gTargetRoot
     debug "Zip: " & gZipFileName
+    If gIncludeDir <> "" Then: debug "Inc: " & gIncludeDir
     debug ""
 
     ' Get the list of files to be processed
     Set gFilesToProcess = getFiles()         ' getting all Excel-files in the folder
 
     If gFilesToProcess.Count = 0 Then 
-        wsh.echo "No files selected"
+        MsgBox "No files selected"
         Exit Sub
     End If
 
@@ -73,6 +76,10 @@ Sub mainProcessing()
     debug "Processed files: " & gcProcCnt
     timeEnd = Timer()
     debug "Performance report (sec): " & timeEnd - timeStart & "/" & gPerf
+
+    If gIncludeDir <> "" Then 
+        Call copyIncludeDir
+    End If
 
     If gbSkipZip = False and gcProcCnt > 0 Then
         Call compressContent()
@@ -222,7 +229,7 @@ Function showScreen(in_HTMLcode, windowHeight)
                 End If
                 
                 If getOpenWorkbooksQty() = 0 Then
-                    MsgBox "There are no open files."
+                    wsh.echo "There are no open files."
                     Exit Function
                     ' TODO: to enable user to choose other option
                 End If
@@ -233,7 +240,7 @@ Function showScreen(in_HTMLcode, windowHeight)
             ElseIf .done.value = "clickedAll" Then
                 gbOpenOnly = False
                 Call mainProcessing()
-                MsgBox "Job is done"
+                wsh.echo "Job is done"
             Else
                 wsh.echo "Script timed out." 
             End If 
@@ -346,6 +353,21 @@ Function getOpenWorkbooksQty()
     getOpenWorkbooksQty = openWorkbooksQty
 End Function 
 
+Sub copyIncludeDir ()
+    Dim fso, sFullIncludePath
+
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    sFullIncludePath = fso.GetAbsolutePathName(gIncludeDir)
+
+    If fso.FolderExists(sFullIncludePath) Then 
+        debug "Including: " & sFullIncludePath
+        fso.CopyFolder sFullIncludePath, gTargetRoot
+    Else
+        debug "Include folder does not exist: " & sFullIncludePath
+    End If 
+
+End Sub
+
 '*************************************************************
 '* EXCEL ROUTINES
 '*************************************************************
@@ -435,7 +457,7 @@ Sub processOneWorkbook(in_wbName, isOpened)
     Set contentIndex = Nothing
     Set contentIndex = loadWorkbookSettings(wb) ' Load the settings of the workbook
     If contentIndex is Nothing Then
-        debug "  Workbook does not contain '_content' sheet"
+        debug "  Workbook does not contain '_contents' sheet"
         If Not isOpened Then: wb.Close ' Close workbooks which were closed before processing
         Exit Sub
     End if
@@ -512,15 +534,6 @@ Sub processWorksheet(ws, txtFileName, sMode)
             Next                        
             hFile.Write sBuf
 
-            ' For i = 1 to LastRow
-            '     sBuf = ""
-            '     rng = ws.Cells(i, FirstColumn).Resize(1, rngWidth)
-            '     For j = 1 to rngWidth
-            '         sBuf = sBuf & rng(1, j) & iif(j < rngWidth, vbTab, "")
-            '     Next                                            ' Next column
-            '     hFile.WriteLine sBuf
-            ' Next                                                ' Next row
-
     End Select
     gPerf = gPerf + Timer() - tm
     
@@ -531,7 +544,7 @@ End sub
 Function loadWorkbookSettings(wb)
     Dim sheetsToProcess: Set sheetsToProcess = CreateObject("Scripting.Dictionary")
     Dim wsContents:      Set wsContents = Nothing
-    Dim rCursor
+    Dim rCursor, sExport
     
     On Error Resume Next
     Set wsContents = wb.Sheets("_contents")
@@ -546,13 +559,12 @@ Function loadWorkbookSettings(wb)
 
     Do While Not IsEmpty(rCursor.Value)
         sName    = rCursor.Offset(0, 0) ' Name of the worksheet
-        sExport  = rCursor.Offset(0, 1) ' Indicates whether the sheet should be exported to .txt
-        sSpecial = UCase(rCursor.Offset(0, 2)) ' Indicates whether special logic should be applied to export operation
-
+        sExport  = rCursor.Offset(0, 1) ' Indicates whether the sheet should be exported to .txt and export mode e.g. LASTONLY
+        
         debug "  " & iif(isempty(sExport), "-", "+") & sName & iif(isempty(sSpecial), "", " [" & sSpecial & "]")
 
-        If sExport = "X" Then
-            sheetsToProcess.Add sName, sSpecial
+        If sExport = "X" Or sExport = "LASTONLY" Then
+            sheetsToProcess.Add sName, sExport
         End If
 
         Set rCursor = rCursor.Offset(1, 0)
@@ -585,9 +597,7 @@ Function loadWorkSheetSettings(ws)
         clmCounter = clmCounter + 1
     Loop        
     
-    ' TODO: rowsCounter - causes empty table for AS_* structures in declaration
-    ' Suggestion: always fill first column with index values;
-    ' This column should not be exported and used only to calculate lastRow value
+    'Note: always fill first column with non-empty index value!!!
     Do  ' Identify last row
         If IsEmpty( ws.Cells(rowsCounter, 1) ) Then
             LastRow = rowsCounter - 1
@@ -619,7 +629,7 @@ Sub compressContent()
     createEmptyZip()
     copyToZip()
  
-    wsh.echo "Archiving finished!"
+    wsh.echo "Archiving finished"
 End sub
 
 ' Generates an empty ZIP folder 
@@ -638,10 +648,7 @@ Sub createEmptyZip()
 
     hZipFile.Write Chr(80) & Chr(75) & Chr(5) & Chr(6) & String(18, 0)
     hZipFile.Close
-
-    ' Set fso     = Nothing
-    ' Set hZipFile = Nothing
-    ' WScript.Sleep 100
+    
 End sub
 
 ' Moves the content of the folder to an empty .ZIP archive
@@ -653,7 +660,7 @@ Sub copyToZip()
     Set sourceFolder = shellAPP.NameSpace(gTargetRoot)
 
     zipFolder.CopyHere sourceFolder.Items
-    WScript.Sleep 100
+    WScript.Sleep 300
 End Sub
 
 '*************************************************************
@@ -688,8 +695,9 @@ Sub ParseCmdLineParams ()
           "-h  - help (this screen)" & vbCrLf & _
           "-o  - silently process just opened files" & vbCrLf & _
           "-a  - silently process all files" & vbCrLf & _
+          "-i  - include a directory (specify path as a parameter)" & vbCrLf & _
           "-z  - use this path to zip file instead of default one" & vbCrLf & _
-          "-nz - Skip archiving, just generate text files"
+          "-nz - skip archiving, just generate text files"
 
   Do While i < Wscript.Arguments.Count
 
@@ -703,8 +711,15 @@ Sub ParseCmdLineParams ()
     case "-a"
         gbOpenOnly = False
         gbSilent = True
-    case "-nz"
+    case "-nz"  
         gbSkipZip = True
+    case "-i"
+        i = i + 1
+        If i = Wscript.Arguments.Count Then
+            wsh.echo "Specify directory after -i"
+            wscript.Quit
+        End If
+        gIncludeDir = Wscript.Arguments(i)
     case "-z"
         i = i + 1
         If i = Wscript.Arguments.Count Then

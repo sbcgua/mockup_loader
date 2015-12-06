@@ -1,4 +1,4 @@
-# Mockup Loader for ABAP unit testing#
+# Mockup Loader for ABAP unit testing #
 
 *Version: 0.1*
 
@@ -150,7 +150,7 @@ A nugget is available to install the code with SAPLink. SAPLink does not support
         * `METHNAME type SCX_ATTRNAME`
         * `MSG type SCX_ATTRNAME`
         * `CODE type CHAR2`
-    2. Go to Texts tab, choose exception id `ZCX_MOCKUP_LOADER_ERROR` (the only one there) and press Message Test button. Set `Message class = 0M, Message number = 500, Attrib1 = METHNAME, Attrib2 = MSG`. This message is one of standard messages with text "& & & &".
+    2. Go to Texts tab, choose exception id `ZCX_MOCKUP_LOADER_ERROR` (the only one there) and press Message Test button. Set `Message class = SY, Message number = 499, Attrib1 = METHNAME, Attrib2 = MSG`. This message is one of standard messages with text "& & & &".
     3. Create a static public method `RAISE`. Copy the content of the `lib/zcx_mockup_loader_error-raise.abap` there. 
         * Add importing parameter `MSG type STRING`
         * Add optional importing parameter `CODE type CHAR2`
@@ -173,7 +173,7 @@ An example can be found in [example/zmockup_loader_example.abap](/example/zmocku
 
 ## Excel to TXT VBS script ##
 
-We have much data prepared in Excel files. Many files, many sheets in each. It is boring and time consuming to copy them all to text (although Ctrl+C in Excel actually copies TAB delimited text which greatly simplifies the matter for small cases).
+We have a lot of data prepared in Excel files. Many files, many sheets in each. It is boring and time consuming to copy them all to text (although Ctrl+C in Excel actually copies TAB delimited text which greatly simplifies the matter for small cases).
 
 So we created a script which does the work automatically. How to use it:
 
@@ -204,6 +204,7 @@ Command line parameters:
 - `-o`  - silently process just opened files
 - `-a`  - silently process all files
 - `-z`  - use this path to zip file instead of default one
+- `-i`  - copy (include) following path into uncompressed directory and consequently to zip
 - `-nz` - Skip archiving, just generate text files to 'uncompressed' dir
 
 ## Contributors ##

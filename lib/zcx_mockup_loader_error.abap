@@ -10,8 +10,8 @@ public section.
 
   constants:
     begin of ZCX_MOCKUP_LOADER_ERROR,
-      msgid type symsgid value '0M',
-      msgno type symsgno value '500',
+      msgid type symsgid value 'SY',
+      msgno type symsgno value '499',
       attr1 type scx_attrname value 'METHNAME',
       attr2 type scx_attrname value 'MSG',
       attr3 type scx_attrname value '',

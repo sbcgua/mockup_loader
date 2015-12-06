@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <nugget name="ZMOCKUP_LOADER">
  <CLAS CLSNAME="ZCL_MOCKUP_LOADER" VERSION="1" LANGU="E" DESCRIPT="Mockup loader" CATEGORY="00" EXPOSURE="0" STATE="1" RELEASE="0" CLSFINAL="X" CLSCCINCL="X" FIXPT="X" UNICODE="X" CLSBCCAT="00" WITH_UNIT_TESTS="X" DURATION_TYPE="0 " RISK_LEVEL="0 ">
-  <types CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="TT_STRING" VERSION="1" LANGU="E" EXPOSURE="0" STATE="1" EDITORDER="1 " TYPTYPE="4" SRCROW1="4 " SRCCOLUMN1="4 " SRCROW2="4 " SRCCOLUMN2="33 " TYPESRC_LENG="32 " TYPESRC="tt_string type table of string
+  <types CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="TT_STRING" VERSION="1" LANGU="E" EXPOSURE="0" STATE="1" EDITORDER="1 " TYPTYPE="4" SRCROW1="4 " SRCCOLUMN1="4 " SRCROW2="4 " SRCCOLUMN2="33 " TYPESRC_LENG="32 " TYPESRC="tt_string type table of string
+
 "/>
-  <types CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="TY_STORE" VERSION="1" LANGU="E" EXPOSURE="0" STATE="1" EDITORDER="2 " TYPTYPE="4" SRCROW1="6 " SRCCOLUMN1="4 " SRCROW2="10 " SRCCOLUMN2="18 " TYPESRC_LENG="137 " TYPESRC="begin of ty_store,
-      name    type char40,
-      tabkey  type abap_compname,
-      data    type ref to data,
-    end of ty_store
+  <types CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="TY_STORE" VERSION="1" LANGU="E" EXPOSURE="0" STATE="1" EDITORDER="2 " TYPTYPE="4" SRCROW1="6 " SRCCOLUMN1="4 " SRCROW2="10 " SRCCOLUMN2="18 " TYPESRC_LENG="137 " TYPESRC="begin of ty_store,
+
+      name    type char40,
+
+      tabkey  type abap_compname,
+
+      data    type ref to data,
+
+    end of ty_store
+
 "/>
-  <types CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="TT_STORE" VERSION="1" LANGU="E" EXPOSURE="0" STATE="1" EDITORDER="3 " TYPTYPE="4" SRCROW1="12 " SRCCOLUMN1="4 " SRCROW2="12 " SRCCOLUMN2="34 " TYPESRC_LENG="33 " TYPESRC="tt_store type table of ty_store
+  <types CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="TT_STORE" VERSION="1" LANGU="E" EXPOSURE="0" STATE="1" EDITORDER="3 " TYPTYPE="4" SRCROW1="12 " SRCCOLUMN1="4 " SRCROW2="12 " SRCCOLUMN2="34 " TYPESRC_LENG="33 " TYPESRC="tt_store type table of ty_store
+
 "/>
   <localImplementation>* Local definitions and classes</localImplementation>
   <localTypes>*&quot;* use this source file for any type of declarations (class
@@ -696,7 +703,7 @@ class lcl_test_mockup_loader implementation.
       exceptions others = 4.
 
     assert_subrc(  act = sy-subrc       exp = 4 ).
-    assert_equals( act = sy-msgno       exp = 500 ). &quot; 0M(500) -&gt; &amp; &amp; &amp; &amp;
+    assert_equals( act = sy-msgno       exp = 499 ). &quot; SY(499) -&gt; &amp; &amp; &amp; &amp;
 
   endmethod.       &quot;store_retrieve
 
@@ -1668,7 +1675,7 @@ endmethod.</source>
 endmethod.</source>
   </method>
  </CLAS>
- <CLAS CLSNAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" DESCRIPT="Exception class for mockup loader" CATEGORY="40" EXPOSURE="2" STATE="1" RELEASE="0" CLSFINAL="X" CLSCCINCL="X" FIXPT="X" UNICODE="X" RSTAT="K" CLSBCCAT="00" MSG_ID="0M" DURATION_TYPE="0 " RISK_LEVEL="0 " REFCLSNAME="CX_STATIC_CHECK">
+ <CLAS CLSNAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" DESCRIPT="Exception class for mockup loader" CATEGORY="40" EXPOSURE="2" STATE="1" RELEASE="0" CLSFINAL="X" CLSCCINCL="X" FIXPT="X" UNICODE="X" RSTAT="K" CLSBCCAT="00" MSG_ID="SY" DURATION_TYPE="0 " RISK_LEVEL="0 " REFCLSNAME="CX_STATIC_CHECK">
   <implementing CLSNAME="ZCX_MOCKUP_LOADER_ERROR" REFCLSNAME="IF_T100_MESSAGE" VERSION="1" EXPOSURE="2" STATE="1" RELTYPE="1" EDITORDER="1 "/>
   <localImplementation>*&quot;* use this source file for the definition and implementation of
 *&quot;* local helper classes, interface definitions and type
@@ -1681,14 +1688,22 @@ endmethod.</source>
   <attribute CLSNAME="ZCX_MOCKUP_LOADER_ERROR" CMPNAME="CODE" VERSION="1" LANGU="E" DESCRIPT="Tech code for unit tests" EXPOSURE="2" STATE="1" EDITORDER="4 " ATTDECLTYP="0" ATTRDONLY="X" ATTEXPVIRT="0" TYPTYPE="1" TYPE="CHAR2" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
   <attribute CLSNAME="ZCX_MOCKUP_LOADER_ERROR" CMPNAME="METHNAME" VERSION="1" LANGU="E" DESCRIPT="Method where exception happened" EXPOSURE="2" STATE="1" EDITORDER="2 " ATTDECLTYP="0" ATTRDONLY="X" ATTEXPVIRT="0" TYPTYPE="1" TYPE="SCX_ATTRNAME" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
   <attribute CLSNAME="ZCX_MOCKUP_LOADER_ERROR" CMPNAME="MSG" VERSION="1" LANGU="E" DESCRIPT="Text description" EXPOSURE="2" STATE="1" EDITORDER="3 " ATTDECLTYP="0" ATTRDONLY="X" ATTEXPVIRT="0" TYPTYPE="1" TYPE="SCX_ATTRNAME" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
-  <attribute CLSNAME="ZCX_MOCKUP_LOADER_ERROR" CMPNAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" EXPOSURE="2" STATE="1" EDITORDER="1 " ATTDECLTYP="2" ATTEXPVIRT="0" TYPTYPE="4" SRCROW1="12 " SRCCOLUMN1="4 " SRCROW2="19 " SRCCOLUMN2="33 " LOCKED="X" TYPESRC_LENG="323 " TYPESRC="begin of ZCX_MOCKUP_LOADER_ERROR,
-      msgid type symsgid value &apos;0M&apos;,
-      msgno type symsgno value &apos;500&apos;,
-      attr1 type scx_attrname value &apos;METHNAME&apos;,
-      attr2 type scx_attrname value &apos;MSG&apos;,
-      attr3 type scx_attrname value &apos;&apos;,
-      attr4 type scx_attrname value &apos;&apos;,
-    end of ZCX_MOCKUP_LOADER_ERROR
+  <attribute CLSNAME="ZCX_MOCKUP_LOADER_ERROR" CMPNAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" EXPOSURE="2" STATE="1" EDITORDER="1 " ATTDECLTYP="2" ATTEXPVIRT="0" TYPTYPE="4" SRCROW1="12 " SRCCOLUMN1="4 " SRCROW2="19 " SRCCOLUMN2="33 " LOCKED="X" TYPESRC_LENG="323 " TYPESRC="begin of ZCX_MOCKUP_LOADER_ERROR,
+
+      msgid type symsgid value &apos;SY&apos;,
+
+      msgno type symsgno value &apos;499&apos;,
+
+      attr1 type scx_attrname value &apos;METHNAME&apos;,
+
+      attr2 type scx_attrname value &apos;MSG&apos;,
+
+      attr3 type scx_attrname value &apos;&apos;,
+
+      attr4 type scx_attrname value &apos;&apos;,
+
+    end of ZCX_MOCKUP_LOADER_ERROR
+
 "/>
   <inheritance CLSNAME="ZCX_MOCKUP_LOADER_ERROR" REFCLSNAME="CX_STATIC_CHECK" VERSION="1" STATE="1"/>
   <method CLSNAME="ZCX_MOCKUP_LOADER_ERROR" CMPNAME="RAISE" VERSION="1" LANGU="E" DESCRIPT="Raise the exception" EXPOSURE="2" STATE="1" EDITORDER="2 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">

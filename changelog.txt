@@ -1,0 +1,15 @@
+Mockup loader changelog
+
+Legend
+------
+
+* : fixed
+! : changed
++ : added
+- : removed
+
+v0.1.1, 2015-12-06
+------------------
+! change exception message from 0M(500) to SY(499)
++ improvement of VBS script - added feature to explicitly include directory to zip
+

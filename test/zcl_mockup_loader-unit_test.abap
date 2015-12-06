@@ -677,7 +677,7 @@ class lcl_test_mockup_loader implementation.
       exceptions others = 4.
 
     assert_subrc(  act = sy-subrc       exp = 4 ).
-    assert_equals( act = sy-msgno       exp = 500 ). " 0M(500) -> & & & &
+    assert_equals( act = sy-msgno       exp = 499 ). " SY(499) -> & & & &
 
   endmethod.       "store_retrieve
 
