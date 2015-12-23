@@ -197,7 +197,21 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 * +-------------------------------------------------------------------------------------------------+
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method class_constructor.
-  class_set_source( i_type = 'MIME' i_path = '' ). " Defaults
+  data:
+        l_type   type char4,
+        l_path_c type char40,
+        l_path   type string.
+
+  get parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
+  get parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_c.
+
+  if l_type is not initial and l_path_c is not initial.
+    l_path = l_path_c.
+    class_set_source( i_type = l_type i_path = l_path ).
+  else.
+    class_set_source( i_type = 'MIME' i_path = '' ). " Defaults
+  endif.
+
 endmethod.
 
 

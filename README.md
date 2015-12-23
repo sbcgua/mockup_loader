@@ -10,7 +10,8 @@
 - [Installation](#installation)
 - [Reference](#reference)
 - [Examples](#examples)
-- [Excel to TXT VBS script](#excel-to-txt-vbs-script)
+- [Other features](#other-features)
+- [Excel to TXT conversion script](#excel-to-txt-conversion-script)
 - [Contributors](#contributors)
 - [License](#license)
 
@@ -139,7 +140,10 @@ Here are some facts about package content and invocation approach:
 
 ### SAPLink ###
 
-A nugget is available to install the code with SAPLink. SAPLink does not support W3MI objects so after import of the nugget please follow manual step 4.2 to finalize installation. Unit test execution is also a recommended step (see manual p4.3).
+A nugget is available to install the code with SAPLink.
+ 
+- SAPLink does not support W3MI objects so after import of the nugget please follow manual step 4.2 to finalize installation. Unit test execution is also a recommended step (see manual step 4.3)
+- SAPLink does not support SET/GET parameters so after import please create them manually (see manual step 5)
 
 ### Manual installation ###
 
@@ -161,7 +165,8 @@ A nugget is available to install the code with SAPLink. SAPLink does not support
     2. Create a binary data object via SMW0 transaction in the package `ZMOCKUP_LOADER`. Call it `ZMOCKUP_LOADER_UNIT_TEST` and upload the `test/zmockup_loader_unit_test.zip`. 
         * This potentially may require setting up MIME type in Settings->Maintain MIME types menu (the setting is quite obvious, e.g. just specify TYPE=ZIP, EXTENTION=\*.zip).
     3. Run the unit test for the `ZCL_MOCKUP_LOADER` class (Menu->Class->Run->Unit tests or Ctrl+Shift+F10). Should pass ;)
-
+5. Create SET/GET patameters `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH` with SM30 and maintenance view `TPARA`.
+6. Create the program ZMOCKUP_LOADER_SWITCH_SOURCE, copy the content of `lib\zmockup_loader_switch_source.abap` and activate.
 
 ## Reference ##
 
@@ -171,11 +176,22 @@ Complete reference of class method can be found in [REFERENCE.md](REFERENCE.md).
 
 An example can be found in [example/zmockup_loader_example.abap](/example/zmockup_loader_example.abap).
 
-## Excel to TXT VBS script ##
+## Other features ##
+
+### Load source redirection ###
+
+Final test mockup is supposed to be uploaded as MIME object via SMW0. During data or test creation, however, it is more convenient (faster) to read local file. There are 2 ways to do that - hard and soft.
+
+Soft way uses SET/GET parameters `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH` to specify type (FILE/MIME) and path respectively. They can be set via SU3 transaction or via `ZMOCKUP_LOADER_SWITCH_SOURCE` program. Upon the initialization the program reads  the parameters and adjusts selection screen to reflect current settings. User changes in the selection screen immediately change parameters in session memory, no run is required. Parameters are processed in `CLASS_SETUP`. 
+
+Hard code way would be to use `CLASS_SET_SOURCE` method in `CLASS_SETUP` **of testing class** (see [REFERENCE.md](REFERENCE.md)). The method enjoys the priority and overrides soft defaults (as it is called later).
+
+
+## Excel to TXT conversion script ##
 
 We have a lot of data prepared in Excel files. Many files, many sheets in each. It is boring and time consuming to copy them all to text (although Ctrl+C in Excel actually copies TAB delimited text which greatly simplifies the matter for small cases).
 
-So we created a script which does the work automatically. How to use it:
+So we created a VB script which does the work automatically. How to use it:
 
 1. Excel files should be in one directory, same as the script. Formats supported: `.xlsx`, `.xls`, `.xlsm`, `.ods`
 2. Each Excel file should have a sheet named `_contents`, it should contain a list of other sheet names which are relevant to be converted. In the second column there should be a mark 'X' to save the sheet to text. (See [example/Example.ods](example/Example.ods)) 

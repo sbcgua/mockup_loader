@@ -15,6 +15,8 @@ importing
 
 The method is **static** and should be called in `CLASS_SETUP` method of a test class **before** `get_instance()` is called first.
 
+Class constructor `CLASS_SETUP` also reads GET/SET parameters `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH` to get defaults for type and path respectively. `CLASS_SET_SOURCE` overrides them if called. Parameters can be set via transaction `SU3` or via `ZMOCKUP_LOADER_SWITCH_SOURCE` program. 
+
 **Example:**
 
 ```abap

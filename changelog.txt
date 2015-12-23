@@ -1,12 +1,18 @@
 Mockup loader changelog
+=======================
 
 Legend
 ------
-
 * : fixed
 ! : changed
 + : added
 - : removed
+
+
+v0.1.2, 2015-12-23
+------------------
++ Added SET/GET parameters ZMOCKUP_LOADER_STYPE and ZMOCKUP_LOADER_SPATH for temporary load source re-direction
++ Added program ZMOCKUP_LOADER_SWITCH_SOURCE to switch the parameters in a convenient way (see README.md)
 
 v0.1.1, 2015-12-06
 ------------------
