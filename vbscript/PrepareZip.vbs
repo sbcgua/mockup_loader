@@ -5,7 +5,8 @@
 ' Declare global variables
 Dim gxlApp                      ' Excel instance
 Dim gSourceFolderPath           ' Path to the working directry (where XLS files are)
-Dim gTargetRoot                 ' Path to uncompressed TXT temp folder
+Dim gBuildParentPath            ' Path to parent folder of uncompressed folder
+Dim gBuildDir                   ' Path to uncompressed TXT temp folder
 Dim gZipFileName                ' Path to zip file
 Dim gIncludeDir                 ' Path to included directory
 Dim gFilesToProcess             ' Found Excel files and their statuses
@@ -14,7 +15,10 @@ Dim gbOpenOnly                  ' Process open only files
 Dim gbSilent                    ' Silent processing (no HTA window)
 Dim gbSkipZip                   ' Silent processing (no HTA window)
 Dim gPerf                       ' Performance counter
-Dim gcProcCnt                   ' Processed files counter
+Dim gcFileCnt                   ' Processed files counter
+Dim gcSheetCnt                  ' Processed sheets counter
+Dim gcErrorCnt                  ' Processed errors (sheets) counter
+Dim gbAnsi                      ' Use ANSI console formatting (with color)
 
 Main    ' Start the script / void main(void) ;)
 
@@ -22,12 +26,16 @@ Sub Main()
     ' Generic initializations
     gbOpenOnly        = False
     gbSkipZip         = False
-    gcProcCnt         = 0
+    gbAnsi            = False
+    gcFileCnt         = 0
+    gcSheetCnt        = 0
+    gcErrorCnt        = 0
     gSourceFolderPath = getSourceFolder()
-    gTargetRoot       = gSourceFolderPath & "\" & "uncompressed"
-    gZipFileName      = gSourceFolderPath & "\" & "mockup.zip"
+    gBuildParentPath  = gSourceFolderPath
     gIncludeDir       = ""
+    gZipFileName      = gSourceFolderPath & "\" & "mockup.zip"
     ParseCmdLineParams()
+    gBuildDir         = gBuildParentPath & "\" & "uncompressed"
 
     ' Identify console
     If InStr(LCase(WScript.FullName), "cscript.exe") = 0 _
@@ -38,7 +46,7 @@ Sub Main()
     findExistingExcelInstance() 
 
     debug "Src: " & gSourceFolderPath
-    debug "Dst: " & gTargetRoot
+    debug "Dst: " & gBuildDir
     debug "Zip: " & gZipFileName
     If gIncludeDir <> "" Then: debug "Inc: " & gIncludeDir
     debug ""
@@ -73,15 +81,21 @@ Sub mainProcessing()
     Call proveTargetFolder()
     Call processWorkbooks()
 
-    debug "Processed files: " & gcProcCnt
     timeEnd = Timer()
-    debug "Performance report (sec): " & timeEnd - timeStart & "/" & gPerf
 
     If gIncludeDir <> "" Then 
         Call copyIncludeDir
     End If
 
-    If gbSkipZip = False and gcProcCnt > 0 Then
+    debug ""
+    debug "---------------------"
+    debug "Processed files:  " & gcFileCnt
+    debug "Processed sheets: " & gcSheetCnt
+    debug "Process errors:   " & gcErrorCnt
+    debug "Performance (sec. total/ws): " _
+        & FormatNumber(timeEnd - timeStart, 3) & "/" & FormatNumber(gPerf, 3)
+
+    If gbSkipZip = False and gcFileCnt > 0 Then
         Call compressContent()
     End If
 End Sub
@@ -328,7 +342,9 @@ Function getFiles()
         If dicRelevantExtentions.Exists(fileExt) and Left(file.ShortName, 2) <> "~$" Then
             If IsOpened(fileName) Then
                 fileStatus = "Open"
-            Else    
+            ElseIf gbOpenOnly = True Then
+                fileStatus = "Skip"
+            Else     
                 fileStatus = "Closed"
             End If
             dicFiles.Add file.Name, fileStatus
@@ -361,7 +377,7 @@ Sub copyIncludeDir ()
 
     If fso.FolderExists(sFullIncludePath) Then 
         debug "Including: " & sFullIncludePath
-        fso.CopyFolder sFullIncludePath, gTargetRoot
+        fso.CopyFolder sFullIncludePath, gBuildDir
     Else
         debug "Include folder does not exist: " & sFullIncludePath
     End If 
@@ -398,8 +414,8 @@ End Function
 Sub proveTargetFolder()
     Dim fso: Set fso   = WScript.CreateObject("Scripting.Filesystemobject")
     
-    If Not fso.FolderExists(gTargetRoot) Then
-        fso.CreateFolder(gTargetRoot)
+    If Not fso.FolderExists(gBuildDir) Then
+        fso.CreateFolder(gBuildDir)
     End If
 End Sub
 
@@ -445,7 +461,7 @@ Sub processOneWorkbook(in_wbName, isOpened)
     cProcCnt       = 0
     wbName         = getBareFileName(in_wbName)
     wbFileName     = gSourceFolderPath & "\" &  in_wbName
-    wbTargetFolder = gTargetRoot & "\" & wbName
+    wbTargetFolder = gBuildDir & "\" & wbName
     
     if isOpened Then
         Set wb = gxlApp.Workbooks.Item(wbName)
@@ -474,8 +490,10 @@ Sub processOneWorkbook(in_wbName, isOpened)
         Set ws = wb.Worksheets.Item(wsName)
         On Error Goto 0
 
+        gcSheetCnt = gcSheetCnt + 1
         If ws Is Nothing Then
-            debug "  Not found: " & wsName
+            debug "  [!!] Not found: " & wsName
+            gcErrorCnt = gcErrorCnt + 1
         Else
             txtFileName = wbTargetFolder & "\" & LCase(wsName) & ".txt"
             Call processWorksheet( ws, txtFileName, contentIndex.Item(ws.Name) )
@@ -484,7 +502,7 @@ Sub processOneWorkbook(in_wbName, isOpened)
 
     Next
     
-    if cProcCnt > 0 Then gcProcCnt = gcProcCnt + 1
+    if cProcCnt > 0 Then gcFileCnt = gcFileCnt + 1
 
     ' TODO: some sophisticated log
     
@@ -502,7 +520,9 @@ Sub processWorksheet(ws, txtFileName, sMode)
     LastRow     = aBounds(2) 
     rngWidth    = LastColumn - FirstColumn + 1
 
-    debug "  Processing: " & ws.Name & " (col=" & FirstColumn & ":" & LastColumn & ", rows=" & LastRow & ")"
+    debug "  [OK] Processed: " & ws.Name _
+        & " (col=" & FirstColumn & ":" & LastColumn & ", rows=" & LastRow & ")" _
+        & iif(sMode = "X", "", " [" & sMode & "]")
 
     Set fso     = WScript.CreateObject("Scripting.Filesystemobject")
     Set hFile   = fso.CreateTextFile(txtFileName, True, True)
@@ -561,7 +581,7 @@ Function loadWorkbookSettings(wb)
         sName    = rCursor.Offset(0, 0) ' Name of the worksheet
         sExport  = rCursor.Offset(0, 1) ' Indicates whether the sheet should be exported to .txt and export mode e.g. LASTONLY
         
-        debug "  " & iif(isempty(sExport), "-", "+") & sName & iif(isempty(sSpecial), "", " [" & sSpecial & "]")
+        If isempty(sExport) Then: debug "  [  ] Skip: " & sName
 
         If sExport = "X" Or sExport = "LASTONLY" Then
             sheetsToProcess.Add sName, sExport
@@ -657,7 +677,7 @@ Sub copyToZip()
 
     Set shellAPP     = CreateObject("Shell.Application")
     Set zipFolder    = shellAPP.NameSpace(gZipFileName)
-    Set sourceFolder = shellAPP.NameSpace(gTargetRoot)
+    Set sourceFolder = shellAPP.NameSpace(gBuildDir)
 
     zipFolder.CopyHere sourceFolder.Items
     WScript.Sleep 300
@@ -675,13 +695,33 @@ function iif(psdStr, trueStr, falseStr)
     end if
 end function
 
-Sub debug(strDebug)
+function formatAnsi(str)
+    if InStr(str,"(Skip)") then
+        formatAnsi = Chr(27) & "[1;30m" & str & Chr(27) & "[0m"
+    elseif InStr(str,"[  ]") then
+        formatAnsi = replace(str, "[  ]", Chr(27) & "[1;30m" & "[  ]" & Chr(27) & "[0m")
+    elseif InStr(str,"[OK]") then
+        formatAnsi = replace(str, "[OK]", Chr(27) & "[0;32m" & "[OK]" & Chr(27) & "[0m")
+    elseif InStr(str,"[!!]") then
+        formatAnsi = replace(str, "[!!]", Chr(27) & "[1;31m" & "[!!]" & Chr(27) & "[0m")
+    elseif InStr(str,"Process errors:") and gcErrorCnt > 0 then
+        formatAnsi = Chr(27) & "[1;31m" & str & Chr(27) & "[0m"
+    else
+        formatAnsi = str
+    end if
+end function
+
+sub debug(strDebug)
     if gbConsole then
-        wsh.echo strDebug
+        if gbAnsi then
+            wsh.echo formatAnsi(strDebug)
+        else
+            wsh.echo strDebug
+        end if
     else
         ' Nothing for the moment
     end if
-End Sub
+end sub
 
 '*************************************************************
 '* CONSOLE ROUTINES
@@ -692,20 +732,22 @@ Sub ParseCmdLineParams ()
   Dim sHelp
 
   sHelp = "Command line params:" & vbCrLf & _
-          "-h  - help (this screen)" & vbCrLf & _
-          "-o  - silently process just opened files" & vbCrLf & _
-          "-a  - silently process all files" & vbCrLf & _
-          "-i  - include a directory (specify path as a parameter)" & vbCrLf & _
-          "-z  - use this path to zip file instead of default one" & vbCrLf & _
-          "-nz - skip archiving, just generate text files"
+          " -h     - help (this screen)" & vbCrLf & _
+          " -o     - silently process just opened files" & vbCrLf & _
+          " -a     - silently process all files" & vbCrLf & _
+          " -i     - include a directory (specify path as a parameter)" & vbCrLf & _
+          " -bd    - parent directory for uncompressed dir (specify path as a parameter)" & vbCrLf & _
+          " -z     - use this path to zip file instead of default one" & vbCrLf & _
+          " -color - format with color (ANSICON must be installed)" & vbCrLf & _
+          " -nz    - skip archiving, just generate text files"
 
   Do While i < Wscript.Arguments.Count
 
     select case Wscript.Arguments(i)
-    case "-h"
+    case "-h" 
         wsh.echo sHelp
         wscript.Quit
-    case "-o"
+    case "-o" 
         gbOpenOnly = True
         gbSilent = True
     case "-a"
@@ -713,6 +755,8 @@ Sub ParseCmdLineParams ()
         gbSilent = True
     case "-nz"  
         gbSkipZip = True
+    case "-color"  
+        gbAnsi = True
     case "-i"
         i = i + 1
         If i = Wscript.Arguments.Count Then
@@ -720,6 +764,13 @@ Sub ParseCmdLineParams ()
             wscript.Quit
         End If
         gIncludeDir = Wscript.Arguments(i)
+    case "-bd"
+        i = i + 1
+        If i = Wscript.Arguments.Count Then
+            wsh.echo "Specify directory after -bd"
+            wscript.Quit
+        End If
+        gBuildParentPath = Wscript.Arguments(i)
     case "-z"
         i = i + 1
         If i = Wscript.Arguments.Count Then

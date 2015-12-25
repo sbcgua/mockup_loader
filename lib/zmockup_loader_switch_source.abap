@@ -24,40 +24,50 @@
 *| SOFTWARE.                                                                      |
 *\--------------------------------------------------------------------------------/
 */--------------------------------------------------------------------------------\
+*| CONTRIBUTORS                                                                   |
+*|--------------------------------------------------------------------------------|
+*| Leading developers : Alexander Tsybulsky (atsybulsky@sbcg.com.ua)              |
+*|                      Svetlana Shlapak    (sshlapak@sbcg.com.ua)                |
+*| Testing and ideas:   Bohdan Petruschak   (b.petrushchak@sbcg.com.ua)           |
+*|--------------------------------------------------------------------------------|
 *| project homepage: https://github.com/sbcgua/mockup_loader                      |
 *\--------------------------------------------------------------------------------/
 
+
 report zmockup_loader_switch_source.
+tables sscrfields.
 
 *&---------------------------------------------------------------------*
 *&      Selection screen
 *&---------------------------------------------------------------------*
 selection-screen begin of block b1 with frame title txt_b1.
-  selection-screen begin of line.
-  parameters p_undef type char1 radiobutton group gr1 user-command gr1.
-  selection-screen comment (10) txt_und  for field p_undef.
-  selection-screen end of line.
+selection-screen begin of line.
+parameters p_undef type char1 radiobutton group gr1 user-command gr1.
+selection-screen comment (10) txt_und  for field p_undef.
+selection-screen end of line.
 
-  selection-screen begin of line.
-  parameters p_mime type char1 radiobutton group gr1.
-  selection-screen comment (10) txt_mime for field p_mime.
-  selection-screen end of line.
+selection-screen begin of line.
+parameters p_mime type char1 radiobutton group gr1.
+selection-screen comment (10) txt_mime for field p_mime.
+selection-screen end of line.
 
-  selection-screen begin of line.
-  parameters p_file type char1 radiobutton group gr1.
-  selection-screen comment (10) txt_file for field p_file.
-  selection-screen end of line.
+selection-screen begin of line.
+parameters p_file type char1 radiobutton group gr1.
+selection-screen comment (10) txt_file for field p_file.
+selection-screen end of line.
 
-  selection-screen begin of line.
-  selection-screen comment (15) txt_fp for field p_file.
-  parameters p_fpath type char128.
-  selection-screen end of line.
+selection-screen begin of line.
+selection-screen comment (15) txt_fp for field p_file.
+parameters p_fpath type char128.
+selection-screen end of line.
 
-  selection-screen begin of line.
-  selection-screen comment (15) txt_mp for field p_file .
-  parameters: p_mpath type char40.
-  selection-screen end of line.
+selection-screen begin of line.
+selection-screen comment (15) txt_mp for field p_file .
+parameters: p_mpath type char40.
+selection-screen end of line.
 selection-screen end of block b1.
+
+selection-screen: function key 1.
 
 
 *&---------------------------------------------------------------------*
@@ -66,11 +76,14 @@ selection-screen end of block b1.
 initialization.
 
   txt_b1   = 'Source type (switch saves parameter immediately)'. "#EC NOTEXT
-  txt_und  = 'Undefined'.                                        "#EC NOTEXT
-  txt_mime = 'MIME'.                                             "#EC NOTEXT
-  txt_file = 'FILE'.                                             "#EC NOTEXT
-  txt_fp   = 'File path'.                                        "#EC NOTEXT
-  txt_mp   = 'MIME object'.                                      "#EC NOTEXT
+  txt_und  = 'Undefined'.                                   "#EC NOTEXT
+  txt_mime = 'MIME'.                                        "#EC NOTEXT
+  txt_file = 'FILE'.                                        "#EC NOTEXT
+  txt_fp   = 'File path'.                                   "#EC NOTEXT
+  txt_mp   = 'MIME object'.                                 "#EC NOTEXT
+
+  sscrfields-functxt_01 = 'Get SU3 value'.                  "#EC NOTEXT
+
   perform get_stype.
 
 at selection-screen output.
@@ -96,6 +109,12 @@ at selection-screen on p_mpath.
     set parameter id 'ZMOCKUP_LOADER_SPATH' field p_mpath.
   endif.
 
+at selection-screen.
+  case sy-ucomm.
+      when'FC01'.          "Get SU3 value
+      perform get_su3_value.
+  endcase.
+
 *&---------------------------------------------------------------------*
 *&      Form  set_stype
 *&---------------------------------------------------------------------*
@@ -108,10 +127,10 @@ form set_stype.
 
     loop at screen.
       case screen-name.
-      when 'P_MPATH' or 'TXT_MP'.
-        screen-active = 0.
-      when 'P_FPATH' or 'TXT_FP'.
-        screen-active = 1.
+        when 'P_MPATH' or 'TXT_MP'.
+          screen-active = 0.
+        when 'P_FPATH' or 'TXT_FP'.
+          screen-active = 1.
       endcase.
       modify screen.
     endloop.
@@ -121,10 +140,10 @@ form set_stype.
     clear: p_fpath.
     loop at screen.
       case screen-name.
-      when 'P_MPATH' or 'TXT_MP'.
-        screen-active = 1.
-      when 'P_FPATH' or 'TXT_FP'.
-        screen-active = 0.
+        when 'P_MPATH' or 'TXT_MP'.
+          screen-active = 1.
+        when 'P_FPATH' or 'TXT_FP'.
+          screen-active = 0.
       endcase.
       modify screen.
     endloop.
@@ -133,8 +152,8 @@ form set_stype.
     clear l_stype.
     loop at screen.
       case screen-name.
-      when 'P_MPATH' or 'P_FPATH' or 'TXT_FP' or 'TXT_MP'.
-        screen-active = 0.
+        when 'P_MPATH' or 'P_FPATH' or 'TXT_FP' or 'TXT_MP'.
+          screen-active = 0.
       endcase.
       modify screen.
     endloop.
@@ -156,14 +175,14 @@ form get_stype.
   clear: p_fpath, p_mpath.
 
   case l_stype.
-  when 'FILE'.
-    p_file  = 'X'.
-    p_fpath = l_spath.
-  when 'MIME'.
-    p_mime  = 'X'.
-    p_mpath = l_spath.
-  when others.
-    p_undef = 'X'.
+    when 'FILE'.
+      p_file  = 'X'.
+      p_fpath = l_spath.
+    when 'MIME'.
+      p_mime  = 'X'.
+      p_mpath = l_spath.
+    when others.
+      p_undef = 'X'.
   endcase.
 endform.                    "get_stype
 
@@ -173,7 +192,9 @@ endform.                    "get_stype
 form f4_file_path changing c_path.
   data: l_path type localfile.
 
-  call function 'F4_FILENAME' importing file_name = l_path.
+  call function 'F4_FILENAME'
+    importing
+      file_name = l_path.
 
   c_path = l_path.
   set parameter id 'ZMOCKUP_LOADER_SPATH' field l_path.
@@ -222,3 +243,24 @@ form f4_mime_path changing c_path.
   p_mpath = ls_return-fieldval.
   set parameter id 'ZMOCKUP_LOADER_SPATH' field p_mpath.
 endform.                    "set_file_path
+
+*&---------------------------------------------------------------------*
+*&      Form  get_su3_value
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+form get_su3_value.
+  data l_param type usr05-parva.
+
+  call function 'G_GET_USER_PARAMETER'
+    exporting parameter_id    = 'ZMOCKUP_LOADER_SPATH'
+    importing parameter_value = l_param.
+
+  if p_file is not initial.
+    p_fpath = l_param.
+    set parameter id 'ZMOCKUP_LOADER_SPATH' field l_param.
+  elseif p_mime is not initial.
+    p_mpath = l_param.
+    set parameter id 'ZMOCKUP_LOADER_SPATH' field l_param.
+  endif.
+endform.                    "get_su3_value

@@ -166,7 +166,9 @@ A nugget is available to install the code with SAPLink.
         * This potentially may require setting up MIME type in Settings->Maintain MIME types menu (the setting is quite obvious, e.g. just specify TYPE=ZIP, EXTENTION=\*.zip).
     3. Run the unit test for the `ZCL_MOCKUP_LOADER` class (Menu->Class->Run->Unit tests or Ctrl+Shift+F10). Should pass ;)
 5. Create SET/GET patameters `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH` with SM30 and maintenance view `TPARA`.
-6. Create the program ZMOCKUP_LOADER_SWITCH_SOURCE, copy the content of `lib\zmockup_loader_switch_source.abap` and activate.
+6. Create the program ZMOCKUP_LOADER_SWITCH_SOURCE 
+    1. ... Copy the content of `lib\zmockup_loader_switch_source.abap` and activate.
+    2. Create transaction `ZMOCKUP_LOADER_SWSRC` with SE93 and set it to run the program. 
 
 ## Reference ##
 
@@ -180,12 +182,9 @@ An example can be found in [example/zmockup_loader_example.abap](/example/zmocku
 
 ### Load source redirection ###
 
-Final test mockup is supposed to be uploaded as MIME object via SMW0. During data or test creation, however, it is more convenient (faster) to read local file. There are 2 ways to do that - hard and soft.
+Final test mockup is supposed to be uploaded as MIME object via SMW0. During data or test creation, however, it is more convenient (faster) to read local file. 
 
-Soft way uses SET/GET parameters `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH` to specify type (FILE/MIME) and path respectively. They can be set via SU3 transaction or via `ZMOCKUP_LOADER_SWITCH_SOURCE` program. Upon the initialization the program reads  the parameters and adjusts selection screen to reflect current settings. User changes in the selection screen immediately change parameters in session memory, no run is required. Parameters are processed in `CLASS_SETUP`. 
-
-Hard code way would be to use `CLASS_SET_SOURCE` method in `CLASS_SETUP` **of testing class** (see [REFERENCE.md](REFERENCE.md)). The method enjoys the priority and overrides soft defaults (as it is called later).
-
+Supposedly, you call static `CLASS_SET_SOURCE` method in `CLASS_SETUP` **of testing class** to define the 'normal' type/path to mockup archive. To temporarily switch to another source you can call transaction `ZMOCKUP_LOADER_SWSRC` (or program `ZMOCKUP_LOADER_SWITCH_SOURCE`). It will initialize SET/GET parameters  `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH` which will overload defaults for current session. User changes in the selection screen immediately change the parameters in session memory, no run is required.
 
 ## Excel to TXT conversion script ##
 
@@ -221,7 +220,9 @@ Command line parameters:
 - `-a`  - silently process all files
 - `-z`  - use this path to zip file instead of default one
 - `-i`  - copy (include) following path into uncompressed directory and consequently to zip
-- `-nz` - Skip archiving, just generate text files to 'uncompressed' dir
+- `-nz` - skip archiving, just generate text files to 'uncompressed' dir
+- `-bd` - change build directory - where uncompressed folder is created
+- `-color` - output in color (requires [ANSICON](https://github.com/adoxa/ansicon))  
 
 ## Contributors ##
 

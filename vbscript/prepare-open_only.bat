@@ -1,2 +1,2 @@
-@cscript PrepareZip.vbs -o
+@cscript //NoLogo PrepareZip.vbs -o
 @pause

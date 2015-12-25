@@ -113,8 +113,8 @@ private section.
   class-data GO_INSTANCE type ref to ZCL_MOCKUP_LOADER .
   data O_ZIP type ref to CL_ABAP_ZIP .
   data AT_STORE type TT_STORE .
-  class-data G_MOCKUP_LOAD_PATH type STRING .
-  class-data G_MOCKUP_LOAD_TYPE type CHAR4 .
+  class-data G_MOCKUP_SRC_PATH type STRING .
+  class-data G_MOCKUP_SRC_TYPE type CHAR4 .
 
   type-pools ABAP .
   methods MAP_FILE_STRUCTURE
@@ -197,21 +197,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 * +-------------------------------------------------------------------------------------------------+
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method class_constructor.
-  data:
-        l_type   type char4,
-        l_path_c type char40,
-        l_path   type string.
-
-  get parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
-  get parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_c.
-
-  if l_type is not initial and l_path_c is not initial.
-    l_path = l_path_c.
-    class_set_source( i_type = l_type i_path = l_path ).
-  else.
-    class_set_source( i_type = 'MIME' i_path = '' ). " Defaults
-  endif.
-
+  class_set_source( i_type = 'MIME' i_path = '' ). " Defaults
 endmethod.
 
 
@@ -224,8 +210,8 @@ endmethod.
 method class_set_source.
   check i_type = 'MIME' or i_type = 'FILE'. "TODO some more sophisticated error handling
 
-  g_mockup_load_type = i_type.
-  g_mockup_load_path = i_path.
+  g_mockup_src_type = i_type.
+  g_mockup_src_path = i_path.
 endmethod.
 
 
@@ -270,11 +256,29 @@ method initialize.
         lt_w3mime   type table of w3mime,
         ls_w3mime   type w3mime.
 
+  data:
+        l_src_type  type char4,
+        l_src_path  type string,
+        l_type_tmp  type char4,
+        l_path_tmp  type char40.
+
+  " Get re-direction settings from session memory
+  get parameter id 'ZMOCKUP_LOADER_STYPE' field l_type_tmp.
+  get parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_tmp.
+
+  if l_type_tmp is not initial and l_path_tmp is not initial.
+    l_src_type = l_type_tmp.
+    l_src_path = l_path_tmp.
+  else.
+    l_src_type = g_mockup_src_type.
+    l_src_path = g_mockup_src_path.
+  endif.
+
   " Load data
-  case g_mockup_load_type.
+  case l_src_type.
   when 'MIME'. " Load from SMW0
     l_key-relid = 'MI'.
-    l_key-objid = g_mockup_load_path.
+    l_key-objid = l_src_path.
 
     call function 'WWWDATA_IMPORT'
       exporting
@@ -294,7 +298,7 @@ method initialize.
   when 'FILE'. " Load from frontend
     call function 'GUI_UPLOAD'
     exporting
-      filename   = g_mockup_load_path
+      filename   = l_src_path
       filetype   = 'BIN'
     importing
       filelength = l_size
@@ -304,7 +308,7 @@ method initialize.
       others = 1.
 
     if sy-subrc is not initial.
-      zcx_mockup_loader_error=>raise( msg = |Cannot upload file: { g_mockup_load_path }| code = 'RE' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = |Cannot upload file: { l_src_path }| code = 'RE' ). "#EC NOTEXT
     endif.
 
   when others.
@@ -469,14 +473,16 @@ method map_file_structure.
         l_fieldcnt   type i,
         lt_fields    type tt_string,
         l_field_name type string,
-        lt_dupcheck  type tt_string.
+        lt_dupcheck  type tt_string,
+        l_struc_name type string.
 
+  l_struc_name = io_struc_descr->get_relative_name( ).
   split i_line at cl_abap_char_utilities=>horizontal_tab into table lt_fields.
 
   " Check if the line ends with TAB
   find all occurrences of cl_abap_char_utilities=>horizontal_tab in i_line match count l_tabcnt.
   if l_tabcnt = lines( lt_fields ). " Line ends with TAB, last empty field is not added to table, see help for 'split'
-    zcx_mockup_loader_error=>raise( msg = 'Empty field at the end' code = 'EN' ).   "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = |Empty field at the end @{ l_struc_name }| code = 'EN' ).   "#EC NOTEXT
   endif.
 
   " Compare number of fields, check structure similarity
@@ -493,7 +499,7 @@ method map_file_structure.
     endif.
 
     if l_fieldcnt <> lines( io_struc_descr->components ).
-      zcx_mockup_loader_error=>raise( msg = 'Different columns number' code = 'CN' ).   "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = |Different columns number @{ l_struc_name }| code = 'CN' ).   "#EC NOTEXT
     endif.
   endif.
 
@@ -502,20 +508,20 @@ method map_file_structure.
   sort lt_dupcheck[].
   delete adjacent duplicates from lt_dupcheck[].
   if lines( lt_dupcheck ) <> lines( lt_fields ).
-    zcx_mockup_loader_error=>raise( msg = 'Duplicate field names found' code = 'DN' ).   "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = |Duplicate field names found @{ l_struc_name }| code = 'DN' ).   "#EC NOTEXT
   endif.
 
   " Compare columns names and make map
   loop at lt_fields into l_field_name.
     if l_field_name is initial. " Check empty fields
-      zcx_mockup_loader_error=>raise( msg = 'Empty field name found' code = 'EN' ).   "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = |Empty field name found @{ l_struc_name }| code = 'EN' ).   "#EC NOTEXT
     endif.
 
     read table io_struc_descr->components with key name = l_field_name transporting no fields.
     if sy-subrc is initial.
       append sy-tabix to et_map.
     else.
-      zcx_mockup_loader_error=>raise( msg = |Column { l_field_name } not found in target structure| code = 'MC' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = |{ l_field_name } not found in structure @{ l_struc_name }| code = 'MC' ). "#EC NOTEXT
     endif.
   endloop.
 

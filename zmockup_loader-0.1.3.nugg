@@ -112,6 +112,7 @@ class lcl_test_mockup_loader definition for testing
 
     methods: read_zip for testing.
     methods: integrated_test for testing.
+    methods: source_redirect_test for testing.
 
     methods: parse_data for testing.
     methods: parse_field for testing.
@@ -146,6 +147,14 @@ class lcl_test_mockup_loader implementation.
 * Setup methods
 **********************************************************************
   method class_setup.
+    data l_type_tmp type char4.
+
+    get parameter id &apos;ZMOCKUP_LOADER_STYPE&apos; field l_type_tmp.
+    if l_type_tmp is not initial.
+      fail( quit = class
+            msg  = &apos;Load source is redirected, please reset with ZMOCKUP_LOADER_SWITCH_SOURCE before running the test&apos; ). &quot;#EC NOTEXT
+    endif.
+
     zcl_mockup_loader=&gt;class_set_source( i_type = &apos;MIME&apos; i_path = &apos;ZMOCKUP_LOADER_UNIT_TEST&apos; ).
   endmethod.       &quot;class_setup
 
@@ -266,6 +275,38 @@ class lcl_test_mockup_loader implementation.
     endtry.
 
   endmethod.       &quot; integrated_test
+
+**********************************************************************
+* Source redirection via SET/GET parameters test
+**********************************************************************
+  method source_redirect_test.
+    data:
+          lo_ex      type ref to zcx_mockup_loader_error,
+          l_type     type char4,
+          l_path     type char40,
+          l_path_tmp type char40.
+
+    get parameter id &apos;ZMOCKUP_LOADER_SPATH&apos; field l_path_tmp. &quot; Preserve
+
+    l_type = &apos;MIME&apos;.
+    l_path = &apos;ZMOCKUP_LOADER_WRONG_OBJECT&apos;.
+    set parameter id &apos;ZMOCKUP_LOADER_STYPE&apos; field l_type.
+    set parameter id &apos;ZMOCKUP_LOADER_SPATH&apos; field l_path.
+
+    try.
+      o-&gt;free_instance( ).
+      o = zcl_mockup_loader=&gt;get_instance( ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    clear l_type.
+    set parameter id &apos;ZMOCKUP_LOADER_STYPE&apos; field l_type.
+    set parameter id &apos;ZMOCKUP_LOADER_SPATH&apos; field l_path_tmp.
+
+    assert_not_initial( lo_ex ).
+    assert_equals( exp = &apos;RE&apos; act = lo_ex-&gt;code ).
+
+  endmethod.       &quot; source_redirect_test
 
 **********************************************************************
 * Test of data parser - dummy data is supplied to the tested method
@@ -902,26 +943,12 @@ endclass.       &quot;lcl_Test_Mockup_Loader</localTestClasses>
   <typeClasDef CLSNAME="ZCL_MOCKUP_LOADER" TYPEGROUP="CL_ABAP_ZIP" VERSION="1" TPUTYPE="1" IMPLICIT="X"/>
   <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="AT_STORE" VERSION="1" LANGU="E" DESCRIPT="Store table" EXPOSURE="0" STATE="1" EDITORDER="3 " ATTDECLTYP="0" ATTEXPVIRT="0" TYPTYPE="1" TYPE="TT_STORE" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
   <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="GO_INSTANCE" VERSION="1" LANGU="E" DESCRIPT="Mockup loader" EXPOSURE="0" STATE="1" EDITORDER="1 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="3" TYPE="ZCL_MOCKUP_LOADER" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
-  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="G_MOCKUP_LOAD_PATH" VERSION="1" LANGU="E" DESCRIPT="Mockup load path/key" EXPOSURE="0" STATE="1" EDITORDER="4 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="1" TYPE="STRING" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
-  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="G_MOCKUP_LOAD_TYPE" VERSION="1" LANGU="E" DESCRIPT="Mockup load source type" EXPOSURE="0" STATE="1" EDITORDER="5 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="1" TYPE="CHAR4" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="G_MOCKUP_SRC_PATH" VERSION="1" LANGU="E" DESCRIPT="Mockup load path/key" EXPOSURE="0" STATE="1" EDITORDER="4 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="1" TYPE="STRING" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="G_MOCKUP_SRC_TYPE" VERSION="1" LANGU="E" DESCRIPT="Mockup load source type" EXPOSURE="0" STATE="1" EDITORDER="5 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="1" TYPE="CHAR4" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
   <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="O_ZIP" VERSION="1" LANGU="E" DESCRIPT="Zip Utility" EXPOSURE="0" STATE="1" EDITORDER="2 " ATTDECLTYP="0" ATTEXPVIRT="0" TYPTYPE="3" TYPE="CL_ABAP_ZIP" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
   <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="CLASS_CONSTRUCTOR" VERSION="1" LANGU="E" DESCRIPT="Class constructor" EXPOSURE="2" STATE="1" EDITORDER="10 " DISPID="0 " MTDTYPE="2" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
    <source>method class_constructor.
-  data:
-        l_type   type char4,
-        l_path_c type char40,
-        l_path   type string.
-
-  get parameter id &apos;ZMOCKUP_LOADER_STYPE&apos; field l_type.
-  get parameter id &apos;ZMOCKUP_LOADER_SPATH&apos; field l_path_c.
-
-  if l_type is not initial and l_path_c is not initial.
-    l_path = l_path_c.
-    class_set_source( i_type = l_type i_path = l_path ).
-  else.
-    class_set_source( i_type = &apos;MIME&apos; i_path = &apos;&apos; ). &quot; Defaults
-  endif.
-
+  class_set_source( i_type = &apos;MIME&apos; i_path = &apos;&apos; ). &quot; Defaults
 endmethod.</source>
   </method>
   <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="CLASS_SET_SOURCE" VERSION="1" LANGU="E" DESCRIPT="Set alternative load path" EXPOSURE="2" STATE="1" EDITORDER="9 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
@@ -930,8 +957,8 @@ endmethod.</source>
    <source>method class_set_source.
   check i_type = &apos;MIME&apos; or i_type = &apos;FILE&apos;. &quot;TODO some more sophisticated error handling
 
-  g_mockup_load_type = i_type.
-  g_mockup_load_path = i_path.
+  g_mockup_src_type = i_type.
+  g_mockup_src_path = i_path.
 endmethod.</source>
   </method>
   <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="FREE_INSTANCE" VERSION="1" LANGU="E" DESCRIPT="Free singleton instance" EXPOSURE="2" STATE="1" EDITORDER="8 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
@@ -964,11 +991,29 @@ endmethod.</source>
         lt_w3mime   type table of w3mime,
         ls_w3mime   type w3mime.
 
+  data:
+        l_src_type  type char4,
+        l_src_path  type string,
+        l_type_tmp  type char4,
+        l_path_tmp  type char40.
+
+  &quot; Get re-direction settings from session memory
+  get parameter id &apos;ZMOCKUP_LOADER_STYPE&apos; field l_type_tmp.
+  get parameter id &apos;ZMOCKUP_LOADER_SPATH&apos; field l_path_tmp.
+
+  if l_type_tmp is not initial and l_path_tmp is not initial.
+    l_src_type = l_type_tmp.
+    l_src_path = l_path_tmp.
+  else.
+    l_src_type = g_mockup_src_type.
+    l_src_path = g_mockup_src_path.
+  endif.
+
   &quot; Load data
-  case g_mockup_load_type.
+  case l_src_type.
   when &apos;MIME&apos;. &quot; Load from SMW0
     l_key-relid = &apos;MI&apos;.
-    l_key-objid = g_mockup_load_path.
+    l_key-objid = l_src_path.
 
     call function &apos;WWWDATA_IMPORT&apos;
       exporting
@@ -988,7 +1033,7 @@ endmethod.</source>
   when &apos;FILE&apos;. &quot; Load from frontend
     call function &apos;GUI_UPLOAD&apos;
     exporting
-      filename   = g_mockup_load_path
+      filename   = l_src_path
       filetype   = &apos;BIN&apos;
     importing
       filelength = l_size
@@ -998,7 +1043,7 @@ endmethod.</source>
       others = 1.
 
     if sy-subrc is not initial.
-      zcx_mockup_loader_error=&gt;raise( msg = |Cannot upload file: { g_mockup_load_path }| code = &apos;RE&apos; ). &quot;#EC NOTEXT
+      zcx_mockup_loader_error=&gt;raise( msg = |Cannot upload file: { l_src_path }| code = &apos;RE&apos; ). &quot;#EC NOTEXT
     endif.
 
   when others.
@@ -1147,14 +1192,16 @@ endmethod.</source>
         l_fieldcnt   type i,
         lt_fields    type tt_string,
         l_field_name type string,
-        lt_dupcheck  type tt_string.
+        lt_dupcheck  type tt_string,
+        l_struc_name type string.
 
+  l_struc_name = io_struc_descr-&gt;get_relative_name( ).
   split i_line at cl_abap_char_utilities=&gt;horizontal_tab into table lt_fields.
 
   &quot; Check if the line ends with TAB
   find all occurrences of cl_abap_char_utilities=&gt;horizontal_tab in i_line match count l_tabcnt.
   if l_tabcnt = lines( lt_fields ). &quot; Line ends with TAB, last empty field is not added to table, see help for &apos;split&apos;
-    zcx_mockup_loader_error=&gt;raise( msg = &apos;Empty field at the end&apos; code = &apos;EN&apos; ).   &quot;#EC NOTEXT
+    zcx_mockup_loader_error=&gt;raise( msg = |Empty field at the end @{ l_struc_name }| code = &apos;EN&apos; ).   &quot;#EC NOTEXT
   endif.
 
   &quot; Compare number of fields, check structure similarity
@@ -1171,7 +1218,7 @@ endmethod.</source>
     endif.
 
     if l_fieldcnt &lt;&gt; lines( io_struc_descr-&gt;components ).
-      zcx_mockup_loader_error=&gt;raise( msg = &apos;Different columns number&apos; code = &apos;CN&apos; ).   &quot;#EC NOTEXT
+      zcx_mockup_loader_error=&gt;raise( msg = |Different columns number @{ l_struc_name }| code = &apos;CN&apos; ).   &quot;#EC NOTEXT
     endif.
   endif.
 
@@ -1180,20 +1227,20 @@ endmethod.</source>
   sort lt_dupcheck[].
   delete adjacent duplicates from lt_dupcheck[].
   if lines( lt_dupcheck ) &lt;&gt; lines( lt_fields ).
-    zcx_mockup_loader_error=&gt;raise( msg = &apos;Duplicate field names found&apos; code = &apos;DN&apos; ).   &quot;#EC NOTEXT
+    zcx_mockup_loader_error=&gt;raise( msg = |Duplicate field names found @{ l_struc_name }| code = &apos;DN&apos; ).   &quot;#EC NOTEXT
   endif.
 
   &quot; Compare columns names and make map
   loop at lt_fields into l_field_name.
     if l_field_name is initial. &quot; Check empty fields
-      zcx_mockup_loader_error=&gt;raise( msg = &apos;Empty field name found&apos; code = &apos;EN&apos; ).   &quot;#EC NOTEXT
+      zcx_mockup_loader_error=&gt;raise( msg = |Empty field name found @{ l_struc_name }| code = &apos;EN&apos; ).   &quot;#EC NOTEXT
     endif.
 
     read table io_struc_descr-&gt;components with key name = l_field_name transporting no fields.
     if sy-subrc is initial.
       append sy-tabix to et_map.
     else.
-      zcx_mockup_loader_error=&gt;raise( msg = |Column { l_field_name } not found in target structure| code = &apos;MC&apos; ). &quot;#EC NOTEXT
+      zcx_mockup_loader_error=&gt;raise( msg = |{ l_field_name } not found in structure @{ l_struc_name }| code = &apos;MC&apos; ). &quot;#EC NOTEXT
     endif.
   endloop.
 
@@ -1987,40 +2034,50 @@ endclass.   &quot;lcl_test</source>
 *| SOFTWARE.                                                                      |
 *\--------------------------------------------------------------------------------/
 */--------------------------------------------------------------------------------\
+*| CONTRIBUTORS                                                                   |
+*|--------------------------------------------------------------------------------|
+*| Leading developers : Alexander Tsybulsky (atsybulsky@sbcg.com.ua)              |
+*|                      Svetlana Shlapak    (sshlapak@sbcg.com.ua)                |
+*| Testing and ideas:   Bohdan Petruschak   (b.petrushchak@sbcg.com.ua)           |
+*|--------------------------------------------------------------------------------|
 *| project homepage: https://github.com/sbcgua/mockup_loader                      |
 *\--------------------------------------------------------------------------------/
 
+
 report zmockup_loader_switch_source.
+tables sscrfields.
 
 *&amp;---------------------------------------------------------------------*
 *&amp;      Selection screen
 *&amp;---------------------------------------------------------------------*
 selection-screen begin of block b1 with frame title txt_b1.
-  selection-screen begin of line.
-  parameters p_undef type char1 radiobutton group gr1 user-command gr1.
-  selection-screen comment (10) txt_und  for field p_undef.
-  selection-screen end of line.
+selection-screen begin of line.
+parameters p_undef type char1 radiobutton group gr1 user-command gr1.
+selection-screen comment (10) txt_und  for field p_undef.
+selection-screen end of line.
 
-  selection-screen begin of line.
-  parameters p_mime type char1 radiobutton group gr1.
-  selection-screen comment (10) txt_mime for field p_mime.
-  selection-screen end of line.
+selection-screen begin of line.
+parameters p_mime type char1 radiobutton group gr1.
+selection-screen comment (10) txt_mime for field p_mime.
+selection-screen end of line.
 
-  selection-screen begin of line.
-  parameters p_file type char1 radiobutton group gr1.
-  selection-screen comment (10) txt_file for field p_file.
-  selection-screen end of line.
+selection-screen begin of line.
+parameters p_file type char1 radiobutton group gr1.
+selection-screen comment (10) txt_file for field p_file.
+selection-screen end of line.
 
-  selection-screen begin of line.
-  selection-screen comment (15) txt_fp for field p_file.
-  parameters p_fpath type char128.
-  selection-screen end of line.
+selection-screen begin of line.
+selection-screen comment (15) txt_fp for field p_file.
+parameters p_fpath type char128.
+selection-screen end of line.
 
-  selection-screen begin of line.
-  selection-screen comment (15) txt_mp for field p_file .
-  parameters: p_mpath type char40.
-  selection-screen end of line.
+selection-screen begin of line.
+selection-screen comment (15) txt_mp for field p_file .
+parameters: p_mpath type char40.
+selection-screen end of line.
 selection-screen end of block b1.
+
+selection-screen: function key 1.
 
 
 *&amp;---------------------------------------------------------------------*
@@ -2029,11 +2086,14 @@ selection-screen end of block b1.
 initialization.
 
   txt_b1   = &apos;Source type (switch saves parameter immediately)&apos;. &quot;#EC NOTEXT
-  txt_und  = &apos;Undefined&apos;.                                        &quot;#EC NOTEXT
-  txt_mime = &apos;MIME&apos;.                                             &quot;#EC NOTEXT
-  txt_file = &apos;FILE&apos;.                                             &quot;#EC NOTEXT
-  txt_fp   = &apos;File path&apos;.                                        &quot;#EC NOTEXT
-  txt_mp   = &apos;MIME object&apos;.                                      &quot;#EC NOTEXT
+  txt_und  = &apos;Undefined&apos;.                                   &quot;#EC NOTEXT
+  txt_mime = &apos;MIME&apos;.                                        &quot;#EC NOTEXT
+  txt_file = &apos;FILE&apos;.                                        &quot;#EC NOTEXT
+  txt_fp   = &apos;File path&apos;.                                   &quot;#EC NOTEXT
+  txt_mp   = &apos;MIME object&apos;.                                 &quot;#EC NOTEXT
+
+  sscrfields-functxt_01 = &apos;Get SU3 value&apos;.                  &quot;#EC NOTEXT
+
   perform get_stype.
 
 at selection-screen output.
@@ -2059,6 +2119,12 @@ at selection-screen on p_mpath.
     set parameter id &apos;ZMOCKUP_LOADER_SPATH&apos; field p_mpath.
   endif.
 
+at selection-screen.
+  case sy-ucomm.
+      when&apos;FC01&apos;.          &quot;Get SU3 value
+      perform get_su3_value.
+  endcase.
+
 *&amp;---------------------------------------------------------------------*
 *&amp;      Form  set_stype
 *&amp;---------------------------------------------------------------------*
@@ -2071,10 +2137,10 @@ form set_stype.
 
     loop at screen.
       case screen-name.
-      when &apos;P_MPATH&apos; or &apos;TXT_MP&apos;.
-        screen-active = 0.
-      when &apos;P_FPATH&apos; or &apos;TXT_FP&apos;.
-        screen-active = 1.
+        when &apos;P_MPATH&apos; or &apos;TXT_MP&apos;.
+          screen-active = 0.
+        when &apos;P_FPATH&apos; or &apos;TXT_FP&apos;.
+          screen-active = 1.
       endcase.
       modify screen.
     endloop.
@@ -2084,10 +2150,10 @@ form set_stype.
     clear: p_fpath.
     loop at screen.
       case screen-name.
-      when &apos;P_MPATH&apos; or &apos;TXT_MP&apos;.
-        screen-active = 1.
-      when &apos;P_FPATH&apos; or &apos;TXT_FP&apos;.
-        screen-active = 0.
+        when &apos;P_MPATH&apos; or &apos;TXT_MP&apos;.
+          screen-active = 1.
+        when &apos;P_FPATH&apos; or &apos;TXT_FP&apos;.
+          screen-active = 0.
       endcase.
       modify screen.
     endloop.
@@ -2096,8 +2162,8 @@ form set_stype.
     clear l_stype.
     loop at screen.
       case screen-name.
-      when &apos;P_MPATH&apos; or &apos;P_FPATH&apos; or &apos;TXT_FP&apos; or &apos;TXT_MP&apos;.
-        screen-active = 0.
+        when &apos;P_MPATH&apos; or &apos;P_FPATH&apos; or &apos;TXT_FP&apos; or &apos;TXT_MP&apos;.
+          screen-active = 0.
       endcase.
       modify screen.
     endloop.
@@ -2119,14 +2185,14 @@ form get_stype.
   clear: p_fpath, p_mpath.
 
   case l_stype.
-  when &apos;FILE&apos;.
-    p_file  = &apos;X&apos;.
-    p_fpath = l_spath.
-  when &apos;MIME&apos;.
-    p_mime  = &apos;X&apos;.
-    p_mpath = l_spath.
-  when others.
-    p_undef = &apos;X&apos;.
+    when &apos;FILE&apos;.
+      p_file  = &apos;X&apos;.
+      p_fpath = l_spath.
+    when &apos;MIME&apos;.
+      p_mime  = &apos;X&apos;.
+      p_mpath = l_spath.
+    when others.
+      p_undef = &apos;X&apos;.
   endcase.
 endform.                    &quot;get_stype
 
@@ -2136,7 +2202,9 @@ endform.                    &quot;get_stype
 form f4_file_path changing c_path.
   data: l_path type localfile.
 
-  call function &apos;F4_FILENAME&apos; importing file_name = l_path.
+  call function &apos;F4_FILENAME&apos;
+    importing
+      file_name = l_path.
 
   c_path = l_path.
   set parameter id &apos;ZMOCKUP_LOADER_SPATH&apos; field l_path.
@@ -2184,6 +2252,31 @@ form f4_mime_path changing c_path.
   read table lt_return into ls_return index 1.
   p_mpath = ls_return-fieldval.
   set parameter id &apos;ZMOCKUP_LOADER_SPATH&apos; field p_mpath.
-endform.                    &quot;set_file_path</source>
+endform.                    &quot;set_file_path
+
+*&amp;---------------------------------------------------------------------*
+*&amp;      Form  get_su3_value
+*&amp;---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+form get_su3_value.
+  data l_param type usr05-parva.
+
+  call function &apos;G_GET_USER_PARAMETER&apos;
+    exporting parameter_id    = &apos;ZMOCKUP_LOADER_SPATH&apos;
+    importing parameter_value = l_param.
+
+  if p_file is not initial.
+    p_fpath = l_param.
+    set parameter id &apos;ZMOCKUP_LOADER_SPATH&apos; field l_param.
+  elseif p_mime is not initial.
+    p_mpath = l_param.
+    set parameter id &apos;ZMOCKUP_LOADER_SPATH&apos; field l_param.
+  endif.
+endform.                    &quot;get_su3_value</source>
  </PROG>
+ <TRAN TCODE="ZMOCKUP_LOADER_SWSRC" PGMNA="ZMOCKUP_LOADER_SWITCH_SOURCE" DYPNO="1000" CINFO="80">
+  <tstct SPRSL="E" TCODE="ZMOCKUP_LOADER_SWSRC" TTEXT="Switch mockup source temporarily"/>
+  <tstcc TCODE="ZMOCKUP_LOADER_SWSRC" S_WEBGUI="1" S_WIN32="X" S_PLATIN="X"/>
+ </TRAN>
 </nugget>

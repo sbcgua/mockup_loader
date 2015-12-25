@@ -93,6 +93,7 @@ class lcl_test_mockup_loader definition for testing
 
     methods: read_zip for testing.
     methods: integrated_test for testing.
+    methods: source_redirect_test for testing.
 
     methods: parse_data for testing.
     methods: parse_field for testing.
@@ -127,6 +128,14 @@ class lcl_test_mockup_loader implementation.
 * Setup methods
 **********************************************************************
   method class_setup.
+    data l_type_tmp type char4.
+
+    get parameter id 'ZMOCKUP_LOADER_STYPE' field l_type_tmp.
+    if l_type_tmp is not initial.
+      fail( quit = class
+            msg  = 'Load source is redirected, please reset with ZMOCKUP_LOADER_SWITCH_SOURCE before running the test' ). "#EC NOTEXT
+    endif.
+
     zcl_mockup_loader=>class_set_source( i_type = 'MIME' i_path = 'ZMOCKUP_LOADER_UNIT_TEST' ).
   endmethod.       "class_setup
 
@@ -247,6 +256,38 @@ class lcl_test_mockup_loader implementation.
     endtry.
 
   endmethod.       " integrated_test
+
+**********************************************************************
+* Source redirection via SET/GET parameters test
+**********************************************************************
+  method source_redirect_test.
+    data:
+          lo_ex      type ref to zcx_mockup_loader_error,
+          l_type     type char4,
+          l_path     type char40,
+          l_path_tmp type char40.
+
+    get parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_tmp. " Preserve
+
+    l_type = 'MIME'.
+    l_path = 'ZMOCKUP_LOADER_WRONG_OBJECT'.
+    set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
+    set parameter id 'ZMOCKUP_LOADER_SPATH' field l_path.
+
+    try.
+      o->free_instance( ).
+      o = zcl_mockup_loader=>get_instance( ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    clear l_type.
+    set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
+    set parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_tmp.
+
+    assert_not_initial( lo_ex ).
+    assert_equals( exp = 'RE' act = lo_ex->code ).
+
+  endmethod.       " source_redirect_test
 
 **********************************************************************
 * Test of data parser - dummy data is supplied to the tested method
