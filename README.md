@@ -1,6 +1,6 @@
 # Mockup Loader for ABAP unit testing #
 
-*Version: 0.1.2*
+*Version: 0.1.3*
 
 ## Contents ##
 
