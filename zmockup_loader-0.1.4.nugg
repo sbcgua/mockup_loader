@@ -66,14 +66,20 @@
         e_field      = dummy-&amp;1.
   end-of-definition.
 
-  define test_positive.
+  define test_parse_positive.
     test_parse &amp;1 &amp;2.
-    assert_equals( act = dummy-&amp;1 exp = &amp;3 ).
+    assert_equals( act = dummy-&amp;1 exp = &amp;3 msg = &apos;Parse field positive:&apos; &amp;&amp; &amp;2 ).
   end-of-definition.
 
-  define test_negative.
-    test_parse &amp;1 &amp;2.
-    assert_differs( act = dummy-&amp;1 exp = &amp;3 ).
+  define test_parse_negative.
+    clear lo_ex.
+    try.
+      test_parse &amp;1 &amp;2.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( act = lo_ex msg = &apos;Parse field negative:&apos; &amp;&amp; &amp;2 ).
+    assert_equals( exp = &apos;PF&apos; act = lo_ex-&gt;code ).
   end-of-definition.
 
 **********************************************************************
@@ -449,35 +455,66 @@ class lcl_test_mockup_loader implementation.
 
     &quot; Positive tests ******************************
     try.
-      test_positive TDATE    &apos;01.01.2015&apos;      &apos;20150101&apos;.
-      test_positive TCHAR    &apos;ABC&apos;             &apos;ABC&apos;.
-      test_positive TSTRING  &apos;The string test&apos; &apos;The string test&apos;.
-      test_positive TALPHA   &apos;100000&apos;          &apos;0000100000&apos;.
-      test_positive TDECIMAL &apos;1234,12&apos;         &apos;1234.12&apos;.
-      test_negative TDECIMAL &apos;1234.12&apos;         &apos;1234.12&apos;.
-      test_positive TNUMBER  &apos;2015&apos;            &apos;2015&apos;.
-      test_positive TINTEGER &apos;123&apos;             123.
+      test_parse_positive TDATE    &apos;01.01.2015&apos;      &apos;20150101&apos;.
+      test_parse_positive TCHAR    &apos;ABC&apos;             &apos;ABC&apos;.
+      test_parse_positive TSTRING  &apos;The string test&apos; &apos;The string test&apos;.
+      test_parse_positive TALPHA   &apos;100000&apos;          &apos;0000100000&apos;.
+      test_parse_positive TNUMBER  &apos;2015&apos;            &apos;2015&apos;.
+      test_parse_positive TINTEGER &apos;123&apos;             123.
     catch zcx_mockup_loader_error into lo_ex.
       fail( lo_ex-&gt;get_text( ) ).
     endtry.
 
-    &quot; Negative tests (1) **************************
-    clear lo_ex.
-    try.  test_parse TDATE &apos;01.012015&apos;.
+    &quot; Negative tests ******************************
+
+    test_parse_negative TDATE    &apos;01.012015&apos;.
+    test_parse_negative TNUMBER  &apos;20ha&apos;.
+
+    &quot; Decimal converion tests *********************
+    try.
+      test_parse_positive TDECIMAL &apos;1234.12&apos;         &apos;1234.12&apos;. &quot; Native ABAP format
+      test_parse_positive TDECIMAL &apos;-1234.12&apos;        &apos;-1234.12&apos;.&quot; Native ABAP format
+
+      zcl_mockup_loader=&gt;class_set_params( i_amt_format = &apos;&apos; ). &quot; Set defaults
+      test_parse_positive TDECIMAL &apos;-1234,12&apos;        &apos;-1234.12&apos;.
+      test_parse_positive TDECIMAL &apos;1234,12&apos;         &apos;1234.12&apos;.
+      test_parse_positive TDECIMAL &apos;1 234,12&apos;        &apos;1234.12&apos;.
+      test_parse_positive TDECIMAL &apos;14,12&apos;           &apos;14.12&apos;.
+      test_parse_positive TDECIMAL &apos;1 234 567,12&apos;    &apos;1234567.12&apos;.
+
+      zcl_mockup_loader=&gt;class_set_params( i_amt_format = &apos;.,&apos; ).
+      test_parse_positive TDECIMAL &apos;1234,12&apos;         &apos;1234.12&apos;.
+      test_parse_positive TDECIMAL &apos;1 234,12&apos;        &apos;1234.12&apos;.
+      test_parse_positive TDECIMAL &apos;1.234,12&apos;        &apos;1234.12&apos;.
+      test_parse_positive TDECIMAL &apos;14,12&apos;           &apos;14.12&apos;.
+      test_parse_positive TDECIMAL &apos;1.234.567,12&apos;    &apos;1234567.12&apos;.
+
+      zcl_mockup_loader=&gt;class_set_params( i_amt_format = &apos;,.&apos; ).
+      test_parse_positive TDECIMAL &apos;1234.12&apos;         &apos;1234.12&apos;.
+      test_parse_positive TDECIMAL &apos;1 234.12&apos;        &apos;1234.12&apos;.
+      test_parse_positive TDECIMAL &apos;1,234.12&apos;        &apos;1234.12&apos;.
+      test_parse_positive TDECIMAL &apos;14.12&apos;           &apos;14.12&apos;.
+      test_parse_positive TDECIMAL &apos;1,234,567.12&apos;    &apos;1234567.12&apos;.
+
     catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex-&gt;get_text( ) ).
     endtry.
 
-    assert_not_initial( act = lo_ex ).
-    assert_equals( exp = &apos;PF&apos; act = lo_ex-&gt;code ).
+    zcl_mockup_loader=&gt;class_set_params( i_amt_format = &apos;&apos; ). &quot; Set defaults
+    test_parse_negative TDECIMAL &apos;1 234.12&apos;.
+    test_parse_negative TDECIMAL &apos;1 234_12&apos;.
+    test_parse_negative TDECIMAL &apos;1234,123&apos;. &quot; 3 decimal digits into wrbtr which has just 2
+    test_parse_negative TDECIMAL &apos;1234,12_&apos;.
+    test_parse_negative TDECIMAL &apos;Not-a-number&apos;.
+    zcl_mockup_loader=&gt;class_set_params( i_amt_format = &apos;.,&apos; ).
+    test_parse_negative TDECIMAL &apos;1 234.12&apos;.
+    test_parse_negative TDECIMAL &apos;1,234.12&apos;.
+    zcl_mockup_loader=&gt;class_set_params( i_amt_format = &apos;,.&apos; ).
+    test_parse_negative TDECIMAL &apos;1 234,12&apos;.
+    test_parse_negative TDECIMAL &apos;1.234,12&apos;.
 
-    &quot; Negative tests (2) **************************
-    clear lo_ex.
-    try.  test_parse TNUMBER &apos;20ha&apos;.
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
+    zcl_mockup_loader=&gt;class_set_params( i_amt_format = &apos;&apos; ). &quot; Set defaults back
 
-    assert_not_initial( act = lo_ex ).
-    assert_equals( exp = &apos;PF&apos; act = lo_ex-&gt;code ).
 
   endmethod.       &quot;parse_Field
 
@@ -941,17 +978,29 @@ endclass.       &quot;lcl_Test_Mockup_Loader</localTestClasses>
   <typeUsage CLSNAME="ZCL_MOCKUP_LOADER" TYPEGROUP="ABAP" VERSION="1" TPUTYPE="0" IMPLICIT="X"/>
   <forwardDeclaration>ABAP</forwardDeclaration>
   <typeClasDef CLSNAME="ZCL_MOCKUP_LOADER" TYPEGROUP="CL_ABAP_ZIP" VERSION="1" TPUTYPE="1" IMPLICIT="X"/>
-  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="AT_STORE" VERSION="1" LANGU="E" DESCRIPT="Store table" EXPOSURE="0" STATE="1" EDITORDER="3 " ATTDECLTYP="0" ATTEXPVIRT="0" TYPTYPE="1" TYPE="TT_STORE" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
-  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="GO_INSTANCE" VERSION="1" LANGU="E" DESCRIPT="Mockup loader" EXPOSURE="0" STATE="1" EDITORDER="1 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="3" TYPE="ZCL_MOCKUP_LOADER" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
-  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="G_MOCKUP_SRC_PATH" VERSION="1" LANGU="E" DESCRIPT="Mockup load path/key" EXPOSURE="0" STATE="1" EDITORDER="4 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="1" TYPE="STRING" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
-  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="G_MOCKUP_SRC_TYPE" VERSION="1" LANGU="E" DESCRIPT="Mockup load source type" EXPOSURE="0" STATE="1" EDITORDER="5 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="1" TYPE="CHAR4" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
-  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="O_ZIP" VERSION="1" LANGU="E" DESCRIPT="Zip Utility" EXPOSURE="0" STATE="1" EDITORDER="2 " ATTDECLTYP="0" ATTEXPVIRT="0" TYPTYPE="3" TYPE="CL_ABAP_ZIP" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
-  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="CLASS_CONSTRUCTOR" VERSION="1" LANGU="E" DESCRIPT="Class constructor" EXPOSURE="2" STATE="1" EDITORDER="10 " DISPID="0 " MTDTYPE="2" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
+  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="AT_STORE" VERSION="1" LANGU="E" DESCRIPT="Store table" EXPOSURE="0" STATE="1" EDITORDER="4 " ATTDECLTYP="0" ATTEXPVIRT="0" TYPTYPE="1" TYPE="TT_STORE" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="GO_INSTANCE" VERSION="1" LANGU="E" DESCRIPT="Mockup loader" EXPOSURE="0" STATE="1" EDITORDER="2 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="3" TYPE="ZCL_MOCKUP_LOADER" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="G_AMT_FORMAT" VERSION="1" LANGU="E" DESCRIPT="Decimal separators (thousands+decimal)" EXPOSURE="0" STATE="1" EDITORDER="1 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="1" TYPE="CHAR2" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="G_MOCKUP_SRC_PATH" VERSION="1" LANGU="E" DESCRIPT="Mockup load path/key" EXPOSURE="0" STATE="1" EDITORDER="5 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="1" TYPE="STRING" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="G_MOCKUP_SRC_TYPE" VERSION="1" LANGU="E" DESCRIPT="Mockup load source type" EXPOSURE="0" STATE="1" EDITORDER="6 " ATTDECLTYP="1" ATTEXPVIRT="0" TYPTYPE="1" TYPE="CHAR4" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <attribute CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="O_ZIP" VERSION="1" LANGU="E" DESCRIPT="Zip Utility" EXPOSURE="0" STATE="1" EDITORDER="3 " ATTDECLTYP="0" ATTEXPVIRT="0" TYPTYPE="3" TYPE="CL_ABAP_ZIP" SRCROW1="0 " SRCCOLUMN1="0 " SRCROW2="0 " SRCCOLUMN2="0 " TYPESRC_LENG="0 "/>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="CLASS_CONSTRUCTOR" VERSION="1" LANGU="E" DESCRIPT="Class constructor" EXPOSURE="2" STATE="1" EDITORDER="1 " DISPID="0 " MTDTYPE="2" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
    <source>method class_constructor.
   class_set_source( i_type = &apos;MIME&apos; i_path = &apos;&apos; ). &quot; Defaults
+  class_set_params( i_amt_format = &apos;&apos; ). &quot; Defaults
 endmethod.</source>
   </method>
-  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="CLASS_SET_SOURCE" VERSION="1" LANGU="E" DESCRIPT="Set alternative load path" EXPOSURE="2" STATE="1" EDITORDER="9 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="CLASS_SET_PARAMS" VERSION="1" LANGU="E" DESCRIPT="Set parameters (e.g. decimal separator)" EXPOSURE="2" STATE="1" EDITORDER="3 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
+   <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="CLASS_SET_PARAMS" SCONAME="I_AMT_FORMAT" VERSION="1" LANGU="E" DESCRIPT="Decimal separators format" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CHAR2"/>
+   <source>method CLASS_SET_PARAMS.
+  if i_amt_format is initial or g_amt_format+1(1) is initial. &quot; Empty param or decimal separator
+    g_amt_format = &apos; ,&apos;. &quot; Defaults
+  else.
+    g_amt_format = i_amt_format.
+  endif.
+endmethod.</source>
+  </method>
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="CLASS_SET_SOURCE" VERSION="1" LANGU="E" DESCRIPT="Set alternative load path" EXPOSURE="2" STATE="1" EDITORDER="2 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="CLASS_SET_SOURCE" SCONAME="I_PATH" VERSION="1" LANGU="E" DESCRIPT="Load path" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="CLASS_SET_SOURCE" SCONAME="I_TYPE" VERSION="1" LANGU="E" DESCRIPT="Load source" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CHAR4"/>
    <source>method class_set_source.
@@ -961,14 +1010,14 @@ endmethod.</source>
   g_mockup_src_path = i_path.
 endmethod.</source>
   </method>
-  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="FREE_INSTANCE" VERSION="1" LANGU="E" DESCRIPT="Free singleton instance" EXPOSURE="2" STATE="1" EDITORDER="8 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="FREE_INSTANCE" VERSION="1" LANGU="E" DESCRIPT="Free singleton instance" EXPOSURE="2" STATE="1" EDITORDER="5 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
    <source>method free_instance.
   if go_instance is not initial.
     free go_instance.
   endif.
 endmethod.</source>
   </method>
-  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="GET_INSTANCE" VERSION="1" LANGU="E" DESCRIPT="Get instance" EXPOSURE="2" STATE="1" EDITORDER="1 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="GET_INSTANCE" VERSION="1" LANGU="E" DESCRIPT="Get instance" EXPOSURE="2" STATE="1" EDITORDER="4 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="GET_INSTANCE" SCONAME="RO_INSTANCE" VERSION="1" LANGU="E" DESCRIPT="Mockup loader" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="3" PARPASSTYP="0" TYPTYPE="3" TYPE="ZCL_MOCKUP_LOADER"/>
    <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="GET_INSTANCE" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
    <source>method get_instance.
@@ -1082,7 +1131,7 @@ endmethod.</source>
   endif.
 endmethod.</source>
   </method>
-  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_AND_STORE" VERSION="1" LANGU="E" DESCRIPT="Load table from ZIP" EXPOSURE="2" STATE="1" EDITORDER="3 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_AND_STORE" VERSION="1" LANGU="E" DESCRIPT="Load table from ZIP" EXPOSURE="2" STATE="1" EDITORDER="7 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_AND_STORE" SCONAME="I_OBJ" VERSION="1" LANGU="E" DESCRIPT="Mockup class" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_AND_STORE" SCONAME="I_STRICT" VERSION="1" LANGU="E" DESCRIPT="Strict structure analysis" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_BOOL" PARVALUE="ABAP_TRUE"/>
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_AND_STORE" SCONAME="I_NAME" VERSION="1" LANGU="E" DESCRIPT="Store place label" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CHAR40"/>
@@ -1131,7 +1180,7 @@ endmethod.</source>
 
 endmethod.</source>
   </method>
-  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_DATA" VERSION="1" LANGU="E" DESCRIPT="Load table from ZIP" EXPOSURE="2" STATE="1" EDITORDER="4 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_DATA" VERSION="1" LANGU="E" DESCRIPT="Load table from ZIP" EXPOSURE="2" STATE="1" EDITORDER="8 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_DATA" SCONAME="I_OBJ" VERSION="1" LANGU="E" DESCRIPT="Mockup class" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_DATA" SCONAME="I_STRICT" VERSION="1" LANGU="E" DESCRIPT="Strict structure analysis" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_BOOL" PARVALUE="ABAP_TRUE"/>
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_DATA" SCONAME="E_CONTAINER" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="ANY"/>
@@ -1156,7 +1205,7 @@ endmethod.</source>
 
 endmethod.</source>
   </method>
-  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_RAW" VERSION="1" LANGU="E" DESCRIPT="Load structure from ZIP" EXPOSURE="2" STATE="1" EDITORDER="2 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_RAW" VERSION="1" LANGU="E" DESCRIPT="Load structure from ZIP" EXPOSURE="2" STATE="1" EDITORDER="6 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_RAW" SCONAME="I_OBJ" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_RAW" SCONAME="I_EXT" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING" PAROPTIONL="X"/>
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="LOAD_RAW" SCONAME="E_CONTENT" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="XSTRING"/>
@@ -1369,7 +1418,10 @@ endmethod.</source>
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_FIELD" SCONAME="E_FIELD" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="ANY"/>
    <exception CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PARSE_FIELD" SCONAME="ZCX_MOCKUP_LOADER_ERROR" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
    <source>method parse_field.
-  data l_mask type string.
+  data:
+        l_mask  type string,
+        l_tmp   type string,
+        l_regex type string.
 
   case is_component-type_kind.
     when &apos;D&apos;. &quot; Date
@@ -1401,16 +1453,46 @@ endmethod.</source>
       e_field = i_data.
 
     when &apos;P&apos;. &quot; Amount
-      call function &apos;HRCM_STRING_TO_AMOUNT_CONVERT&apos;
-        exporting
-          string              = i_data
-          decimal_separator   = &apos;,&apos;
-          thousands_separator = &apos;.&apos;
-        importing
-          betrg               = e_field
-        exceptions
-          convert_error       = 1
-          others              = 2.
+      try .
+        e_field = i_data. &quot; Try native format first - xxxx.xx
+
+      catch cx_sy_arithmetic_error cx_sy_conversion_error.
+        l_tmp   = i_data.
+        l_regex = &apos;^-?\d{1,3}(T\d{3})*(\D\d{1,C})?$&apos;.
+        condense l_tmp no-gaps.
+        replace &apos;C&apos; in l_regex with |{ is_component-decimals }|.
+
+        &quot; Validate number
+        find first occurrence of g_amt_format+0(1) in l_tmp.
+        if sy-subrc is initial. &quot; Found
+          replace &apos;T&apos; in l_regex with g_amt_format+0(1).
+        else.
+          replace &apos;T&apos; in l_regex with &apos;&apos;.
+        endif.
+
+        replace &apos;D&apos; in l_regex with g_amt_format+1(1).
+        find all occurrences of regex l_regex in l_tmp match count sy-tabix.
+
+        if sy-tabix = 1.
+          if not g_amt_format+0(1) is initial.  &quot; Remove thousand separators
+            replace all occurrences of g_amt_format+0(1) in l_tmp with &apos;&apos;.
+          endif.
+
+          if g_amt_format+1(1) &lt;&gt; &apos;.&apos;.          &quot; Replace decimal separator
+            replace g_amt_format+1(1) in l_tmp with &apos;.&apos;.
+          endif.
+
+          try. &quot; Try converting again
+            clear sy-subrc.
+            e_field = l_tmp.
+          catch cx_sy_arithmetic_error cx_sy_conversion_error.
+            sy-subrc = 1.
+          endtry.
+        else. &quot; Not matched
+          sy-subrc = 1.
+        endif.
+
+      endtry.
 
     when &apos;N&apos; or &apos;I&apos;. &quot; Integer number
       if i_data co &apos;0123456789&apos;.
@@ -1418,6 +1500,9 @@ endmethod.</source>
       else.
         sy-subrc = 4.
       endif.
+
+    when &apos;X&apos;.        &quot; Raw
+      e_field = i_data.
 
   endcase.
 
@@ -1485,7 +1570,7 @@ endmethod.</source>
 
 endmethod.</source>
   </method>
-  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PURGE" VERSION="1" LANGU="E" DESCRIPT="Retrieve data from store" EXPOSURE="2" STATE="1" EDITORDER="5 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" BCMTDCAT="00" BCMTDSYN="0">
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PURGE" VERSION="1" LANGU="E" DESCRIPT="Retrieve data from store" EXPOSURE="2" STATE="1" EDITORDER="9 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" BCMTDCAT="00" BCMTDSYN="0">
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="PURGE" SCONAME="I_NAME" VERSION="1" LANGU="E" DESCRIPT="Character field of length 40" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CHAR40"/>
    <source>method purge.
   data l_store type ty_store.
@@ -1535,7 +1620,7 @@ endmethod.</source>
 
 endmethod.</source>
   </method>
-  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="RETRIEVE" VERSION="1" LANGU="E" DESCRIPT="Retrieve data from store" EXPOSURE="2" STATE="1" EDITORDER="6 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="RETRIEVE" VERSION="1" LANGU="E" DESCRIPT="Retrieve data from store" EXPOSURE="2" STATE="1" EDITORDER="10 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="1" BCMTDCAT="00" BCMTDSYN="0">
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="RETRIEVE" SCONAME="I_NAME" VERSION="1" LANGU="E" DESCRIPT="Character field of length 40" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CHAR40"/>
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="RETRIEVE" SCONAME="I_SIFT" VERSION="1" LANGU="E" DESCRIPT="Filter with tab key" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CLIKE" PAROPTIONL="X"/>
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="RETRIEVE" SCONAME="E_DATA" VERSION="1" LANGU="E" DESCRIPT="Place to retrieve store to" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="ANY"/>
@@ -1562,7 +1647,7 @@ endmethod.</source>
 
 endmethod.</source>
   </method>
-  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="STORE" VERSION="1" LANGU="E" DESCRIPT="Save data to store" EXPOSURE="2" STATE="1" EDITORDER="7 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
+  <method CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="STORE" VERSION="1" LANGU="E" DESCRIPT="Save data to store" EXPOSURE="2" STATE="1" EDITORDER="11 " DISPID="0 " MTDTYPE="0" MTDDECLTYP="0" MTDNEWEXC="X" BCMTDCAT="00" BCMTDSYN="0">
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="STORE" SCONAME="I_NAME" VERSION="1" LANGU="E" DESCRIPT="Store place label" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="CHAR40"/>
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="STORE" SCONAME="I_DATA" VERSION="1" LANGU="E" DESCRIPT="Data to store" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ANY"/>
    <parameter CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="STORE" SCONAME="I_TABKEY" VERSION="1" LANGU="E" DESCRIPT="Table key for filtering" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_COMPNAME" PAROPTIONL="X"/>

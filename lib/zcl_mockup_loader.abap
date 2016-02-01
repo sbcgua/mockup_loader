@@ -32,8 +32,6 @@
 *|--------------------------------------------------------------------------------|
 *| project homepage: https://github.com/sbcgua/mockup_loader                      |
 *\--------------------------------------------------------------------------------/
-
-
 class ZCL_MOCKUP_LOADER definition
   public
   final
@@ -41,11 +39,20 @@ class ZCL_MOCKUP_LOADER definition
 
 public section.
 
+  class-methods CLASS_CONSTRUCTOR .
+  class-methods CLASS_SET_SOURCE
+    importing
+      !I_PATH type STRING
+      !I_TYPE type CHAR4 .
+  class-methods CLASS_SET_PARAMS
+    importing
+      !I_AMT_FORMAT type CHAR2 .
   class-methods GET_INSTANCE
     returning
       value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
     raising
       ZCX_MOCKUP_LOADER_ERROR .
+  class-methods FREE_INSTANCE .
   methods LOAD_RAW
     importing
       !I_OBJ type STRING
@@ -90,12 +97,6 @@ public section.
       !I_TABKEY type ABAP_COMPNAME optional
     raising
       ZCX_MOCKUP_LOADER_ERROR .
-  class-methods FREE_INSTANCE .
-  class-methods CLASS_SET_SOURCE
-    importing
-      !I_PATH type STRING
-      !I_TYPE type CHAR4 .
-  class-methods CLASS_CONSTRUCTOR .
 protected section.
 private section.
 
@@ -110,6 +111,7 @@ private section.
   types:
     tt_store type table of ty_store .
 
+  class-data G_AMT_FORMAT type CHAR2 .
   class-data GO_INSTANCE type ref to ZCL_MOCKUP_LOADER .
   data O_ZIP type ref to CL_ABAP_ZIP .
   data AT_STORE type TT_STORE .
@@ -198,6 +200,21 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method class_constructor.
   class_set_source( i_type = 'MIME' i_path = '' ). " Defaults
+  class_set_params( i_amt_format = '' ). " Defaults
+endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_MOCKUP_LOADER=>CLASS_SET_PARAMS
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] I_AMT_FORMAT                   TYPE        CHAR2
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+method CLASS_SET_PARAMS.
+  if i_amt_format is initial or g_amt_format+1(1) is initial. " Empty param or decimal separator
+    g_amt_format = ' ,'. " Defaults
+  else.
+    g_amt_format = i_amt_format.
+  endif.
 endmethod.
 
 
@@ -662,7 +679,10 @@ endmethod.
 * | [!CX!] ZCX_MOCKUP_LOADER_ERROR
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method parse_field.
-  data l_mask type string.
+  data:
+        l_mask  type string,
+        l_tmp   type string,
+        l_regex type string.
 
   case is_component-type_kind.
     when 'D'. " Date
@@ -694,16 +714,46 @@ method parse_field.
       e_field = i_data.
 
     when 'P'. " Amount
-      call function 'HRCM_STRING_TO_AMOUNT_CONVERT'
-        exporting
-          string              = i_data
-          decimal_separator   = ','
-          thousands_separator = '.'
-        importing
-          betrg               = e_field
-        exceptions
-          convert_error       = 1
-          others              = 2.
+      try .
+        e_field = i_data. " Try native format first - xxxx.xx
+
+      catch cx_sy_arithmetic_error cx_sy_conversion_error.
+        l_tmp   = i_data.
+        l_regex = '^-?\d{1,3}(T\d{3})*(\D\d{1,C})?$'.
+        condense l_tmp no-gaps.
+        replace 'C' in l_regex with |{ is_component-decimals }|.
+
+        " Validate number
+        find first occurrence of g_amt_format+0(1) in l_tmp.
+        if sy-subrc is initial. " Found
+          replace 'T' in l_regex with g_amt_format+0(1).
+        else.
+          replace 'T' in l_regex with ''.
+        endif.
+
+        replace 'D' in l_regex with g_amt_format+1(1).
+        find all occurrences of regex l_regex in l_tmp match count sy-tabix.
+
+        if sy-tabix = 1.
+          if not g_amt_format+0(1) is initial.  " Remove thousand separators
+            replace all occurrences of g_amt_format+0(1) in l_tmp with ''.
+          endif.
+
+          if g_amt_format+1(1) <> '.'.          " Replace decimal separator
+            replace g_amt_format+1(1) in l_tmp with '.'.
+          endif.
+
+          try. " Try converting again
+            clear sy-subrc.
+            e_field = l_tmp.
+          catch cx_sy_arithmetic_error cx_sy_conversion_error.
+            sy-subrc = 1.
+          endtry.
+        else. " Not matched
+          sy-subrc = 1.
+        endif.
+
+      endtry.
 
     when 'N' or 'I'. " Integer number
       if i_data co '0123456789'.
@@ -711,6 +761,9 @@ method parse_field.
       else.
         sy-subrc = 4.
       endif.
+
+    when 'X'.        " Raw
+      e_field = i_data.
 
   endcase.
 

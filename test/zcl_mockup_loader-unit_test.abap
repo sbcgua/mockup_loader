@@ -47,14 +47,20 @@
         e_field      = dummy-&1.
   end-of-definition.
 
-  define test_positive.
+  define test_parse_positive.
     test_parse &1 &2.
-    assert_equals( act = dummy-&1 exp = &3 ).
+    assert_equals( act = dummy-&1 exp = &3 msg = 'Parse field positive:' && &2 ).
   end-of-definition.
 
-  define test_negative.
-    test_parse &1 &2.
-    assert_differs( act = dummy-&1 exp = &3 ).
+  define test_parse_negative.
+    clear lo_ex.
+    try.
+      test_parse &1 &2.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    assert_not_initial( act = lo_ex msg = 'Parse field negative:' && &2 ).
+    assert_equals( exp = 'PF' act = lo_ex->code ).
   end-of-definition.
 
 **********************************************************************
@@ -430,35 +436,66 @@ class lcl_test_mockup_loader implementation.
 
     " Positive tests ******************************
     try.
-      test_positive TDATE    '01.01.2015'      '20150101'.
-      test_positive TCHAR    'ABC'             'ABC'.
-      test_positive TSTRING  'The string test' 'The string test'.
-      test_positive TALPHA   '100000'          '0000100000'.
-      test_positive TDECIMAL '1234,12'         '1234.12'.
-      test_negative TDECIMAL '1234.12'         '1234.12'.
-      test_positive TNUMBER  '2015'            '2015'.
-      test_positive TINTEGER '123'             123.
+      test_parse_positive TDATE    '01.01.2015'      '20150101'.
+      test_parse_positive TCHAR    'ABC'             'ABC'.
+      test_parse_positive TSTRING  'The string test' 'The string test'.
+      test_parse_positive TALPHA   '100000'          '0000100000'.
+      test_parse_positive TNUMBER  '2015'            '2015'.
+      test_parse_positive TINTEGER '123'             123.
     catch zcx_mockup_loader_error into lo_ex.
       fail( lo_ex->get_text( ) ).
     endtry.
 
-    " Negative tests (1) **************************
-    clear lo_ex.
-    try.  test_parse TDATE '01.012015'.
+    " Negative tests ******************************
+
+    test_parse_negative TDATE    '01.012015'.
+    test_parse_negative TNUMBER  '20ha'.
+
+    " Decimal converion tests *********************
+    try.
+      test_parse_positive TDECIMAL '1234.12'         '1234.12'. " Native ABAP format
+      test_parse_positive TDECIMAL '-1234.12'        '-1234.12'." Native ABAP format
+
+      zcl_mockup_loader=>class_set_params( i_amt_format = '' ). " Set defaults
+      test_parse_positive TDECIMAL '-1234,12'        '-1234.12'.
+      test_parse_positive TDECIMAL '1234,12'         '1234.12'.
+      test_parse_positive TDECIMAL '1 234,12'        '1234.12'.
+      test_parse_positive TDECIMAL '14,12'           '14.12'.
+      test_parse_positive TDECIMAL '1 234 567,12'    '1234567.12'.
+
+      zcl_mockup_loader=>class_set_params( i_amt_format = '.,' ).
+      test_parse_positive TDECIMAL '1234,12'         '1234.12'.
+      test_parse_positive TDECIMAL '1 234,12'        '1234.12'.
+      test_parse_positive TDECIMAL '1.234,12'        '1234.12'.
+      test_parse_positive TDECIMAL '14,12'           '14.12'.
+      test_parse_positive TDECIMAL '1.234.567,12'    '1234567.12'.
+
+      zcl_mockup_loader=>class_set_params( i_amt_format = ',.' ).
+      test_parse_positive TDECIMAL '1234.12'         '1234.12'.
+      test_parse_positive TDECIMAL '1 234.12'        '1234.12'.
+      test_parse_positive TDECIMAL '1,234.12'        '1234.12'.
+      test_parse_positive TDECIMAL '14.12'           '14.12'.
+      test_parse_positive TDECIMAL '1,234,567.12'    '1234567.12'.
+
     catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_not_initial( act = lo_ex ).
-    assert_equals( exp = 'PF' act = lo_ex->code ).
+    zcl_mockup_loader=>class_set_params( i_amt_format = '' ). " Set defaults
+    test_parse_negative TDECIMAL '1 234.12'.
+    test_parse_negative TDECIMAL '1 234_12'.
+    test_parse_negative TDECIMAL '1234,123'. " 3 decimal digits into wrbtr which has just 2
+    test_parse_negative TDECIMAL '1234,12_'.
+    test_parse_negative TDECIMAL 'Not-a-number'.
+    zcl_mockup_loader=>class_set_params( i_amt_format = '.,' ).
+    test_parse_negative TDECIMAL '1 234.12'.
+    test_parse_negative TDECIMAL '1,234.12'.
+    zcl_mockup_loader=>class_set_params( i_amt_format = ',.' ).
+    test_parse_negative TDECIMAL '1 234,12'.
+    test_parse_negative TDECIMAL '1.234,12'.
 
-    " Negative tests (2) **************************
-    clear lo_ex.
-    try.  test_parse TNUMBER '20ha'.
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
+    zcl_mockup_loader=>class_set_params( i_amt_format = '' ). " Set defaults back
 
-    assert_not_initial( act = lo_ex ).
-    assert_equals( exp = 'PF' act = lo_ex->code ).
 
   endmethod.       "parse_Field
 

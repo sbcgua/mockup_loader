@@ -26,6 +26,25 @@ call method zcl_mockup_loader=>class_set_source
     i_path = 'c:\sap\projectX\unit_tests\mockup.zip'. 
 ```
 
+### CLASS_SET_PARAMS (static) ###
+
+```abap
+importing
+  I_AMT_FORMAT type CHAR2 
+```
+
+- **I_AMT_FORMAT** - amount separators. First character defines thousand separator, the second one defines decimal separator. E.g. `'.,'` would suppose amounts like `123.000,12`. Empty parameter resets to default - `' ,'`. The second character cannot be empty - this also resets the format to defaults.
+
+The method is **static** and should be called in `CLASS_SETUP` method of a test class.
+
+**Example:**
+
+```abap
+call method zcl_mockup_loader=>class_set_param
+  importing
+    i_amt_format = '.,'.
+```
+
 ### GET_INSTANCE (static) ###
 
 ```abap
