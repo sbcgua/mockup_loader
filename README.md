@@ -141,10 +141,13 @@ Here are some facts about package content and invocation approach:
 
 ### SAPLink ###
 
-A nugget is available to install the code with SAPLink.
+A nugget and slinkees are available to install the code with SAPLink. 
  
-- SAPLink does not support W3MI objects so after import of the nugget please follow manual step 4.2 to finalize installation. Unit test execution is also a recommended step (see manual step 4.3)
-- SAPLink does not support SET/GET parameters so after import please create them manually (see manual step 5)
+Vanilla SAPLink does not support:
+- SET/GET parameters so either install ZSAPLINK_USER_PARAMETER plugin or create them manually after import (see manual step 5)
+- W3MI objects so please follow manual step 4.2 to finalize installation. 
+
+Unit test execution is a recommended after-step (see manual step 4.3).
 
 ### Manual installation ###
 

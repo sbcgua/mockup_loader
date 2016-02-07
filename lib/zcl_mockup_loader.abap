@@ -690,11 +690,8 @@ method parse_field.
         exporting
           date_external            = i_data
           accept_initial_date      = 'X'
-        importing
-          date_internal            = e_field
-        exceptions
-          date_external_is_invalid = 1
-          others                   = 2.
+        importing  date_internal   = e_field
+        exceptions date_external_is_invalid = 4.
 
     when 'C'. " Char + convexits
       describe field e_field edit mask l_mask.
@@ -747,10 +744,10 @@ method parse_field.
             clear sy-subrc.
             e_field = l_tmp.
           catch cx_sy_arithmetic_error cx_sy_conversion_error.
-            sy-subrc = 1.
+            sy-subrc = 4.
           endtry.
         else. " Not matched
-          sy-subrc = 1.
+          sy-subrc = 4.
         endif.
 
       endtry.
@@ -763,7 +760,11 @@ method parse_field.
       endif.
 
     when 'X'.        " Raw
-      e_field = i_data.
+      try .
+        e_field = i_data.
+      catch cx_sy_conversion_no_raw cx_sy_conversion_error.
+        sy-subrc = 4.
+      endtry.
 
   endcase.
 

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TRAN TCODE="ZMOCKUP_LOADER_SWSRC" PGMNA="ZMOCKUP_LOADER_SWITCH_SOURCE" DYPNO="1000" CINFO="80">
+ <tstct SPRSL="E" TCODE="ZMOCKUP_LOADER_SWSRC" TTEXT="Switch mockup source temporarily"/>
+ <tstcc TCODE="ZMOCKUP_LOADER_SWSRC" S_WEBGUI="1" S_WIN32="X" S_PLATIN="X"/>
+</TRAN>

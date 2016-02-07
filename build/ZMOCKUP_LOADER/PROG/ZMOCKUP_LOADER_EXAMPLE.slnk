@@ -1,4 +1,11 @@
-*/--------------------------------------------------------------------------------\
+<?xml version="1.0" encoding="utf-8"?>
+<PROG NAME="ZMOCKUP_LOADER_EXAMPLE" VARCL="X" SUBC="1" APPL="*" RSTAT="T" RMAND="100" RLOAD="E" FIXPT="X" UCCHECK="X">
+ <textPool>
+  <language SPRAS="E">
+   <textElement ID="R" ENTRY="Mockup loader example program" LENGTH="29 "/>
+  </language>
+ </textPool>
+ <source>*/--------------------------------------------------------------------------------\
 *| This file is part of Mockup loader                                             |
 *|                                                                                |
 *| The MIT License (MIT)                                                          |
@@ -6,7 +13,7 @@
 *| Copyright (c) 2015 SBCG Team (www.sbcg.com.ua), Alexander Tsybulsky            |
 *|                                                                                |
 *| Permission is hereby granted, free of charge, to any person obtaining a copy   |
-*| of this software and associated documentation files (the "Software"), to deal  |
+*| of this software and associated documentation files (the &quot;Software&quot;), to deal  |
 *| in the Software without restriction, including without limitation the rights   |
 *| to use, copy, modify, merge, publish, distribute, sublicense, and/or sell      |
 *| copies of the Software, and to permit persons to whom the Software is          |
@@ -15,7 +22,7 @@
 *| The above copyright notice and this permission notice shall be included in all |
 *| copies or substantial portions of the Software.                                |
 *|                                                                                |
-*| THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     |
+*| THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR     |
 *| IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,       |
 *| FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    |
 *| AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER         |
@@ -35,8 +42,8 @@ report zmockup_loader_example.
 class lcl_context definition final create private.
 
   public section.
-    data a_carrid  type sflight-carrid read-only. " Some settings for the production code
-    data a_testenv type abap_bool read-only.      " Indicates execution in test environment
+    data a_carrid  type sflight-carrid read-only. &quot; Some settings for the production code
+    data a_testenv type abap_bool read-only.      &quot; Indicates execution in test environment
 
     class-methods get_instance
       returning value(ro_instance) type ref to lcl_context.
@@ -47,25 +54,25 @@ class lcl_context definition final create private.
   private section.
     class-data go_instance type ref to lcl_context.
 
-endclass.  " lcl_context
+endclass.  &quot; lcl_context
 
 class lcl_context implementation.
-  method get_instance. " Get sinleton instance
+  method get_instance. &quot; Get sinleton instance
     if go_instance is not bound.
       create object go_instance.
     endif.
     ro_instance = go_instance.
   endmethod.
 
-  method set_carrid. " Setup context for production environment
-    clear: me->a_carrid, me->a_testenv.
-    me->a_carrid = i_carrid.
-    if i_carrid = 'ZZZ'. " Special test env airline - non existing !
-      me->a_testenv = abap_true.
+  method set_carrid. &quot; Setup context for production environment
+    clear: me-&gt;a_carrid, me-&gt;a_testenv.
+    me-&gt;a_carrid = i_carrid.
+    if i_carrid = &apos;ZZZ&apos;. &quot; Special test env airline - non existing !
+      me-&gt;a_testenv = abap_true.
     endif.
   endmethod.
 
-endclass.  " lcl_context
+endclass.  &quot; lcl_context
 
 **********************************************************************
 * SOME BUSINESS LOGIC CLASS - the object to test
@@ -84,35 +91,35 @@ class lcl_main_logic definition final create public.
   private section.
     data o_context type ref to lcl_context.
 
-endclass.  " lcl_main_logic
+endclass.  &quot; lcl_main_logic
 
 class lcl_main_logic implementation.
   method constructor.
-    o_context = lcl_context=>get_instance( ). " Get context
-  endmethod.   "constructor
+    o_context = lcl_context=&gt;get_instance( ). &quot; Get context
+  endmethod.   &quot;constructor
 
-  method get_price. " Get price of the connection in the context airline
+  method get_price. &quot; Get price of the connection in the context airline
     data ls_flight type sflight.
 
-    if o_context->a_testenv = abap_false. " Production env
+    if o_context-&gt;a_testenv = abap_false. &quot; Production env
       select single price into corresponding fields of ls_flight
         from sflight
-        where carrid = o_context->a_carrid
+        where carrid = o_context-&gt;a_carrid
         and   connid = i_connid
         and   fldate = i_date.
-    else.                                  " Test env
-      zcl_mockup_loader=>retrieve( exporting i_name = 'SFLIGHT'  i_sift = i_connid
+    else.                                  &quot; Test env
+      zcl_mockup_loader=&gt;retrieve( exporting i_name = &apos;SFLIGHT&apos;  i_sift = i_connid
                                    importing e_data = ls_flight  exceptions others = 4 ).
     endif.
 
-    if sy-subrc is not initial. " Selection error ?
+    if sy-subrc is not initial. &quot; Selection error ?
       raise not_found.
     endif.
 
     r_price = ls_flight-price.
 
-  endmethod.   "get_price
-endclass.  " lcl_main_logic
+  endmethod.   &quot;get_price
+endclass.  &quot; lcl_main_logic
 
 **********************************************************************
 * TEST CLASS
@@ -131,33 +138,33 @@ class lcl_test definition for testing duration short
       end of ty_testcase.
 
   private section.
-    data o    type ref to lcl_main_logic.    " Class being tested
-    data o_ml type ref to zcl_mockup_loader. " Mockup loader
+    data o    type ref to lcl_main_logic.    &quot; Class being tested
+    data o_ml type ref to zcl_mockup_loader. &quot; Mockup loader
 
     class-methods: class_setup.
     methods: setup.
     methods: get_price for testing.
 
-endclass.   "lcl_test
+endclass.   &quot;lcl_test
 
 class lcl_test implementation.
-  method class_setup. " Set mockup source -> workstation file
-    zcl_mockup_loader=>class_set_source( i_type = 'FILE' i_path = 'c:\sap\example.zip' ).
+  method class_setup. &quot; Set mockup source -&gt; workstation file
+    zcl_mockup_loader=&gt;class_set_source( i_type = &apos;FILE&apos; i_path = &apos;c:\sap\example.zip&apos; ).
   endmethod.
 
-  method setup. " Initialize instances
+  method setup. &quot; Initialize instances
     data lo_context type ref to lcl_context.
     data lo_ex      type ref to zcx_mockup_loader_error.
 
-    lo_context = lcl_context=>get_instance( ).
-    lo_context->set_carrid( 'ZZZ' ). " Test env airline
+    lo_context = lcl_context=&gt;get_instance( ).
+    lo_context-&gt;set_carrid( &apos;ZZZ&apos; ). &quot; Test env airline
 
     create object o.
 
     try.
-      o_ml = zcl_mockup_loader=>get_instance( ).
+      o_ml = zcl_mockup_loader=&gt;get_instance( ).
     catch zcx_mockup_loader_error into lo_ex.
-      fail( lo_ex->get_text( ) ).
+      fail( lo_ex-&gt;get_text( ) ).
     endtry.
 
   endmethod.
@@ -169,37 +176,37 @@ class lcl_test implementation.
     data l_result     type sflight-price.
 
     try.
-      " Load test cases index for local usage
-      o_ml->load_data( exporting i_obj       = 'EXAMPLE/testcases'
+      &quot; Load test cases index for local usage
+      o_ml-&gt;load_data( exporting i_obj       = &apos;EXAMPLE/testcases&apos;
                        importing e_container = lt_testcases ).
 
-      " Load and store flights table
-      o_ml->load_and_store( i_obj    = 'EXAMPLE/sflight'
-                            i_name   = 'SFLIGHT'
+      &quot; Load and store flights table
+      o_ml-&gt;load_and_store( i_obj    = &apos;EXAMPLE/sflight&apos;
+                            i_name   = &apos;SFLIGHT&apos;
                             i_strict = abap_false
-                            i_tabkey = 'CONNID'
-                            i_type   = 'FLIGHTTAB' ).
+                            i_tabkey = &apos;CONNID&apos;
+                            i_type   = &apos;FLIGHTTAB&apos; ).
 
     catch zcx_mockup_loader_error into lo_ex.
-      fail( lo_ex->get_text( ) ).
+      fail( lo_ex-&gt;get_text( ) ).
     endtry.
 
-    loop at lt_testcases into ls_case. " Loop through test catalog and run tests
-      call method o->get_price
+    loop at lt_testcases into ls_case. &quot; Loop through test catalog and run tests
+      call method o-&gt;get_price
         exporting
           i_connid = ls_case-connid
-          i_date   = '20150101'
+          i_date   = &apos;20150101&apos;
         receiving
           r_price  = l_result
         exceptions others = 4.
 
-      if ls_case-type = '+'. " Positive test
+      if ls_case-type = &apos;+&apos;. &quot; Positive test
         assert_subrc(  act = sy-subrc  exp = 0
                        msg = |[{ ls_case-testid }] { ls_case-msg }| ).
         assert_equals( act = l_result  exp = ls_case-result
                        msg = |[{ ls_case-testid }] { ls_case-msg }| ).
 
-      else. "'-'             " Negative test
+      else. &quot;&apos;-&apos;             &quot; Negative test
         assert_subrc(  act = sy-subrc  exp = 4
                        msg = |[{ ls_case-testid }] { ls_case-msg }| ).
       endif.
@@ -208,4 +215,5 @@ class lcl_test implementation.
 
   endmethod.
 
-endclass.   "lcl_test
+endclass.   &quot;lcl_test</source>
+</PROG>

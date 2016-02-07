@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <nugget name="ZMOCKUP_LOADER">
+ <DEVC DEVCLASS="ZMOCKUP_LOADER" CTEXT="Mockup loader for unit tests" LANGUAGE="E" MASTERLANG="E" KORRFLAG="X" PDEVCLASS="ZSBS" DLVUNIT="HOME" NAMESPACE="/0CUST/" CREATED_BY="USER1" CREATED_ON="20151031" CHANGED_BY="USER1" CHANGED_ON="20151031" PROJECT_GUID="00000000000000000000000000000000"/>
  <CLAS CLSNAME="ZCL_MOCKUP_LOADER" VERSION="1" LANGU="E" DESCRIPT="Mockup loader" CATEGORY="00" EXPOSURE="0" STATE="1" RELEASE="0" CLSFINAL="X" CLSCCINCL="X" FIXPT="X" UNICODE="X" CLSBCCAT="00" WITH_UNIT_TESTS="X" DURATION_TYPE="0 " RISK_LEVEL="0 " ZSAPLINK_PLUGIN_MAJOR_VERSION="0 " ZSAPLINK_PLUGIN_MINOR_VERSION="1 " ZSAPLINK_PLUGIN_BUILD_VERSION="0 " ZSAPLINK_PLUGIN_INFO1="ZSAPLINK_CLASS is part of the main ZSAPLINK project --&gt; This plugin found there instead of ZSAPLINK_PLUGINS projects" ZSAPLINK_PLUGIN_INFO2="SAPLINK homepage: https://www.assembla.com/spaces/saplink/wiki" ZSAPLINK_PLUGIN_INFO3="Download from https://www.assembla.com/code/saplink/subversion/nodes" ZSAPLINK_PLUGIN_INFO4="and navigate to:  trunk -&gt; core -&gt; ZSAPLINK -&gt; CLAS -&gt; ZSAPLINK_CLASS.slnk">
   <types CLSNAME="ZCL_MOCKUP_LOADER" CMPNAME="TT_STRING" VERSION="1" LANGU="E" EXPOSURE="0" STATE="1" EDITORDER="1 " TYPTYPE="4" SRCROW1="4 " SRCCOLUMN1="4 " SRCROW2="4 " SRCCOLUMN2="33 " TYPESRC_LENG="0 " TYPESRC="tt_string type table of string
 "/>
@@ -783,31 +784,31 @@ class lcl_test_mockup_loader implementation.
 **********************************************************************
   method retrieve_types.
     data:
-          lo_ex     type ref to zcx_mockup_loader_error,
-          l_src     type bset_tab,
-          l_dst_tab type bset_tab,
-          l_dst_tt  type table of bset,
-          l_dst_ts  type sorted table of bset with unique key bukrs,
-          l_dst_str type bset,
-          l_dst_dif type table of bkpf.
+          lo_ex        type ref to zcx_mockup_loader_error,
+          lt_src       type scarr_tab,
+          lt_dst_tab   type scarr_tab,
+          lt_dst_tt    type table of scarr,
+          lt_dst_ts    type sorted table of scarr with unique key carrid,
+          l_dst_struc  type scarr,
+          lt_dst_diff  type table of sflight.
 
-    append initial line to l_src.
-    try. o-&gt;store( i_name = &apos;DATA&apos; i_data = l_src ).
+    append initial line to lt_src.
+    try. o-&gt;store( i_name = &apos;DATA&apos; i_data = lt_src ).
     catch zcx_mockup_loader_error into lo_ex.
       fail( lo_ex-&gt;get_text( ) ).
     endtry.
 
     &quot; Store to different kinds of same table *******************
     try.
-      call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = l_dst_tab.
-      call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = l_dst_tt.
-      call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = l_dst_ts.
+      call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = lt_dst_tab.
+      call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = lt_dst_tt.
+      call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = lt_dst_ts.
     catch zcx_mockup_loader_error into lo_ex.
       fail( lo_ex-&gt;get_text( ) ).
     endtry.
 
     &quot; Store to structure ***************************************
-    try. call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = l_dst_str.
+    try. call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = l_dst_struc.
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
 
@@ -816,7 +817,7 @@ class lcl_test_mockup_loader implementation.
 
     &quot; Store to table with different structure ******************
     clear lo_ex.
-    try. call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = l_dst_dif.
+    try. call method o-&gt;_retrieve exporting i_name  = &apos;DATA&apos; importing e_data = lt_dst_diff.
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
 
@@ -834,7 +835,7 @@ class lcl_test_mockup_loader implementation.
           dummy_tab_exp  type tt_dummy,
           dummy_act      type ty_dummy,
           dummy_tab_act  type tt_dummy,
-          ls_bset        type bset,
+          ls_wrong       type sflight,
           lo_ex          type ref to zcx_mockup_loader_error.
 
     call method get_dummy_data
@@ -874,7 +875,7 @@ class lcl_test_mockup_loader implementation.
       call method o-&gt;_retrieve
         exporting i_name   = &apos;TAB&apos;
                   i_sift   = &apos;2015&apos;
-        importing e_data   = ls_bset.
+        importing e_data   = ls_wrong.
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
 
@@ -1429,11 +1430,8 @@ endmethod.</source>
         exporting
           date_external            = i_data
           accept_initial_date      = &apos;X&apos;
-        importing
-          date_internal            = e_field
-        exceptions
-          date_external_is_invalid = 1
-          others                   = 2.
+        importing  date_internal   = e_field
+        exceptions date_external_is_invalid = 4.
 
     when &apos;C&apos;. &quot; Char + convexits
       describe field e_field edit mask l_mask.
@@ -1486,10 +1484,10 @@ endmethod.</source>
             clear sy-subrc.
             e_field = l_tmp.
           catch cx_sy_arithmetic_error cx_sy_conversion_error.
-            sy-subrc = 1.
+            sy-subrc = 4.
           endtry.
         else. &quot; Not matched
-          sy-subrc = 1.
+          sy-subrc = 4.
         endif.
 
       endtry.
@@ -1502,7 +1500,11 @@ endmethod.</source>
       endif.
 
     when &apos;X&apos;.        &quot; Raw
-      e_field = i_data.
+      try .
+        e_field = i_data.
+      catch cx_sy_conversion_no_raw cx_sy_conversion_error.
+        sy-subrc = 4.
+      endtry.
 
   endcase.
 
@@ -1864,7 +1866,6 @@ endmethod.</source>
 endmethod.</source>
   </method>
  </CLAS>
- <DEVC DEVCLASS="ZMOCKUP_LOADER" CTEXT="Mockup loader for unit tests" LANGUAGE="E" MASTERLANG="E" KORRFLAG="X" PDEVCLASS="ZSBS" DLVUNIT="HOME" NAMESPACE="/0CUST/" CREATED_BY="USER1" CREATED_ON="20151031" CHANGED_BY="USER1" CHANGED_ON="20151031" PROJECT_GUID="00000000000000000000000000000000"/>
  <PROG NAME="ZMOCKUP_LOADER_EXAMPLE" VARCL="X" SUBC="1" APPL="*" RSTAT="T" RMAND="100" RLOAD="E" FIXPT="X" UCCHECK="X">
   <textPool>
    <language SPRAS="E">
@@ -1908,14 +1909,14 @@ report zmockup_loader_example.
 class lcl_context definition final create private.
 
   public section.
-    data a_bukrs   type bukrs     read-only. &quot; Some settings for the production code
-    data a_testenv type abap_bool read-only. &quot; Indicates execution in test environment
+    data a_carrid  type sflight-carrid read-only. &quot; Some settings for the production code
+    data a_testenv type abap_bool read-only.      &quot; Indicates execution in test environment
 
     class-methods get_instance
       returning value(ro_instance) type ref to lcl_context.
 
-    methods set_bukrs
-      importing i_bukrs type bukrs.
+    methods set_carrid
+      importing i_carrid type sflight-carrid.
 
   private section.
     class-data go_instance type ref to lcl_context.
@@ -1930,10 +1931,10 @@ class lcl_context implementation.
     ro_instance = go_instance.
   endmethod.
 
-  method set_bukrs. &quot; Setup context for production environment
-    clear: me-&gt;a_bukrs, me-&gt;a_testenv.
-    me-&gt;a_bukrs = i_bukrs.
-    if i_bukrs = &apos;ZZZZ&apos;. &quot; Special test env company code - non existing !
+  method set_carrid. &quot; Setup context for production environment
+    clear: me-&gt;a_carrid, me-&gt;a_testenv.
+    me-&gt;a_carrid = i_carrid.
+    if i_carrid = &apos;ZZZ&apos;. &quot; Special test env airline - non existing !
       me-&gt;a_testenv = abap_true.
     endif.
   endmethod.
@@ -1947,11 +1948,11 @@ class lcl_main_logic definition final create public.
 
   public section.
     methods constructor.
-    methods check_doc_is_reversed
+    methods get_price
       importing
-        i_belnr type belnr_d
-        i_gjahr type gjahr
-      returning value(r_reversed) type abap_bool
+        i_connid type sflight-connid
+        i_date   type sflight-fldate
+      returning value(r_price) type sflight-price
       exceptions not_found.
 
   private section.
@@ -1964,31 +1965,27 @@ class lcl_main_logic implementation.
     o_context = lcl_context=&gt;get_instance( ). &quot; Get context
   endmethod.   &quot;constructor
 
-  method check_doc_is_reversed. &quot; Checks if FI document is reversed - the method to be tested
-    data ls_bkpf type bkpf.
+  method get_price. &quot; Get price of the connection in the context airline
+    data ls_flight type sflight.
 
     if o_context-&gt;a_testenv = abap_false. &quot; Production env
-      select single xreversal into corresponding fields of ls_bkpf
-        from bkpf
-        where bukrs = o_context-&gt;a_bukrs
-        and   belnr = i_belnr
-        and   gjahr = i_gjahr.
+      select single price into corresponding fields of ls_flight
+        from sflight
+        where carrid = o_context-&gt;a_carrid
+        and   connid = i_connid
+        and   fldate = i_date.
     else.                                  &quot; Test env
-      zcl_mockup_loader=&gt;retrieve( exporting i_name = &apos;BKPF&apos;  i_sift = i_belnr
-                                   importing e_data = ls_bkpf exceptions others = 4 ).
+      zcl_mockup_loader=&gt;retrieve( exporting i_name = &apos;SFLIGHT&apos;  i_sift = i_connid
+                                   importing e_data = ls_flight  exceptions others = 4 ).
     endif.
 
     if sy-subrc is not initial. &quot; Selection error ?
       raise not_found.
     endif.
 
-    if ls_bkpf-xreversal is initial. &quot; Document reversed ?
-      r_reversed = abap_false.
-    else.
-      r_reversed = abap_true.
-    endif.
+    r_price = ls_flight-price.
 
-  endmethod.   &quot;check_doc_is_reversed
+  endmethod.   &quot;get_price
 endclass.  &quot; lcl_main_logic
 
 **********************************************************************
@@ -2002,8 +1999,8 @@ class lcl_test definition for testing duration short
       begin of ty_testcase,
         testid   type i,
         type     type char1,
-        belnr    type belnr_d,
-        result   type abap_bool,
+        connid   type sflight-connid,
+        result   type sflight-price,
         msg      type string,
       end of ty_testcase.
 
@@ -2013,7 +2010,7 @@ class lcl_test definition for testing duration short
 
     class-methods: class_setup.
     methods: setup.
-    methods: check_doc_is_reversed for testing.
+    methods: get_price for testing.
 
 endclass.   &quot;lcl_test
 
@@ -2027,7 +2024,7 @@ class lcl_test implementation.
     data lo_ex      type ref to zcx_mockup_loader_error.
 
     lo_context = lcl_context=&gt;get_instance( ).
-    lo_context-&gt;set_bukrs( &apos;ZZZZ&apos; ). &quot; Test env bukrs
+    lo_context-&gt;set_carrid( &apos;ZZZ&apos; ). &quot; Test env airline
 
     create object o.
 
@@ -2039,35 +2036,35 @@ class lcl_test implementation.
 
   endmethod.
 
-  method check_doc_is_reversed.
+  method get_price.
     data lt_testcases type table of ty_testcase.
     data ls_case      type ty_testcase.
     data lo_ex        type ref to zcx_mockup_loader_error.
-    data l_result     type abap_bool.
+    data l_result     type sflight-price.
 
     try.
       &quot; Load test cases index for local usage
-      o_ml-&gt;load_data( exporting i_obj       = &apos;testcases&apos;
+      o_ml-&gt;load_data( exporting i_obj       = &apos;EXAMPLE/testcases&apos;
                        importing e_container = lt_testcases ).
 
-      &quot; Load and store BKPF table
-      o_ml-&gt;load_and_store( i_obj    = &apos;bkpf&apos;
-                            i_name   = &apos;BKPF&apos;
+      &quot; Load and store flights table
+      o_ml-&gt;load_and_store( i_obj    = &apos;EXAMPLE/sflight&apos;
+                            i_name   = &apos;SFLIGHT&apos;
                             i_strict = abap_false
-                            i_tabkey = &apos;BELNR&apos;
-                            i_type   = &apos;BKPF_T&apos; ).
+                            i_tabkey = &apos;CONNID&apos;
+                            i_type   = &apos;FLIGHTTAB&apos; ).
 
     catch zcx_mockup_loader_error into lo_ex.
       fail( lo_ex-&gt;get_text( ) ).
     endtry.
 
     loop at lt_testcases into ls_case. &quot; Loop through test catalog and run tests
-      call method o-&gt;check_doc_is_reversed
+      call method o-&gt;get_price
         exporting
-          i_belnr    = ls_case-belnr
-          i_gjahr    = &apos;2015&apos;
+          i_connid = ls_case-connid
+          i_date   = &apos;20150101&apos;
         receiving
-          r_reversed = l_result
+          r_price  = l_result
         exceptions others = 4.
 
       if ls_case-type = &apos;+&apos;. &quot; Positive test
@@ -2364,4 +2361,10 @@ endform.                    &quot;get_su3_value</source>
   <tstct SPRSL="E" TCODE="ZMOCKUP_LOADER_SWSRC" TTEXT="Switch mockup source temporarily"/>
   <tstcc TCODE="ZMOCKUP_LOADER_SWSRC" S_WEBGUI="1" S_WIN32="X" S_PLATIN="X"/>
  </TRAN>
+ <PARA PARAMID="ZMOCKUP_LOADER_SPATH">
+  <parat PARAMID="ZMOCKUP_LOADER_SPATH" SPRACHE="E" PARTEXT="Mockup loader source path"/>
+ </PARA>
+ <PARA PARAMID="ZMOCKUP_LOADER_STYPE">
+  <parat PARAMID="ZMOCKUP_LOADER_STYPE" SPRACHE="E" PARTEXT="Mockup loader source type"/>
+ </PARA>
 </nugget>
