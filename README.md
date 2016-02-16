@@ -1,6 +1,6 @@
 # Mockup Loader for ABAP unit testing #
 
-*Version: 0.1.3*
+*Version: 0.1.4*
 
 ## Contents ##
 
@@ -13,6 +13,7 @@
 - [Other features](#other-features)
 - [Excel to TXT conversion script](#excel-to-txt-conversion-script)
 - [Contributors](#contributors)
+- [Publications](#publications)
 - [License](#license)
 
 <!-- end toc -->
@@ -130,7 +131,7 @@ As the final result we can perform completely dynamic unit tests in our projects
 
 Here are some facts about package content and invocation approach:
 
-- The main class is called `ZCL_MOCKUP_LOADER`. It is designed as a singleton class assuming it loads ZIPed content once when the test class initiallized. Consequently, the "Store" exists in one  instance as well.
+- The main class is called `ZCL_MOCKUP_LOADER`. It is designed as a singleton class assuming it loads ZIPped content once when the test class initiallized. Consequently, the "Store" exists in one  instance as well.
 - Most methods of the class may throw `ZCX_MOCKUP_LOADER_ERROR` exception, which in particular specifies some error details available via `get_text()` call (also an error code, which is more for own unit testing purpose). Those methods are assumed to be executed from unit test classes, so there should be no problem to handle exceptions properly there. 
 - `RETRIEVE()` method, however, which takes data from the "Store" is **static**. It is assumed to be called from "production" code instead of *DB selects*. It does all singleton magic inside, and throws **non-class** based exception. This is made to avoid the necessity to handle exceptions, irrelevant to the main code, and also to be able to catch the exception as `SY-SUBRC` value. `SY-SUBRC` can be checked later as if it would be the result of a regular DB select. So the interference with the main code is minimal. 
 - Zipped text files must be in **Unicode** encoding (UTF16).
@@ -140,10 +141,13 @@ Here are some facts about package content and invocation approach:
 
 ### SAPLink ###
 
-A nugget is available to install the code with SAPLink.
+A nugget and slinkees are available to install the code with SAPLink. 
  
-- SAPLink does not support W3MI objects so after import of the nugget please follow manual step 4.2 to finalize installation. Unit test execution is also a recommended step (see manual step 4.3)
-- SAPLink does not support SET/GET parameters so after import please create them manually (see manual step 5)
+Vanilla SAPLink does not support:
+- SET/GET parameters so either install ZSAPLINK_USER_PARAMETER plugin or create them manually after import (see manual step 5)
+- W3MI objects so please follow manual step 4.2 to finalize installation. 
+
+Unit test execution is a recommended after-step (see manual step 4.3).
 
 ### Manual installation ###
 
@@ -190,39 +194,7 @@ Supposedly, you call static `CLASS_SET_SOURCE` method in `CLASS_SETUP` **of test
 
 We have a lot of data prepared in Excel files. Many files, many sheets in each. It is boring and time consuming to copy them all to text (although Ctrl+C in Excel actually copies TAB delimited text which greatly simplifies the matter for small cases).
 
-So we created a VB script which does the work automatically. How to use it:
-
-1. Excel files should be in one directory, same as the script. Formats supported: `.xlsx`, `.xls`, `.xlsm`, `.ods`
-2. Each Excel file should have a sheet named `_contents`, it should contain a list of other sheet names which are relevant to be converted. In the second column there should be a mark 'X' to save the sheet to text. (See [example/Example.ods](example/Example.ods)) 
-3. Each sheet should contain data, staring in A1 cell. 
-    * The first row must contain field names (capitalized).
-    * The first column is used to identify the end of length of the table - so it must be continuous
-    * Columns with `'_'` at the beginning are ignored - can be used for meta data or to define table size in case real first data field may contain empty values (See example).
-4. The script reads the current directory and finds all Excel files. 
-5. It identifies if any of those are opened currently (though might not work correctly if you run several Excel instances)
-6. Then it gives you the choice to process opened files only or all of them. 
-7. Each file is processed according to points 1-3 and each sheet is saved as `.txt` file (in UTF16 encoding) to `uncompressed/EXCELFILENAME/` directory, where `EXCELFILENAME` is the name of the Excel file.
-8. After everything is finished the "uncompressed" directory is compressed to a zip file and placed to the same directory where script is.
-
-### Command line parameters ###
-
-The script also supports command line parameters and can be executed with `cscript.exe` (preferable - then execution log is output to console). We use `.bat` files like this for example: 
-
-```
-@cscript PrepareZip.vbs -o -z c:\sap\mockup.zip
-@pause
-```
-
-Command line parameters:
-
-- `-h`  - help screen
-- `-o`  - silently process just opened files
-- `-a`  - silently process all files
-- `-z`  - use this path to zip file instead of default one
-- `-i`  - copy (include) following path into uncompressed directory and consequently to zip
-- `-nz` - skip archiving, just generate text files to 'uncompressed' dir
-- `-bd` - change build directory - where uncompressed folder is created
-- `-color` - output in color (requires [ANSICON](https://github.com/adoxa/ansicon))  
+So we created a VB script which does this work automatically. Please read [EXCEL2TXT.md](EXCEL2TXT.md) for more info.
 
 ## Contributors ##
 
@@ -232,6 +204,10 @@ Main development team members are:
 - Alexander Tsybulsky
 - Svetlana Shlapak
 - Bohdan Petrushchak
+
+## Publications ##
+
+- [Unit testing mockup loader for ABAP @SCN](http://scn.sap.com/community/abap/blog/2015/11/12/unit-testing-mockup-loader-for-abap)
 
 ## License ##
 
