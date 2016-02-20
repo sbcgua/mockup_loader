@@ -77,6 +77,7 @@ Frees the instance for whatever reason you might need it (never used in our code
 importing
   I_OBJ    type STRING
   I_STRICT type ABAP_BOOL default ABAP_TRUE
+  I_WHERE  type ANY       optional
 exporting
   E_CONTAINER type ANY
 ```
@@ -84,7 +85,8 @@ exporting
 - **I_OBJ** - path to file inside ZIP. Extension `'.txt'` is automatically appended so should not be specified. Please be aware that ZIP file names are **case sensitive** (at least this is how SAP handles them).
     - Files must be in **Unicode** encoding (UTF16).
 - **I_STRICT** - suggests if the structure of the file must strictly correspond to the structure of target container. The call **always** validates that all fields in the text file are present in target structure. `I_STRICT` = 'True' **additionally** means that the number of fields is the same as in the target structure.
-    - One exception is `MANDT` field. It may be skipped in a text file even for strict validation. So a text file with all structure fields but MANDT is still considered as strictly equal. 
+    - One exception is `MANDT` field. It may be skipped in a text file even for strict validation. So a text file with all structure fields but MANDT is still considered as strictly equal.
+- **I_WHERE** - a structure of range tables which are used to filter the output. Component of the structure must be named after target table fields. The structure may contain ONLY ranges. The structure may contain components (names) which are missing in the target table - they are just ignored. See a code example below.   
 - **E_CONTAINER** - container for the data. Can be table or structure. In the latter case just the first data line of the file is parsed, no error is thrown if there are more lines in case like that.   
 
 The method assumes that field names are specified in the first line of the text file and are **capitalized**. The order is not important and can be mixed. `MANDT` field, if present, is ignored (no value transferred).
@@ -109,6 +111,30 @@ catch zcx_mockup_loader_error into lo_ex.
   fail( lo_ex->get_text( ) ).
 endtry.
 ```
+
+Using `I_WHERE`.
+
+```abap
+data:
+      begin of l_where,
+        belnr  type range of belnr_d,
+      end of l_where,
+      rl_belnr like line of l_where-belnr,
+
+  rl_belnr-sign   = 'I'.
+  rl_belnr-option = 'EQ'.
+  rl_belnr-low    = '0000000010'.
+  append rl_belnr to l_where-belnr.
+
+...
+  call method o_ml->load_data
+    exporting i_obj       = 'TEST1/BSEG'
+              i_strict    = abap_false
+              i_where     = l_where
+    importing e_container = lt_bseg.
+...
+```
+ 
 
 ### LOAD_RAW (instance) ###
 

@@ -150,6 +150,7 @@ endclass.   &quot;lcl_test
 class lcl_test implementation.
   method class_setup. &quot; Set mockup source -&gt; workstation file
     zcl_mockup_loader=&gt;class_set_source( i_type = &apos;FILE&apos; i_path = &apos;c:\sap\example.zip&apos; ).
+    zcl_mockup_loader=&gt;class_set_params( i_amt_format = &apos; ,&apos; ).
   endmethod.
 
   method setup. &quot; Initialize instances

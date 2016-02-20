@@ -1,6 +1,7 @@
 # Mockup Loader for ABAP unit testing #
 
-*Version: 0.1.4*
+*Version: 0.1.5*    
+*[History of changes](/changelog.txt)*
 
 ## Contents ##
 
@@ -9,7 +10,7 @@
 - [Synopsis](#synopsis)
 - [Installation](#installation)
 - [Reference](#reference)
-- [Examples](#examples)
+- [Examples and HOWTOs](#examples-and-howtos)
 - [Other features](#other-features)
 - [Excel to TXT conversion script](#excel-to-txt-conversion-script)
 - [Contributors](#contributors)
@@ -178,9 +179,11 @@ Unit test execution is a recommended after-step (see manual step 4.3).
 
 Complete reference of class method can be found in [REFERENCE.md](REFERENCE.md). 
 
-## Examples ##
+## Examples and HOWTOs ##
 
-An example can be found in [example/zmockup_loader_example.abap](/example/zmockup_loader_example.abap).
+Have a look at the Howto section in the project [Wiki](Home).
+
+A complete example can be found in [example/zmockup_loader_example.abap](/example/zmockup_loader_example.abap).
 
 ## Other features ##
 

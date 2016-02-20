@@ -15,7 +15,7 @@ method RAISE.
   raise exception type zcx_mockup_loader_error
     exporting
       methname = l_methname
-      msg = msg
-      code = code.
+      msg      = msg
+      code     = code.
 
 endmethod.

@@ -51,6 +51,8 @@ try.
   o_zake->download_nugget_to_lm   = abap_true.
   o_zake->create_slinkees( 'ZMOCKUP_LOADER' ).
 
+  write: / 'Build successful'. "#EC NOTEXT
+
 catch zcx_saplink into ex.
-  write: / 'an error occured: ', ex->msg.
+  write: / 'An error occured: ', ex->msg. "#EC NOTEXT
 endtry.
