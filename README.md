@@ -1,7 +1,8 @@
 # Mockup Loader for ABAP unit testing #
 
 *Version: 0.1.5*    
-*[History of changes](/changelog.txt)*
+*[History of changes](/changelog.txt)*    
+*See also project [Wiki](../../wiki)*
 
 ## Contents ##
 
@@ -181,7 +182,7 @@ Complete reference of class method can be found in [REFERENCE.md](REFERENCE.md).
 
 ## Examples and HOWTOs ##
 
-Have a look at the Howto section in the project [Wiki](Home).
+Have a look at the Howto section in the project [Wiki](../../wiki).
 
 A complete example can be found in [example/zmockup_loader_example.abap](/example/zmockup_loader_example.abap).
 
