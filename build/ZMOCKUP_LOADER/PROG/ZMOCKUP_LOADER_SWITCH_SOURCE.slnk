@@ -118,8 +118,8 @@ at selection-screen on p_mpath.
 
 at selection-screen.
   case sy-ucomm.
-      when&apos;FC01&apos;.          &quot;Get SU3 value
-      perform get_su3_value.
+    when &apos;FC01&apos;.          &quot;Get SU3 value
+    perform get_su3_value.
   endcase.
 
 *&amp;---------------------------------------------------------------------*

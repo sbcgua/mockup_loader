@@ -11,7 +11,8 @@ Legend
 v0.1.6, 2016-??
 ------------------
 + Text file encoding is not hardcoded UTF16 anymore but can be set in CLASS_SET_PARAMS. UTF16 is still the default.
-
++ More convenient forms of I_WHERE for LOAD_DATA. See Reference.md.
+* Improvements in unit tests
 
 v0.1.5, 2016-02-20
 ------------------

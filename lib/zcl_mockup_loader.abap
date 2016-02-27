@@ -53,18 +53,28 @@ public section.
     begin of ty_filter,
       name  type string,
       range type ref to data,
+      type  type char1,
     end of ty_filter .
   types:
     tt_filter type standard table of ty_filter with key name .
+  types:
+    begin of ty_where,
+      name  type string,
+      range type ref to data,
+    end of ty_where .
+  types:
+    tt_where type standard table of ty_where with key name .
 
   class-methods CLASS_CONSTRUCTOR .
   class-methods CLASS_SET_SOURCE
     importing
       !I_PATH type STRING
       !I_TYPE type CHAR4 .
+  type-pools ABAP .
   class-methods CLASS_SET_PARAMS
     importing
-      !I_AMT_FORMAT type CHAR2 .
+      !I_AMT_FORMAT type CHAR2 optional
+      !I_ENCODING type ABAP_ENCODING optional .
   class-methods GET_INSTANCE
     returning
       value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
@@ -79,7 +89,6 @@ public section.
       !E_CONTENT type XSTRING
     raising
       ZCX_MOCKUP_LOADER_ERROR .
-  type-pools ABAP .
   methods LOAD_AND_STORE
     importing
       !I_OBJ type STRING
@@ -119,12 +128,14 @@ public section.
 protected section.
 private section.
 
-  class-data G_AMT_FORMAT type CHAR2 .
   class-data GO_INSTANCE type ref to ZCL_MOCKUP_LOADER .
   data O_ZIP type ref to CL_ABAP_ZIP .
   data AT_STORE type TT_STORE .
   class-data G_MOCKUP_SRC_PATH type STRING .
   class-data G_MOCKUP_SRC_TYPE type CHAR4 .
+  class-data G_AMT_FORMAT type CHAR2 .
+  type-pools ABAP .
+  class-data G_ENCODING type ABAP_ENCODING .
 
   methods INITIALIZE
     raising
@@ -223,42 +234,105 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 * | [!CX!] ZCX_MOCKUP_LOADER_ERROR
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method BUILD_FILTER.
-  data ld_where type ref to cl_abap_structdescr.
-  data lt_comps type cl_abap_structdescr=>component_table.
-  data l_comp   like line of lt_comps.
+  data dy_templ      type ref to cl_abap_tabledescr.
+  data dy_type       type ref to cl_abap_typedescr.
+  data dy_struc      type ref to cl_abap_structdescr.
+  data dy_table      type ref to cl_abap_tabledescr.
 
-  data r_templ  type range of c.
-  data ld_rtemp type ref to cl_abap_tabledescr.
-  data ld_rcomp type ref to cl_abap_tabledescr.
+  data l_filter      type ty_filter.
+  data l_where       type ty_where.
+  data lt_filter     type tt_filter.
+  data lt_components type cl_abap_structdescr=>component_table.
+  data l_component   like line of lt_components.
 
-  data l_filter  type ty_filter.
-  field-symbols <range> type any table.
+  field-symbols <ftable> type any table.
+  field-symbols <cond>   type string.
 
-  " Check if filter is set of ranges
+  clear     e_filter.
+  dy_type   = cl_abap_typedescr=>describe_by_data( i_where ).
+  dy_templ ?= cl_abap_typedescr=>describe_by_name( 'SVER_TABLE_TYPE_VERI_RANGE' ).
+
   try.
-    ld_rtemp ?= cl_abap_typedescr=>describe_by_data( r_templ ).
-    ld_where ?= cl_abap_typedescr=>describe_by_data( i_where ). " Expect structure, cast_error otherwise
-    lt_comps  = ld_where->get_components( ).
-
-    loop at lt_comps into l_comp.
-      if l_comp-type->kind <> cl_abap_typedescr=>kind_table.
-        zcx_mockup_loader_error=>raise( msg = |I_WHERE must be a structure of ranges only| code = 'RO' ).   "#EC NOTEXT
+    case dy_type->type_kind.
+    when cl_abap_typedescr=>typekind_table. " Table -> expect tt_where
+      dy_table ?= dy_type.
+      dy_struc ?= dy_table->get_table_line_type( ).
+      if not dy_struc->absolute_name cs '\CLASS=ZCL_MOCKUP_LOADER\TYPE=TY_WHERE'.
+        zcx_mockup_loader_error=>raise( msg = |I_WHERE table must be of TT_WHERE type| code = 'WT' ).   "#EC NOTEXT
       endif.
 
-      ld_rcomp ?= l_comp-type.
-      if ld_rcomp->key ne ld_rtemp->key. " Not range-like structure ?
-        zcx_mockup_loader_error=>raise( msg = |I_WHERE must be a structure of ranges only| code = 'RO' ).   "#EC NOTEXT
+      assign i_where to <ftable>.
+      loop at <ftable> into l_where.
+        l_filter-name  = l_where-name.
+        l_filter-range = l_where-range.
+        l_filter-type  = 'R'. " Range
+        dy_table ?= cl_abap_typedescr=>describe_by_data_ref( l_filter-range ). " Assume table, cast_error otherwise
+        if dy_table->key ne dy_templ->key. " Not range ?
+          zcx_mockup_loader_error=>raise( msg = |I_WHERE-RANGE must be a range table| code = 'RT' ).   "#EC NOTEXT
+        endif.
+        append l_filter to lt_filter.
+      endloop.
+
+    when cl_abap_typedescr=>typekind_struct2.
+      dy_struc      ?= dy_type.
+
+      if dy_struc->absolute_name = '\CLASS=ZCL_MOCKUP_LOADER\TYPE=TY_WHERE'.
+        l_where        = i_where.
+        l_filter-name  = l_where-name.
+        l_filter-range = l_where-range.
+        l_filter-type  = 'R'. " Range
+        dy_table ?= cl_abap_typedescr=>describe_by_data_ref( l_filter-range ). " Assume table, cast_error otherwise
+        if dy_table->key ne dy_templ->key. " Not range ?
+          zcx_mockup_loader_error=>raise( msg = |I_WHERE-RANGE must be a range table| code = 'RT' ).   "#EC NOTEXT
+        endif.
+        append l_filter to lt_filter.
+
+      else.
+        lt_components  = dy_struc->get_components( ).
+        loop at lt_components into l_component.
+          if l_component-type->kind <> cl_abap_typedescr=>kind_table.
+            zcx_mockup_loader_error=>raise( msg = |I_WHERE must be a structure of ranges or TY_WHERE| code = 'WS' ).   "#EC NOTEXT
+          endif.
+
+          dy_table ?= l_component-type.
+          if dy_table->key ne dy_templ->key. " Not range-like structure ?
+            zcx_mockup_loader_error=>raise( msg = |I_WHERE must be a structure of ranges or TY_WHERE| code = 'WS' ).   "#EC NOTEXT
+          endif.
+
+          l_filter-name = l_component-name.
+          l_filter-type = 'R'. " Range
+          assign component l_component-name of structure i_where to <ftable>.
+          get reference of <ftable> into l_filter-range.
+          append l_filter to lt_filter.
+        endloop.
       endif.
 
-      l_filter-name = l_comp-name.
-      assign component l_comp-name of structure i_where to <range>.
-      get reference of <range> into l_filter-range.
-      append l_filter to e_filter.
-    endloop.
+    when cl_abap_typedescr=>typekind_char or cl_abap_typedescr=>typekind_string.
+      l_filter-type = 'S'. " String
+      create data l_filter-range type string.
+      assign l_filter-range->* to <cond>.
+
+      split i_where at '=' into l_filter-name <cond>.
+      shift l_filter-name right deleting trailing space.
+      shift l_filter-name left  deleting leading space.
+      shift <cond>        right deleting trailing space.
+      shift <cond>        left  deleting leading space.
+
+      if l_filter-name is initial or <cond> is initial.
+        zcx_mockup_loader_error=>raise( msg = |Incorrect I_WHERE string pattern| code = 'SP' ).   "#EC NOTEXT
+      endif.
+
+      append l_filter to lt_filter.
+
+    when others.
+      zcx_mockup_loader_error=>raise( msg = |Unsupported type { dy_type->absolute_name } of I_WHERE| code = 'UT' ).   "#EC NOTEXT
+    endcase.
 
   catch cx_sy_move_cast_error.
     zcx_mockup_loader_error=>raise( msg = |CX_SY_MOVE_CAST_ERROR @BUILD_FILTER()| code = 'CE' ).   "#EC NOTEXT
   endtry.
+
+  e_filter = lt_filter.
 
 endmethod.
 
@@ -269,20 +343,27 @@ endmethod.
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method class_constructor.
   class_set_source( i_type = 'MIME' i_path = '' ). " Defaults
-  class_set_params( i_amt_format = '' ). " Defaults
+  class_set_params( i_amt_format = '' i_encoding = '4103' ). " Defaults, UTF16
 endmethod.
 
 
 * <SIGNATURE>---------------------------------------------------------------------------------------+
 * | Static Public Method ZCL_MOCKUP_LOADER=>CLASS_SET_PARAMS
 * +-------------------------------------------------------------------------------------------------+
-* | [--->] I_AMT_FORMAT                   TYPE        CHAR2
+* | [--->] I_AMT_FORMAT                   TYPE        CHAR2(optional)
+* | [--->] I_ENCODING                     TYPE        ABAP_ENCODING(optional)
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method CLASS_SET_PARAMS.
   if i_amt_format is initial or g_amt_format+1(1) is initial. " Empty param or decimal separator
     g_amt_format = ' ,'. " Defaults
   else.
     g_amt_format = i_amt_format.
+  endif.
+
+  if i_encoding is initial.
+    g_encoding = '4103'. " UTF16
+  else.
+    g_encoding = i_encoding.
   endif.
 endmethod.
 
@@ -294,10 +375,10 @@ endmethod.
 * | [--->] I_TYPE                         TYPE        CHAR4
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method class_set_source.
-  check i_type = 'MIME' or i_type = 'FILE'. "TODO some more sophisticated error handling
-
-  g_mockup_src_type = i_type.
-  g_mockup_src_path = i_path.
+  if i_type = 'MIME' or i_type = 'FILE'. "TODO some more sophisticated error handling
+    g_mockup_src_type = i_type.
+    g_mockup_src_path = i_path.
+  endif.
 endmethod.
 
 
@@ -309,22 +390,30 @@ endmethod.
 * | [<-()] R_YESNO                        TYPE        ABAP_BOOL
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method DOES_LINE_FIT_FILTER.
+  data l_filter         type ty_filter.
   field-symbols <field> type any.
   field-symbols <range> type any table.
-  data l_filter type ty_filter.
+  field-symbols <cond>  type string.
 
   r_yesno = abap_true.
 
   loop at i_filter into l_filter.
     assign component l_filter-name of structure i_line to <field>.
     check <field> is assigned. " Just skip irrelevant ranges
-    assign l_filter-range->* to <range>.
 
-    if not <field> in <range>.
+    if l_filter-type = 'R'.               " Range
+      assign l_filter-range->* to <range>.
+    else.                                 " String
+      assign l_filter-range->* to <cond>.
+    endif.
+
+    if <range> is assigned and not <field> in <range>
+    or <cond>  is assigned and not <field> = <cond>. " cx_sy_conversion_error does not catch that :(
       r_yesno = abap_false.
       exit.
     endif.
-    unassign <field>.
+
+    unassign: <field>, <range>, <cond>.
   endloop.
 
 endmethod.
@@ -351,7 +440,7 @@ method get_instance.
 
   if go_instance is initial.
     create object go_instance.
-    call method go_instance->initialize.
+    go_instance->initialize( ).
   endif.
 
   ro_instance = go_instance.
@@ -453,9 +542,8 @@ method INITIALIZE.
     create object o_zip.
   endif.
 
-  call method o_zip->load
-    exporting  zip    = l_xstring
-    exceptions others = 4.
+  o_zip->load( exporting  zip    = l_xstring
+               exceptions others = 4 ).
 
   if sy-subrc is not initial or lines( o_zip->files ) = 0.
     zcx_mockup_loader_error=>raise( msg = 'ZIP load failed' code = 'ZE' ).  "#EC NOTEXT
@@ -482,10 +570,10 @@ method load_and_store.
   field-symbols <data> type data.
 
   " Create container to load zip data to
-  call method cl_abap_typedescr=>describe_by_name
+  cl_abap_typedescr=>describe_by_name(
     exporting  p_name      = i_type
     receiving  p_descr_ref = lo_type
-    exceptions others      = 4.
+    exceptions others      = 4 ).
 
   if sy-subrc is not initial.
     zcx_mockup_loader_error=>raise( msg = |Type { i_type } not found|  code = 'WT' ). "#EC NOTEXT
@@ -495,23 +583,15 @@ method load_and_store.
 
   create data lr_data type handle lo_dtype.
   assign lr_data->* to <data>.
-  if <data> is not assigned.
-    zcx_mockup_loader_error=>raise( 'Data cannot be assigned' ). "#EC NOTEXT
-  endif.
 
   " Load from zip and store
-  call method load_data
-    exporting
-      i_obj       = i_obj
-      i_strict    = i_strict
-    importing
-      e_container = <data>.
+  me->load_data( exporting i_obj       = i_obj
+                           i_strict    = i_strict
+                 importing e_container = <data> ).
 
-  call method _store
-    exporting
-      i_name     = i_name
-      i_data_ref = lr_data
-      i_tabkey   = i_tabkey.
+  me->_store( i_name     = i_name
+              i_data_ref = lr_data
+              i_tabkey   = i_tabkey ).
 
 endmethod.
 
@@ -532,17 +612,13 @@ method load_data.
     zcx_mockup_loader_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
   endif.
 
-  call method me->read_zip
-    exporting i_name    = i_obj && '.txt'
-    importing e_rawdata = l_rawdata.
+  me->read_zip( exporting i_name    = i_obj && '.txt'
+                importing e_rawdata = l_rawdata ).
 
-  call method me->parse_data
-    exporting
-      i_rawdata   = l_rawdata
-      i_strict    = i_strict
-      i_where     = i_where
-    importing
-      e_container = e_container.
+  me->parse_data( exporting i_rawdata   = l_rawdata
+                            i_strict    = i_strict
+                            i_where     = i_where
+                  importing e_container = e_container ).
 
 endmethod.
 
@@ -568,9 +644,8 @@ method load_raw.
     l_filename = i_obj && i_ext.
   endif.
 
-  call method o_zip->get
-    exporting name    = l_filename
-    importing content = e_content.
+  o_zip->get( exporting name    = l_filename
+              importing content = e_content ).
 
 endmethod.
 
@@ -726,9 +801,8 @@ method parse_data.
 
   " Build filter hash if supplied
   if i_where is not initial.
-    call method build_filter
-      exporting i_where  = i_where
-      importing e_filter = lt_filter.
+    me->build_filter( exporting i_where  = i_where
+                      importing e_filter = lt_filter ).
   endif.
 
   " Read and process header line
@@ -743,13 +817,10 @@ method parse_data.
 
   delete lt_lines index 1.
 
-  call method me->map_file_structure
-    exporting
-      i_line         = ls_line
-      io_struc_descr = lo_struc_descr
-      i_strict       = i_strict
-    importing
-      et_map         = lt_map.
+  me->map_file_structure( exporting i_line         = ls_line
+                                    io_struc_descr = lo_struc_descr
+                                    i_strict       = i_strict
+                          importing et_map         = lt_map ).
 
   " Main data parsing loop
   loop at lt_lines into ls_line.
@@ -758,14 +829,11 @@ method parse_data.
       zcx_mockup_loader_error=>raise( msg = |Empty line { sy-tabix + 1 } cannot be parsed|  code = 'LE' ). "#EC NOTEXT
     endif.
 
-    call method parse_line
-      exporting
-        i_line         = ls_line
-        io_struc_descr = lo_struc_descr
-        it_map         = lt_map
-        i_index        = sy-tabix + 1
-      importing
-        es_container   = <container>.
+    me->parse_line( exporting i_line         = ls_line
+                              io_struc_descr = lo_struc_descr
+                              it_map         = lt_map
+                              i_index        = sy-tabix + 1
+                    importing es_container   = <container> ).
 
     if does_line_fit_filter( i_line = <container> i_filter = lt_filter ) = abap_true.
       if lo_type_descr->kind = 'S'. " Structure
@@ -809,12 +877,9 @@ method parse_field.
         e_field = i_data.
       else.
         shift l_mask left deleting leading '='.
-        call method me->parse_apply_exit
-          exporting
-            i_data     = i_data
-            i_convexit = l_mask
-          importing
-            e_field    = e_field.
+        me->parse_apply_exit( exporting i_data     = i_data
+                                        i_convexit = l_mask
+                              importing e_field    = e_field ).
       endif.
 
     when 'g'. " String
@@ -936,12 +1001,9 @@ method parse_line.
       zcx_mockup_loader_error=>raise( 'Field assign failed?!' ). "#EC NOTEXT
     endif.
 
-    call method parse_field
-      exporting
-        is_component = ls_component
-        i_data       = ls_field
-      importing
-        e_field      = <field>.
+    me->parse_field( exporting is_component = ls_component
+                               i_data       = ls_field
+                     importing e_field      = <field> ).
 
   endloop.
 
@@ -964,9 +1026,10 @@ method purge.
 
   else.            " Delete specific record
     read table at_store with key name = i_name into l_store.
-    check sy-subrc is initial.
-    delete at_store index sy-tabix.
-    free l_store-data.
+    if sy-subrc is initial.
+      delete at_store index sy-tabix.
+      free l_store-data.
+    endif.
   endif.
 
 endmethod.
@@ -985,10 +1048,9 @@ method read_zip.
         lo_conv   type ref to cl_abap_conv_in_ce,
         l_ex      type ref to cx_root.
 
-  call method o_zip->get
-    exporting  name            = i_name
-    importing  content         = l_xstring
-    exceptions zip_index_error = 1.
+  o_zip->get( exporting  name            = i_name
+              importing  content         = l_xstring
+              exceptions zip_index_error = 1 ).
 
   if sy-subrc is not initial.
     zcx_mockup_loader_error=>raise( msg = |Cannot read { i_name }| code = 'ZF' ). "#EC NOTEXT
@@ -997,7 +1059,7 @@ method read_zip.
   shift l_xstring left deleting leading  cl_abap_char_utilities=>byte_order_mark_little in byte mode.
 
   try.
-    lo_conv = cl_abap_conv_in_ce=>create( encoding = '4103' ). " UTF16
+    lo_conv = cl_abap_conv_in_ce=>create( encoding = g_encoding ).
     lo_conv->convert( exporting input = l_xstring importing data = e_rawdata ).
   catch cx_root into l_ex.
     zcx_mockup_loader_error=>raise( msg = 'Codepage conversion error' code = 'CP' ). "#EC NOTEXT
@@ -1018,18 +1080,18 @@ method retrieve.
   data lo_ex type ref to zcx_mockup_loader_error.
 
   try .
-    get_instance( )->_retrieve(
-      exporting i_name = i_name
-                i_sift = i_sift
-      importing e_data = e_data ).
+    get_instance( )->_retrieve( exporting i_name = i_name
+                                          i_sift = i_sift
+                                importing e_data = e_data ).
 
   catch zcx_mockup_loader_error into lo_ex.
 
     " Switch to non-class exceptions to ensure better code readability
     " and compatibility with substituted select results
     " e.g. zcl_mockup_loader=>retrieve( ... ). if sy_subrc is not initial ...
-    call method cl_message_helper=>set_msg_vars_for_if_t100_msg exporting text = lo_ex.
-    message id sy-msgid type sy-msgty number sy-msgno raising retrieve_error
+    cl_message_helper=>set_msg_vars_for_if_t100_msg( text = lo_ex ).
+    message id sy-msgid type sy-msgty number sy-msgno
+      raising retrieve_error
       with sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
 
   endtry.
@@ -1052,17 +1114,12 @@ method store.
   " Create clone container
   create data lr_data like i_data.
   assign lr_data->* to <data>.
-  if <data> is not assigned.
-    zcx_mockup_loader_error=>raise( 'Data cannot be assigned' ). "#EC NOTEXT
-  endif.
 
   <data> = i_data. " Copy data to container
 
-  call method _store
-    exporting
-      i_name     = i_name
-      i_data_ref = lr_data
-      i_tabkey   = i_tabkey.
+  me->_store( i_name     = i_name
+              i_data_ref = lr_data
+              i_tabkey   = i_tabkey ).
 
 endmethod.
 
@@ -1101,9 +1158,6 @@ method _retrieve.
   endif.
 
   assign l_store-data->* to <data>.
-  if <data> is not assigned.
-    zcx_mockup_loader_error=>raise( 'Data cannot be assigned' ). "#EC NOTEXT
-  endif.
 
   " Ensure types are the same
   ld_src = cl_abap_typedescr=>describe_by_data( <data> ).
@@ -1196,7 +1250,8 @@ method _store.
       zcx_mockup_loader_error=>raise( msg = 'Tabkey is relevant for tables only' code = 'TO' ). "#EC NOTEXT
     endif.
 
-    lo_tab_type ?= lo_type. lo_str_type ?= lo_tab_type->get_table_line_type( ).
+    lo_tab_type ?= lo_type.
+    lo_str_type ?= lo_tab_type->get_table_line_type( ).
 
     read table lo_str_type->components with key name = i_tabkey transporting no fields.
     if sy-subrc <> 0.

@@ -35,8 +35,8 @@ report zmockup_loader_example.
 class lcl_context definition final create private.
 
   public section.
-    data a_carrid  type sflight-carrid read-only. " Some settings for the production code
-    data a_testenv type abap_bool read-only.      " Indicates execution in test environment
+    data a_carrid  type sflight-carrid read-only.       " Indicates execution in test environment
+    data a_testenv type abap_bool read-only.
 
     class-methods get_instance
       returning value(ro_instance) type ref to lcl_context.
@@ -45,7 +45,7 @@ class lcl_context definition final create private.
       importing i_carrid type sflight-carrid.
 
   private section.
-    class-data go_instance type ref to lcl_context.
+    class-data go_instance type ref to lcl_context.     " Some settings for the production code
 
 endclass.  " lcl_context
 
@@ -122,7 +122,7 @@ class lcl_test definition for testing duration short
 
   public section.
     types:
-      begin of ty_testcase,
+      begin of ty_testcase, " test case structure
         testid   type i,
         type     type char1,
         connid   type sflight-connid,
@@ -186,13 +186,10 @@ class lcl_test implementation.
     endtry.
 
     loop at lt_testcases into ls_case. " Loop through test catalog and run tests
-      call method o->get_price
-        exporting
-          i_connid = ls_case-connid
-          i_date   = '20150101'
-        receiving
-          r_price  = l_result
-        exceptions others = 4.
+      o->get_price( exporting i_connid = ls_case-connid
+                              i_date   = '20150101'
+                    receiving r_price  = l_result
+                    exceptions others = 4 ).
 
       if ls_case-type = '+'. " Positive test
         assert_subrc(  act = sy-subrc  exp = 0
