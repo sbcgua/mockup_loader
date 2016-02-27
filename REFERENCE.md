@@ -31,9 +31,11 @@ call method zcl_mockup_loader=>class_set_source
 ```abap
 importing
   I_AMT_FORMAT type CHAR2 
+  I_ENCODING   type ABAP_ENCODING
 ```
 
 - **I_AMT_FORMAT** - amount separators. First character defines thousand separator, the second one defines decimal separator. E.g. `'.,'` would suppose amounts like `123.000,12`. Empty parameter resets to default - `' ,'`. The second character cannot be empty - this also resets the format to defaults.
+- **I_ENCODING** - encoding of text files in zip. Default is 4103 which is UTF16. See table `TCP00` for list of ABAP encodings.
 
 The method is **static** and should be called in `CLASS_SETUP` method of a test class.
 

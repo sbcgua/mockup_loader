@@ -8,7 +8,12 @@ Legend
 + : added
 - : removed
 
-v0.1.5, 2016-02-??
+v0.1.6, 2016-??
+------------------
++ Text file encoding is not hardcoded UTF16 anymore but can be set in CLASS_SET_PARAMS. UTF16 is still the default.
+
+
+v0.1.5, 2016-02-20
 ------------------
 * Minor fixes
 + New filter feature for LOAD_DATA. Now you can pass I_WHERE parameter - a structure of ranges - to filter the output. One of purposes is extracting expected values in a multi-case test (when a table contains answers for several cases). See LOAD_DATA section in REFERENCE.md for more details and also how-to at wiki pages.
