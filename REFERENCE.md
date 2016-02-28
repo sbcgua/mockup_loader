@@ -70,7 +70,7 @@ endtry.
 
 ### FREE_INSTANCE (static) ###
 
-Frees the instance for whatever reason you might need it (never used in our code by now ;). 
+Frees the instance for whatever reason you might need it. 
 
 
 ### LOAD_DATA (instance) ###
@@ -88,7 +88,7 @@ exporting
     - Files must be in **Unicode** encoding (UTF16).
 - **I_STRICT** - suggests if the structure of the file must strictly correspond to the structure of target container. The call **always** validates that all fields in the text file are present in target structure. `I_STRICT` = 'True' **additionally** means that the number of fields is the same as in the target structure.
     - One exception is `MANDT` field. It may be skipped in a text file even for strict validation. So a text file with all structure fields but MANDT is still considered as strictly equal.
-- **I_WHERE** - a structure of range tables which are used to filter the output. Component of the structure must be named after target table fields. The structure may contain ONLY ranges. The structure may contain components (names) which are missing in the target table - they are just ignored. See a code example below.   
+- **I_WHERE** - optional condition to filter the sourse table. See "Using filtering" section below for details.   
 - **E_CONTAINER** - container for the data. Can be table or structure. In the latter case just the first data line of the file is parsed, no error is thrown if there are more lines in case like that.   
 
 The method assumes that field names are specified in the first line of the text file and are **capitalized**. The order is not important and can be mixed. `MANDT` field, if present, is ignored (no value transferred).
@@ -114,7 +114,20 @@ catch zcx_mockup_loader_error into lo_ex.
 endtry.
 ```
 
-Using `I_WHERE`.
+**Using filtering**
+
+`I_WHERE` accepts several kinds of input:
+
+1. A string condition in form of `"A=B"`, where `A` is a name of a target table filed to filter and `B` is alowed value (all others will be filtered out). If `A` is missing in the target table - it is just ignored. Be aware that `B` is not types so it may result in dump if used improperly. `'='` may contain spaces around it.
+
+```abap
+  call method o_ml->load_data
+    exporting i_obj       = 'TEST1/BSEG'
+              i_where     = 'BELNR = 0000000010'
+    importing e_container = lt_bseg.
+```
+
+2. A structure of range tables which are used to filter the output. Component of the structure must be named after target table fields. The structure may contain ONLY ranges. The structure may contain components (names) which are missing in the target table - they are just ignored. 
 
 ```abap
 data:
@@ -127,16 +140,43 @@ data:
   rl_belnr-option = 'EQ'.
   rl_belnr-low    = '0000000010'.
   append rl_belnr to l_where-belnr.
-
 ...
   call method o_ml->load_data
     exporting i_obj       = 'TEST1/BSEG'
-              i_strict    = abap_false
               i_where     = l_where
     importing e_container = lt_bseg.
-...
 ```
+
+3. A structure of `ZCL_MOCKUP_LOADER=>TY_WHERE` or a table of `TT_WHERE`, where each line contain a filter (applied simultaneously in case of table => AND). `NAME` component should contain target table field name (ignored if missing in target table). `RANGE` is a reference to a range table. (we assume it should be convenient and well-readable in 7.40+ environments).
  
+```abap
+data:
+      where_tab type zcl_mockup_loader=>tt_where,
+      l_where   type zcl_mockup_loader=>ty_where,
+      belnr_rng type range of belnr_d,
+      r_belnr   like line of rt_belnr,
+
+  r_belnr-sign   = 'I'.
+  r_belnr-option = 'EQ'.
+  r_belnr-low    = '0000000010'.
+  append r_belnr to belnr_rng.
+
+  l_where-name  = 'BELNR'.
+  get reference of range_rng into l_where-range.
+  append l_where to where_tab. 
+...
+  call method o_ml->load_data
+    exporting i_obj       = 'TEST1/BSEG'
+              i_where     = l_where
+    importing e_container = lt_bseg.
+  " OR
+  call method o_ml->load_data
+    exporting i_obj       = 'TEST1/BSEG'
+              i_strict    = abap_false
+              i_where     = where_tab
+    importing e_container = lt_bseg.
+
+```
 
 ### LOAD_RAW (instance) ###
 
@@ -189,6 +229,7 @@ endtry.
 importing
   I_NAME type CHAR40
   I_SIFT type CLIKE optional
+  I_WHERE type ANY optional
 exporting
   E_DATA type ANY
 exceptions
@@ -199,7 +240,8 @@ exceptions
 - **E_DATA** - container to retrieve data to. The type of stored and retrieved data must be identical. Tables, however, are checked for the identical line type. So:
     - Standard/Sorted/Hashed table type are compatible (can be saved as standard and retrieved as sorted)
     - Types like `BKPF_TAB` (dictionary table type) and variables `type table of BKPF` are also compatible
-- **I_SIFT** - the value which is used to filter stored table data to the `E_DATA` container. Only lines where TABKEY field (see `STORE` method) equals to `I_SIFT` value will be retrieved.     
+- **I_SIFT** - the value which is used to filter stored table data to the `E_DATA` container. Only lines where TABKEY field (see `STORE` method) equals to `I_SIFT` value will be retrieved.    
+- **I_WHERE** - alternative filtering method to `I_SIFT`. Cannot be used simultaneously. See `LOAD_DATA()` method description for more details.  
 
 **E_DATA** can be table or structure. In the latter case just the first line of the stored data (optionally, filtered with `I_SIFT`) is retrieved.
 

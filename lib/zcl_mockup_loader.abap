@@ -114,6 +114,7 @@ public section.
     importing
       !I_NAME type CHAR40
       !I_SIFT type CLIKE optional
+      !I_WHERE type ANY optional
     exporting
       !E_DATA type ANY
     exceptions
@@ -215,6 +216,7 @@ private section.
     importing
       !I_NAME type CHAR40
       !I_SIFT type CLIKE optional
+      !I_WHERE type ANY optional
     exporting
       !E_DATA type ANY
     raising
@@ -1056,7 +1058,13 @@ method read_zip.
     zcx_mockup_loader_error=>raise( msg = |Cannot read { i_name }| code = 'ZF' ). "#EC NOTEXT
   endif.
 
-  shift l_xstring left deleting leading  cl_abap_char_utilities=>byte_order_mark_little in byte mode.
+  " Remove unicide signatures
+  case g_encoding.
+    when '4110'. " UTF-8
+      shift l_xstring left deleting leading  cl_abap_char_utilities=>byte_order_mark_utf8 in byte mode.
+    when '4103'. " UTF-16LE
+      shift l_xstring left deleting leading  cl_abap_char_utilities=>byte_order_mark_little in byte mode.
+  endcase.
 
   try.
     lo_conv = cl_abap_conv_in_ce=>create( encoding = g_encoding ).
@@ -1073,6 +1081,7 @@ endmethod.
 * +-------------------------------------------------------------------------------------------------+
 * | [--->] I_NAME                         TYPE        CHAR40
 * | [--->] I_SIFT                         TYPE        CLIKE(optional)
+* | [--->] I_WHERE                        TYPE        ANY(optional)
 * | [<---] E_DATA                         TYPE        ANY
 * | [EXC!] RETRIEVE_ERROR
 * +--------------------------------------------------------------------------------------</SIGNATURE>
@@ -1080,9 +1089,10 @@ method retrieve.
   data lo_ex type ref to zcx_mockup_loader_error.
 
   try .
-    get_instance( )->_retrieve( exporting i_name = i_name
-                                          i_sift = i_sift
-                                importing e_data = e_data ).
+    get_instance( )->_retrieve( exporting i_name  = i_name
+                                          i_sift  = i_sift
+                                          i_where = i_where
+                                importing e_data  = e_data ).
 
   catch zcx_mockup_loader_error into lo_ex.
 
@@ -1129,12 +1139,14 @@ endmethod.
 * +-------------------------------------------------------------------------------------------------+
 * | [--->] I_NAME                         TYPE        CHAR40
 * | [--->] I_SIFT                         TYPE        CLIKE(optional)
+* | [--->] I_WHERE                        TYPE        ANY(optional)
 * | [<---] E_DATA                         TYPE        ANY
 * | [!CX!] ZCX_MOCKUP_LOADER_ERROR
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method _retrieve.
   data:
         l_store     type ty_store,
+        lt_filter   type tt_filter,
         r_data_tab  type ref to data,
         ld_src      type ref to cl_abap_typedescr,
         ld_dst      type ref to cl_abap_typedescr,
@@ -1151,6 +1163,11 @@ method _retrieve.
 
   clear e_data.
 
+  " Validate parameters
+  if i_sift is not initial and i_where is not initial.
+    zcx_mockup_loader_error=>raise( msg = |Pass just one filter param| code = 'WP' ). "#EC NOTEXT
+  endif.
+
   " Find store
   read table at_store with key name = i_name into l_store.
   if sy-subrc is not initial.
@@ -1158,6 +1175,18 @@ method _retrieve.
   endif.
 
   assign l_store-data->* to <data>.
+
+  " Build filter
+  if i_sift is not initial.
+    if l_store-tabkey is initial.
+      zcx_mockup_loader_error=>raise( msg = 'Tabkey field not found' code = 'FM' ). "#EC NOTEXT
+    endif.
+    build_filter( exporting i_where  = l_store-tabkey && '=' && i_sift
+                  importing e_filter = lt_filter ).
+  elseif i_where is not initial.
+    build_filter( exporting i_where  = i_where
+                  importing e_filter = lt_filter ).
+  endif.
 
   " Ensure types are the same
   ld_src = cl_abap_typedescr=>describe_by_data( <data> ).
@@ -1168,12 +1197,17 @@ method _retrieve.
     ld_src_line ?= ld_tab->get_table_line_type( ).
   endif.
 
+  " Ensure filter is applied to a table
+  if lt_filter is not initial and ld_src->kind <> 'T'.
+    zcx_mockup_loader_error=>raise( msg = 'Filtering is relevant for tables only' code = 'TO' ). "#EC NOTEXT
+  endif.
+
   " If types are not equal try going deeper to table line structure
   if ld_src->absolute_name ne ld_dst->absolute_name.
     if ld_src->kind = 'T' and ld_dst->kind = 'T'. " Table => Table
       ld_tab      ?= ld_dst.
       ld_dst_line ?= ld_tab->get_table_line_type( ).
-    elseif i_sift is not initial and ld_src->kind = 'T' and ld_dst->kind = 'S'. " Table + filter => Structure
+    elseif lt_filter is not initial and ld_src->kind = 'T' and ld_dst->kind = 'S'. " Table + filter => Structure
       ld_dst_line ?= ld_dst.
     else.
       zcx_mockup_loader_error=>raise( msg = |Types differ for store { i_name }| code = 'TT' ). "#EC NOTEXT
@@ -1185,40 +1219,38 @@ method _retrieve.
   endif.
 
   " Copy or sift (filter with tabkey) values
-  if i_sift is initial.
+  if lt_filter is initial.
     e_data = <data>.
 
   else. " Assuming ld_src->kind = 'T' -> see STORE
-    assert ld_src->kind = 'T'.
     assert ld_dst->kind ca 'ST'.
     assign l_store-data->* to <src_tab>.
 
-    case ld_dst->kind.
-    when 'T'. " Table
-      " Create temporary table (needed because DST table can be hashed or sorted)
-      ld_tab = cl_abap_tabledescr=>create(
-                  p_line_type  = ld_src_line
-                  p_table_kind = cl_abap_tabledescr=>tablekind_std
-                  p_unique     = abap_false ).
+    if ld_dst->kind = 'T'.
+      ld_tab = cl_abap_tabledescr=>create( p_line_type  = ld_src_line
+                                           p_table_kind = cl_abap_tabledescr=>tablekind_std
+                                           p_unique     = abap_false ).
 
       create data r_data_tab type handle ld_tab.
       assign r_data_tab->* to <tmp_tab>.
+    endif.
 
-      loop at <src_tab> assigning <line>.
-        assign component l_store-tabkey of structure <line> to <tabkey>.
-        if <tabkey> is not assigned.
-          zcx_mockup_loader_error=>raise( msg = 'Tabkey field not found' code = 'FM' ). "#EC NOTEXT
+    loop at <src_tab> assigning <line>.
+      if does_line_fit_filter( i_line = <line> i_filter = lt_filter ) = abap_true.
+        if ld_dst->kind = 'S'. " Structure
+          e_data = <line>.
+          exit. " Only first line goes to structure and then exits
+        else. " Table
+          append <line> to <tmp_tab>.
         endif.
-        check <tabkey> = i_sift.
-        append <line> to <tmp_tab>.
-      endloop.
+      endif.
+    endloop.
 
+    if ld_dst->kind = 'T'.
       e_data = <tmp_tab>.
       free r_data_tab.
+    endif.
 
-    when 'S'. " Structure
-      read table <src_tab> into e_data with key (l_store-tabkey) = i_sift. "#EC CI_ANYSEQ
-    endcase.
   endif.
 
   if e_data is initial.

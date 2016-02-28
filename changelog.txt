@@ -8,11 +8,13 @@ Legend
 + : added
 - : removed
 
-v0.1.6, 2016-??
+v0.1.6, 2016-03-??
 ------------------
 + Text file encoding is not hardcoded UTF16 anymore but can be set in CLASS_SET_PARAMS. UTF16 is still the default.
 + More convenient forms of I_WHERE for LOAD_DATA. See Reference.md.
-* Improvements in unit tests
++ Added I_WHERE logic to _RETRIEVE.
+! Refactored _RETRIEVE logic.
+* Improvements in unit tests - increased coverage to nearly 100%.
 
 v0.1.5, 2016-02-20
 ------------------

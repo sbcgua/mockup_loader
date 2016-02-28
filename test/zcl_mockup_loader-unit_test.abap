@@ -129,6 +129,7 @@ class lcl_test_mockup_loader definition for testing
     methods: read_zip                 for testing.
     methods: integrated_test          for testing.
     methods: source_redirect_test     for testing.
+    methods: utf16_encoding           for testing.
 
     methods: parse_data               for testing.
     methods: parse_field              for testing.
@@ -139,6 +140,7 @@ class lcl_test_mockup_loader definition for testing
     methods: store_retrieve           for testing.
     methods: retrieve_types           for testing.
     methods: store_retrieve_with_key  for testing.
+    methods: store_retrieve_with_where for testing.
     methods: load_and_store           for testing.
     methods: load_raw                 for testing.
     methods: parse_apply_exit         for testing.
@@ -176,6 +178,7 @@ class lcl_test_mockup_loader implementation.
     endif.
 
     zcl_mockup_loader=>class_set_source( i_type = 'MIME' i_path = 'ZMOCKUP_LOADER_UNIT_TEST' ).
+    zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4110' ). " fmt = default, enc = utf-8
   endmethod.       "class_setup
 
   method setup.
@@ -325,9 +328,9 @@ class lcl_test_mockup_loader implementation.
     l_path = 'ZMOCKUP_LOADER_WRONG_OBJECT'.
     set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
     set parameter id 'ZMOCKUP_LOADER_SPATH' field l_path.
+    o->free_instance( ).
 
     try.
-      o->free_instance( ).
       o = zcl_mockup_loader=>get_instance( ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
@@ -335,10 +338,37 @@ class lcl_test_mockup_loader implementation.
     clear l_type.
     set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
     set parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_tmp.
+    o->free_instance( ).
 
     assert_excode 'RE'.
 
   endmethod.       " source_redirect_test
+
+**********************************************************************
+* Check Unicode encoding parsing
+**********************************************************************
+  method utf16_encoding.
+    data:
+          dummy_tab_act  type tt_dummy,
+          dummy_tab_exp  type tt_dummy,
+          lo_ex          type ref to zcx_mockup_loader_error.
+
+    get_dummy_data( importing e_dummy_tab   = dummy_tab_exp ).
+
+    try.
+      zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4103' ). " UTF16
+      call method o->load_data
+        exporting i_obj       = 'testdir/testfile_complete_utf16'
+        importing e_container = dummy_tab_act.
+      zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4110' ). " Back to SETUP defaults
+    catch zcx_mockup_loader_error into lo_ex.
+      zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4110' ). " Back to SETUP defaults
+      fail( lo_ex->get_text( ) ).
+    endtry.
+
+    assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+
+  endmethod. "utf16_encoding
 
 **********************************************************************
 * Test of data parser - dummy data is supplied to the tested method
@@ -452,6 +482,19 @@ class lcl_test_mockup_loader implementation.
     endtry.
     assert_excode 'DT'.
 
+    " Parse empty file ************************************
+    clear lo_ex.
+    clear l_string.
+
+    try.
+      call method o->parse_data
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_tab_act.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'NH'.
+
+
   endmethod.       "parse_Data
 
 **********************************************************************
@@ -527,7 +570,7 @@ class lcl_test_mockup_loader implementation.
     test_parse_negative TDECIMAL '1 234,12'.
     test_parse_negative TDECIMAL '1.234,12'.
 
-    zcl_mockup_loader=>class_set_params( i_amt_format = '' ). " Set defaults back
+    zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4110' ). " Set defaults back
 
 
   endmethod.       "parse_Field
@@ -537,33 +580,40 @@ class lcl_test_mockup_loader implementation.
 **********************************************************************
   method read_zip.
     data:
-          l_filename type string,
           l_str      type string,
           lo_ex      type ref to zcx_mockup_loader_error.
 
     assert_not_initial( act = lines( o->o_zip->files ) ).
 
-    l_filename = 'testdir/testfile_complete.txt'.
-
     " Positive ***************************************
     try.
       call method o->read_zip
-        exporting i_name    = l_filename
+        exporting i_name    = 'testdir/testfile_complete.txt'
         importing e_rawdata = l_str.
     catch zcx_mockup_loader_error into lo_ex.
       fail( lo_ex->get_text( ) ).
     endtry.
     assert_not_initial( act = l_str ).
 
-    " Negative ***************************************
-    l_filename = l_filename && 'XYZ'.
+    " NEGATIVE - wrong file name **********************
+    clear lo_ex.
     try.
       call method o->read_zip
-        exporting i_name    = l_filename
+        exporting i_name    = 'testdir/wrong_filename.xyz'
         importing e_rawdata = l_str.
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'ZF'.
+
+    " NEGATIVE - wrong code page **********************
+    clear lo_ex.
+    try.
+      call method o->read_zip
+        exporting i_name    = 'testdir/testfile_complete_utf16.txt'
+        importing e_rawdata = l_str.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'CP'.
 
   endmethod.        " read_zip
 
@@ -1120,9 +1170,13 @@ class lcl_test_mockup_loader implementation.
     endloop.
   endmethod.       " filter_helper
 
+**********************************************************************
+* LOAD_RAW - test load only method e.g. for XMLs
+**********************************************************************
   method load_raw.
     data:
-          lo_ex      type ref to cx_root,
+          lo_exr     type ref to cx_root,
+          lo_ex      type ref to zcx_mockup_loader_error,
           l_str_exp  type string,
           l_xstr_act type xstring,
           l_str_act  type string,
@@ -1130,20 +1184,39 @@ class lcl_test_mockup_loader implementation.
 
     l_str_exp = '<?xml version="1.0"?><mytag>mydata</mytag>'.
 
-    try .
+    try. " .XML
+      lo_conv = cl_abap_conv_in_ce=>create( encoding = '4110' ).
       o->load_raw( exporting i_obj = 'testdir/test_raw'
                              i_ext = '.xml'
                    importing e_content = l_xstr_act ).
-      lo_conv = cl_abap_conv_in_ce=>create( encoding = '4110' ).
       lo_conv->convert( exporting input = l_xstr_act importing data = l_str_act ).
-    catch cx_root into lo_ex.
+    catch cx_root into lo_exr.
       fail( lo_ex->get_text( ) ).
     endtry.
 
     assert_equals( act = l_str_act exp = l_str_exp ).
 
+    try. " .TXT
+      o->load_raw( exporting i_obj = 'testdir/test_raw'
+                   importing e_content = l_xstr_act ).
+      lo_conv->convert( exporting input = l_xstr_act importing data = l_str_act ).
+    catch cx_root into lo_exr.
+      fail( lo_ex->get_text( ) ).
+    endtry.
+
+    assert_equals( act = l_str_act exp = l_str_exp ).
+
+    try. " No container
+      o->load_raw( exporting i_obj = 'testdir/test_raw' ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'NC'.
+
   endmethod. "load_raw
 
+**********************************************************************
+* PARSE_APPLY_EXIT - apply exit test
+**********************************************************************
   method parse_apply_exit.
     data:
           l_dummy  type ty_dummy,
@@ -1170,5 +1243,60 @@ class lcl_test_mockup_loader implementation.
     assert_excode 'EM'.
 
   endmethod. "parse_apply_exit
+
+**********************************************************************
+* STORE_RETRIEVE_WITH_WHERE - New logic with i_where in store
+**********************************************************************
+  method store_retrieve_with_where.
+    data:
+          dummy_exp      type ty_dummy,
+          dummy_tab_exp  type tt_dummy,
+          dummy_act      type ty_dummy,
+          lo_ex          type ref to zcx_mockup_loader_error.
+
+    get_dummy_data( importing e_dummy_tab   = dummy_tab_exp ).
+    read table dummy_tab_exp into dummy_exp with key tnumber = '2016'.
+
+    " POSITIVE - use i_where
+    try .
+      o->store( i_name = 'STRUC' i_data = dummy_exp ).
+      o->store( i_name = 'TAB'   i_data = dummy_tab_exp ).
+
+      o->_retrieve( exporting i_name = 'TAB' i_where = 'TNUMBER=2016'
+                    importing e_data = dummy_act ).
+    catch zcx_mockup_loader_error into lo_ex.
+      fail( lo_ex->get_text( ) ).
+    endtry.
+    assert_equals( act = dummy_act exp = dummy_exp ).
+
+    " NEGATIVE - Pass both filter simultaneously
+    clear lo_ex.
+    try .
+      o->_retrieve( exporting i_name = 'TAB' i_sift = 'X' i_where = 'Y'
+                    importing e_data = dummy_act ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'WP'.
+
+    " NEGATIVE - Store without tab key
+    clear lo_ex.
+    try .
+      o->_retrieve( exporting i_name = 'TAB' i_sift = 'X'
+                    importing e_data = dummy_act ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'FM'.
+
+    " NEGATIVE - Filter tables only
+    clear lo_ex.
+    try .
+      o->_retrieve( exporting i_name = 'STRUC' i_where = 'TNUMBER=2016'
+                    importing e_data = dummy_act ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'TO'.
+
+
+  endmethod. "store_retrieve_with_where
 
 endclass.       "lcl_Test_Mockup_Loader
