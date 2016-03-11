@@ -114,7 +114,7 @@ catch zcx_mockup_loader_error into lo_ex.
 endtry.
 ```
 
-**Using filtering**
+#### Using filtering ####
 
 `I_WHERE` accepts several kinds of input:
 
