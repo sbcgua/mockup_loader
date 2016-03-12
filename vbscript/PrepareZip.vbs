@@ -2,6 +2,9 @@
 ' Finds .xlsx files in the current dir and transforms them 
 ' to tab delimited txt files in Unicode (UTF16)
 
+' Constants and settings
+Const gcZipWaitTime = 300       ' Wait for CopyHere for N milliseconds
+
 ' Declare global variables
 Dim gxlApp                      ' Excel instance
 Dim gSourceFolderPath           ' Path to the working directry (where XLS files are)
@@ -680,7 +683,7 @@ Sub copyToZip()
     Set sourceFolder = shellAPP.NameSpace(gBuildDir)
 
     zipFolder.CopyHere sourceFolder.Items
-    WScript.Sleep 300
+    WScript.Sleep gcZipWaitTime
 End Sub
 
 '*************************************************************

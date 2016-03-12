@@ -8,6 +8,10 @@ Legend
 + : added
 - : removed
 
+v0.?.?, 2016-??-??
+------------------
++ Added gcZipWaitTime constant to PrepareZip.vbs. Addressing zip issues on slower machines.
+
 v0.1.6, 2016-03-11
 ------------------
 + Text file encoding is not hardcoded UTF16 anymore but can be set in CLASS_SET_PARAMS. UTF16 is still the default. Issue #3
