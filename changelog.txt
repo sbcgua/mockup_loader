@@ -11,6 +11,7 @@ Legend
 v0.?.?, 2016-??-??
 ------------------
 + Added gcZipWaitTime constant to PrepareZip.vbs. Addressing zip issues on slower machines.
+* Renamed PrepareZip.vbs to excel2txt.vbs
 
 v0.1.6, 2016-03-11
 ------------------

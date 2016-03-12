@@ -23,7 +23,7 @@ So we created a VB script which does this work automatically.
 The script also supports command line parameters and can be executed with `cscript.exe` (preferable - then execution log is output to console). We use `.bat` files like this for example: 
 
 ```
-@cscript PrepareZip.vbs -o -z c:\sap\mockup.zip
+@cscript excel2txt.vbs -o -z c:\sap\mockup.zip
 @pause
 ```
 
