@@ -38,3 +38,6 @@ Command line parameters:
 - `-bd` - change build directory - where uncompressed folder is created
 - `-color` - output in color (requires [ANSICON](https://github.com/adoxa/ansicon))  
 
+## Known issues ##
+
+- on slower machines archiving does not succeed sometimes. Zip file is created but with empty or partial content. This happens because archiving is implemented via `Shell.Application.CopyHere` call which is asyncronous - the script cannot see when it finishes. Try to increase `gcZipWaitTime` constant at the beginning of the script or use `-nz` to skip achiving and zip data manually.
