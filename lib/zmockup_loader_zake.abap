@@ -8,51 +8,72 @@
 
 report zmockup_loader_zake.
 
-define addobj.
-  object-object   = &1.
-  object-obj_name = &2.
-  append object to objects.
+define _addobj.
+  append initial line to lt_objects assigning <object>.
+  <object>-object   = &1.
+  <object>-obj_name = &2.
 end-of-definition.
 
-data:
-      ex      type ref to zcx_saplink,
-      o_zake  type ref to zcl_zake_svn,
-      objects type scts_tadir,
-      object  like line of objects.
+define _setattr.
+  assign o_zake->(&1) to <value>.
+  <value> = &2.
+end-of-definition.
 
-try.
-  create object o_zake exporting i_svnpath = 'c:\sap\' i_localpath = 'c:\sap\'.
+start-of-selection.
 
-*  o_zake->set_testrun( 'X' ).
-  o_zake->set_package( 'ZMOCKUP_LOADER' ).
+  data:
+        lx_error   type ref to cx_root,
+        o_zake     type ref to object,
+        lt_objects type scts_tadir.
+
+  field-symbols <object> like line of lt_objects.
+  field-symbols <value>  type any.
 
   " Build Object list for Export
-  addobj 'DEVC' 'ZMOCKUP_LOADER'.
-  addobj 'CLAS' 'ZCL_MOCKUP_LOADER'.
-  addobj 'CLAS' 'ZCX_MOCKUP_LOADER_ERROR'.
-  addobj 'PROG' 'ZMOCKUP_LOADER_EXAMPLE'.
-  addobj 'PROG' 'ZMOCKUP_LOADER_SWITCH_SOURCE'.
-  addobj 'TRAN' 'ZMOCKUP_LOADER_SWSRC'.
-  addobj 'PARA' 'ZMOCKUP_LOADER_SPATH'.
-  addobj 'PARA' 'ZMOCKUP_LOADER_STYPE'.
+  _addobj 'DEVC' 'ZMOCKUP_LOADER'.
+  _addobj 'CLAS' 'ZCL_MOCKUP_LOADER'.
+  _addobj 'CLAS' 'ZCX_MOCKUP_LOADER_ERROR'.
+  _addobj 'PROG' 'ZMOCKUP_LOADER_EXAMPLE'.
+  _addobj 'PROG' 'ZMOCKUP_LOADER_SWITCH_SOURCE'.
+  _addobj 'TRAN' 'ZMOCKUP_LOADER_SWSRC'.
+  _addobj 'PARA' 'ZMOCKUP_LOADER_SPATH'.
+  _addobj 'PARA' 'ZMOCKUP_LOADER_STYPE'.
 
-  o_zake->set_checkin_objects( objects ).
 
-  " Build separate slinkees
+  try.
+    create object o_zake type ('ZCL_ZAKE_SVN')
+      exporting i_svnpath   = 'c:\sap\'
+                i_localpath = 'c:\sap\'.
 
-  o_zake->download_slinkees_to_lm = abap_true.
-  o_zake->download_nugget_to_lm   = space.
-  o_zake->download_zip_to_lm_flag = space.
-  o_zake->create_slinkees( ).
+*    o_zake->set_testrun( 'X' ).
 
-  " Build a complete package too
+    call method o_zake->('SET_PACKAGE')
+      exporting i_package = 'ZMOCKUP_LOADER'.
 
-  o_zake->download_slinkees_to_lm = space.
-  o_zake->download_nugget_to_lm   = abap_true.
-  o_zake->create_slinkees( 'ZMOCKUP_LOADER' ).
+
+    call method o_zake->('SET_CHECKIN_OBJECTS')
+      exporting i_objects = lt_objects.
+
+    " Build separate slinkees
+
+
+    _setattr 'DOWNLOAD_SLINKEES_TO_LM' abap_true.
+    _setattr 'DOWNLOAD_NUGGET_TO_LM'   space.
+    _setattr 'DOWNLOAD_ZIP_TO_LM_FLAG' space.
+    call method o_zake->('CREATE_SLINKEES').
+
+    " Build a complete package too
+
+    _setattr 'DOWNLOAD_SLINKEES_TO_LM' space.
+    _setattr 'DOWNLOAD_NUGGET_TO_LM'   abap_true.
+    call method o_zake->('CREATE_SLINKEES')
+      exporting i_nugget_name = 'ZMOCKUP_LOADER'.
+
+  catch cx_root into lx_error.
+    data l_msg type string.
+    l_msg = lx_error->get_text( ).
+    write: / 'Error occured:', l_msg. "#EC NOTEXT
+  endtry.
 
   write: / 'Build successful'. "#EC NOTEXT
-
-catch zcx_saplink into ex.
-  write: / 'An error occured: ', ex->msg. "#EC NOTEXT
-endtry.
+  
