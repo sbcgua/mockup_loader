@@ -148,9 +148,9 @@ A nugget and slinkees are available to install the code with SAPLink.
  
 Vanilla SAPLink does not support:
 - SET/GET parameters so either install ZSAPLINK_USER_PARAMETER plugin or create them manually after import (see manual step 5)
-- W3MI objects so please follow manual step 4.2 to finalize installation. 
+- W3MI objects so please follow manual step 3.2 to finalize installation. 
 
-Unit test execution is a recommended after-step (see manual step 4.3).
+Unit test execution is a recommended after-step (see manual step 3.3).
 
 ### Manual installation ###
 
@@ -160,7 +160,7 @@ Unit test execution is a recommended after-step (see manual step 4.3).
 	2. Add code from `zcl_mockup_loader-local_classes.abap` to local definitions and implementations (`Goto` menu) 
 	3. Activate.
 3. Optionally upload unit tests. 
-    1. Create a **test class** for the `ZCL_MOCKUP_LOADER`. Copy the content of `test/zcl_mockup_loader-unit_test.abap` there and activate.
+    1. Create a **test class** for the `ZCL_MOCKUP_LOADER`. Copy the content of `lib/zcl_mockup_loader-unit_test.abap` there and activate.
     2. Create a binary data object via SMW0 transaction in the package `ZMOCKUP_LOADER`. Call it `ZMOCKUP_LOADER_UNIT_TEST` and upload the `test/zmockup_loader_unit_test.zip`. 
         * This potentially may require setting up MIME type in Settings->Maintain MIME types menu (the setting is quite obvious, e.g. just specify TYPE=ZIP, EXTENTION=\*.zip).
     3. Run the unit test for the `ZCL_MOCKUP_LOADER` class (Menu->Class->Run->Unit tests or Ctrl+Shift+F10). Should pass ;)
@@ -177,7 +177,7 @@ Complete reference of class method can be found in [REFERENCE.md](REFERENCE.md).
 
 Have a look at the Howto section in the project [Wiki](../../wiki).
 
-A complete example can be found in [example/zmockup_loader_example.abap](/example/zmockup_loader_example.abap).
+A complete example can be found in [lib/zmockup_loader_example.abap](/lib/zmockup_loader_example.abap).
 
 ## Other features ##
 
