@@ -59,11 +59,11 @@ The method to get a singleton instance of the mockup loader. If this is the firs
 **Example:**
 
 ```abap
-data lo_ex type ref to zcx_mockup_loader_error.
+data lo_ex type ref to cx_static_check.
 
 try.
   me->o_ml = zcl_mockup_loader=>get_instance( ).
-catch zcx_mockup_loader_error into lo_ex.
+catch cx_static_check into lo_ex.
   fail( lo_ex->get_text( ) ).
 endtry.
 ```
@@ -109,7 +109,7 @@ try.
     exporting i_obj       = 'TEST1/BSEG'
               i_strict    = abap_false
     importing e_container = lt_bseg.
-catch zcx_mockup_loader_error into lo_ex.
+catch cx_static_check into lo_ex.
   fail( lo_ex->get_text( ) ).
 endtry.
 ```
@@ -218,7 +218,7 @@ try.
     exporting i_name   = 'BKPF'
               i_tabkey = 'BELNR'  " Key field for the saved table
               i_data   = lt_bkpf. 
-catch zcx_mockup_loader_error into lo_ex.
+catch cx_static_check into lo_ex.
   fail( lo_ex->get_text( ) ).
 endtry.
 ```
@@ -245,7 +245,7 @@ exceptions
 
 **E_DATA** can be table or structure. In the latter case just the first line of the stored data (optionally, filtered with `I_SIFT`) is retrieved.
 
-The method is **static**. This is made to avoid the necessity to handle `ZCX_MOCKUP_LOADER_ERROR` exception in production code (which is irrelevant there). Furthermore, it allows to catch the exception as `SY-SUBRC`  and check it later as if it would be the result of a regular DB select.
+The method is **static**. This is made to avoid the necessity to handle class-exception in production code (which is irrelevant there). Furthermore, it allows to catch the exception as `SY-SUBRC`  and check it later as if it would be the result of a regular DB select.
 
 **Example:**
 
@@ -313,7 +313,7 @@ try.
     exporting i_obj       = 'TEST1/BSEG'
               i_name      = 'BSEG'
               i_type      = 'BSEG_T'. " Disctionary BSEG table type
-catch zcx_mockup_loader_error into lo_ex.
+catch cx_static_check into lo_ex.
   fail( lo_ex->get_text( ) ).
 endtry.
 ```

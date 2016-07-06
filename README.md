@@ -1,6 +1,6 @@
 # Mockup Loader for ABAP unit testing #
 
-*Version: 0.1.6*    
+*Version: 0.2.0*    
 *[History of changes](/changelog.txt)*    
 *See also project [Wiki](../../wiki)*
 
@@ -16,6 +16,7 @@
 - [Excel to TXT conversion script](#excel-to-txt-conversion-script)
 - [Contributors](#contributors)
 - [Publications](#publications)
+- [Plans](#plans)
 - [License](#license)
 
 <!-- end toc -->
@@ -133,8 +134,8 @@ As the final result we can perform completely dynamic unit tests in our projects
 
 Here are some facts about package content and invocation approach:
 
-- The main class is called `ZCL_MOCKUP_LOADER`. It is designed as a singleton class assuming it loads ZIPped content once when the test class initiallized. Consequently, the "Store" exists in one  instance as well.
-- Most methods of the class may throw `ZCX_MOCKUP_LOADER_ERROR` exception, which in particular specifies some error details available via `get_text()` call (also an error code, which is more for own unit testing purpose). Those methods are assumed to be executed from unit test classes, so there should be no problem to handle exceptions properly there. 
+- The main class is called `ZCL_MOCKUP_LOADER`. It is designed as a singleton class assuming it loads ZIPped content once when the test class initialized. Consequently, the "Store" exists in one  instance as well.
+- Most methods of the class may throw local exception based on cx_static_check, which in particular specifies some error details available via `get_text()` call (also an error code, which is more for own unit testing purpose). Those methods are assumed to be executed from unit test classes, so there should be no problem to handle exceptions properly there. 
 - `RETRIEVE()` method, however, which takes data from the "Store" is **static**. It is assumed to be called from "production" code instead of *DB selects*. It does all singleton magic inside, and throws **non-class** based exception. This is made to avoid the necessity to handle exceptions, irrelevant to the main code, and also to be able to catch the exception as `SY-SUBRC` value. `SY-SUBRC` can be checked later as if it would be the result of a regular DB select. So the interference with the main code is minimal. 
 - Zipped text files must be in **Unicode** encoding (UTF16).
 
@@ -154,25 +155,17 @@ Unit test execution is a recommended after-step (see manual step 4.3).
 ### Manual installation ###
 
 1. Create a package with SE21/SE80 (`ZMOCKUP_LOADER` would be a good name :)
-2. Create the class with SE24 - `ZCL_MOCKUP_LOADER`. Switch to "Source code based" mode and copy `lib/zcl_mockup_loader.abap` content there. Activate.
-3. Create the exception class `ZCX_MOCKUP_LOADER_ERROR` based on `CX_STATIC_CHECK`. Mark "With message class" flag.
-    1. Create 3 public attributes: 
-        * `METHNAME type SCX_ATTRNAME`
-        * `MSG type SCX_ATTRNAME`
-        * `CODE type CHAR2`
-    2. Go to Texts tab, choose exception id `ZCX_MOCKUP_LOADER_ERROR` (the only one there) and press Message Test button. Set `Message class = SY, Message number = 499, Attrib1 = METHNAME, Attrib2 = MSG`. This message is one of standard messages with text "& & & &".
-    3. Create a static public method `RAISE`. Copy the content of the `lib/zcx_mockup_loader_error-raise.abap` there. 
-        * Add importing parameter `MSG type STRING`
-        * Add optional importing parameter `CODE type CHAR2`
-        * Add `ZCX_MOCKUP_LOADER_ERROR` to the exceptions section 
-    4. Activate   
-4. Optionally upload unit tests. 
+2. Create the class with SE24 - `ZCL_MOCKUP_LOADER`. 
+	1. Switch to "Source code based" mode and copy `lib/zcl_mockup_loader.abap` content there. 
+	2. Add code from `zcl_mockup_loader-local_classes.abap` to local definitions and implementations (`Goto` menu) 
+	3. Activate.
+3. Optionally upload unit tests. 
     1. Create a **test class** for the `ZCL_MOCKUP_LOADER`. Copy the content of `test/zcl_mockup_loader-unit_test.abap` there and activate.
     2. Create a binary data object via SMW0 transaction in the package `ZMOCKUP_LOADER`. Call it `ZMOCKUP_LOADER_UNIT_TEST` and upload the `test/zmockup_loader_unit_test.zip`. 
         * This potentially may require setting up MIME type in Settings->Maintain MIME types menu (the setting is quite obvious, e.g. just specify TYPE=ZIP, EXTENTION=\*.zip).
     3. Run the unit test for the `ZCL_MOCKUP_LOADER` class (Menu->Class->Run->Unit tests or Ctrl+Shift+F10). Should pass ;)
-5. Create SET/GET patameters `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH` with SM30 and maintenance view `TPARA`.
-6. Create the program ZMOCKUP_LOADER_SWITCH_SOURCE 
+4. Create SET/GET parameters `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH` with SM30 and maintenance view `TPARA`.
+5. Create the program ZMOCKUP_LOADER_SWITCH_SOURCE 
     1. ... Copy the content of `lib\zmockup_loader_switch_source.abap` and activate.
     2. Create transaction `ZMOCKUP_LOADER_SWSRC` with SE93 and set it to run the program. 
 
@@ -205,6 +198,7 @@ So we created a VB script which does this work automatically. Please read [EXCEL
 Contributors are described in [CONTRIBUTORS.md](/CONTRIBUTORS.md). You are welcomed to suggest ideas and code improvements ! :)
 
 Main development team members are:
+
 - Alexander Tsybulsky
 - Svetlana Shlapak
 - Bohdan Petrushchak
@@ -212,6 +206,12 @@ Main development team members are:
 ## Publications ##
 
 - [Unit testing mockup loader for ABAP @SCN](http://scn.sap.com/community/abap/blog/2015/11/12/unit-testing-mockup-loader-for-abap)
+- [How to do convenient multicase unit tests with zmockup_loader @SCN](http://scn.sap.com/community/abap/blog/2016/03/20/how-to-do-convenient-multicase-test-with-zmockuploader)
+
+## Plans ##
+
+- Text parser is useful itself for other tasks - maybe worth splitting the class into 2 tools
+- Maybe implement direct editing of the text data in SAP. In ALV or, better, with inline Excel. To have a consistent solution and avoid external VBS script  
 
 ## License ##
 
