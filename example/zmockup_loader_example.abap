@@ -148,7 +148,7 @@ class lcl_test implementation.
 
   method setup. " Initialize instances
     data lo_context type ref to lcl_context.
-    data lo_ex      type ref to zcx_mockup_loader_error.
+    data lo_ex      type ref to cx_static_check.
 
     lo_context = lcl_context=>get_instance( ).
     lo_context->set_carrid( 'ZZZ' ). " Test env airline
@@ -157,7 +157,7 @@ class lcl_test implementation.
 
     try.
       o_ml = zcl_mockup_loader=>get_instance( ).
-    catch zcx_mockup_loader_error into lo_ex.
+    catch cx_static_check into lo_ex.
       fail( lo_ex->get_text( ) ).
     endtry.
 
@@ -166,7 +166,7 @@ class lcl_test implementation.
   method get_price.
     data lt_testcases type table of ty_testcase.
     data ls_case      type ty_testcase.
-    data lo_ex        type ref to zcx_mockup_loader_error.
+    data lo_ex        type ref to cx_static_check.
     data l_result     type sflight-price.
 
     try.
@@ -181,7 +181,7 @@ class lcl_test implementation.
                             i_tabkey = 'CONNID'
                             i_type   = 'FLIGHTTAB' ).
 
-    catch zcx_mockup_loader_error into lo_ex.
+    catch cx_static_check into lo_ex.
       fail( lo_ex->get_text( ) ).
     endtry.
 

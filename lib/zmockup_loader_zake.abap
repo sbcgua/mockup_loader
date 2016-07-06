@@ -32,7 +32,6 @@ start-of-selection.
   " Build Object list for Export
   _addobj 'DEVC' 'ZMOCKUP_LOADER'.
   _addobj 'CLAS' 'ZCL_MOCKUP_LOADER'.
-  _addobj 'CLAS' 'ZCX_MOCKUP_LOADER_ERROR'.
   _addobj 'PROG' 'ZMOCKUP_LOADER_EXAMPLE'.
   _addobj 'PROG' 'ZMOCKUP_LOADER_SWITCH_SOURCE'.
   _addobj 'TRAN' 'ZMOCKUP_LOADER_SWSRC'.
@@ -76,4 +75,3 @@ start-of-selection.
   endtry.
 
   write: / 'Build successful'. "#EC NOTEXT
-  

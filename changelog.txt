@@ -8,10 +8,13 @@ Legend
 + : added
 - : removed
 
-v0.?.?, 2016-??-??
+v0.2.0, 2016-07-06
 ------------------
+- IMPORTANT ! ZCX_MOCKUP_LOADER_ERROR removed - replaced with local class based on CX_STATIC_CHECK. Cleaner code, less to install.
+
 + Added gcZipWaitTime constant to PrepareZip.vbs. Addressing zip issues on slower machines.
 * Renamed PrepareZip.vbs to excel2txt.vbs
+* ZMOCKUP_LOADER_ZAKE now creates refers ZAKE classes dynamically so that it can be compiled in systems where ZAKE is not installed
 
 v0.1.6, 2016-03-11
 ------------------
