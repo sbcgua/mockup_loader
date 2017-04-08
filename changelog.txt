@@ -8,6 +8,10 @@ Legend
 + : added
 - : removed
 
+v0.2.1, 2017-04-08
+------------------
+! No code changes. Just to fix the version before migrating to abapGit from SAPLink nuggets.
+
 v0.2.0, 2016-07-06
 ------------------
 - IMPORTANT ! ZCX_MOCKUP_LOADER_ERROR removed - replaced with local class based on CX_STATIC_CHECK. Cleaner code, less to install.
