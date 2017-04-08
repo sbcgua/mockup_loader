@@ -527,6 +527,7 @@ class lcl_test_mockup_loader implementation.
       test_parse_positive TNUMBER  '2015'            '2015'.
       test_parse_positive TINTEGER '123'             123.
       test_parse_positive TRAW     '8E'              '8E'.
+      test_parse_positive TNUMBER  '"2015"'          '2015'. " Quoted
     catch cx_static_check into lo_ex.
       fail( lo_ex->get_text( ) ).
     endtry.

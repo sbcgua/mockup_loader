@@ -755,15 +755,31 @@ endmethod.
 
 method parse_field.
   data:
-        l_mask  type string,
-        l_tmp   type string,
-        l_regex type string.
+        l_mask     type string,
+        l_tmp      type string,
+        l_unquoted type string,
+        l_regex    type string,
+        l_len      type i.
 
+  clear e_field.
+
+  " Unquote field
+  l_len = strlen( i_data ).
+  if l_len >= 2
+     and substring( val = i_data off = 0         len = 1 ) = '"'
+     and substring( val = i_data off = l_len - 1 len = 1 ) = '"'.
+    l_unquoted = substring( val = i_data off = 1 len = l_len - 2 ).
+  else.
+    l_unquoted = i_data.
+  endif.
+  clear l_len.
+
+  " Parse depending on output type
   case is_component-type_kind.
     when 'D'. " Date
       call function 'CONVERT_DATE_TO_INTERNAL'
         exporting
-          date_external            = i_data
+          date_external            = l_unquoted
           accept_initial_date      = 'X'
         importing  date_internal   = e_field
         exceptions date_external_is_invalid = 4.
@@ -771,23 +787,23 @@ method parse_field.
     when 'C'. " Char + convexits
       describe field e_field edit mask l_mask.
       if l_mask is initial.
-        e_field = i_data.
+        e_field = l_unquoted.
       else.
         shift l_mask left deleting leading '='.
-        me->parse_apply_exit( exporting i_data     = i_data
+        me->parse_apply_exit( exporting i_data     = l_unquoted
                                         i_convexit = l_mask
                               importing e_field    = e_field ).
       endif.
 
     when 'g'. " String
-      e_field = i_data.
+      e_field = l_unquoted.
 
     when 'P'. " Amount
       try .
-        e_field = i_data. " Try native format first - xxxx.xx
+        e_field = l_unquoted. " Try native format first - xxxx.xx
 
       catch cx_sy_arithmetic_error cx_sy_conversion_error.
-        l_tmp   = i_data.
+        l_tmp   = l_unquoted.
         l_regex = '^-?\d{1,3}(T\d{3})*(\D\d{1,C})?$'. "#EC NOTEXT
         condense l_tmp no-gaps.
         replace 'C' in l_regex with |{ is_component-decimals }|.
@@ -825,15 +841,15 @@ method parse_field.
       endtry.
 
     when 'N' or 'I'. " Integer number
-      if i_data co '0123456789'.
-        e_field = i_data.
+      if l_unquoted co '0123456789'.
+        e_field = l_unquoted.
       else.
         sy-subrc = 4.
       endif.
 
     when 'X'.        " Raw
       try .
-        e_field = i_data.
+        e_field = l_unquoted.
       catch cx_sy_conversion_no_raw cx_sy_conversion_error.
         sy-subrc = 4.
       endtry.
