@@ -8,6 +8,11 @@ Legend
 + : added
 - : removed
 
+v1.0.0, 2017-04-08
+------------------
+This is more a technical release. It uses stable code of v0.2.1 but the whole repo is migrated from SAPLink to abapGit which is more convenient and modern exchange solution.
+Since the code proved to be stable I decided to call it v1.0.0 finally :)
+
 v0.2.1, 2017-04-08
 ------------------
 ! No code changes. Just to fix the version before migrating to abapGit from SAPLink nuggets.
