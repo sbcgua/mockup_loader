@@ -74,7 +74,8 @@ public section.
   class-methods CLASS_SET_PARAMS
     importing
       !I_AMT_FORMAT type CHAR2 optional
-      !I_ENCODING type ABAP_ENCODING optional .
+      !I_ENCODING type ABAP_ENCODING optional
+      !I_DATE_FORMAT type CHAR3 optional .
   class-methods GET_INSTANCE
     returning
       value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
@@ -137,6 +138,7 @@ private section.
   class-data G_AMT_FORMAT type CHAR2 .
   type-pools ABAP .
   class-data G_ENCODING type ABAP_ENCODING .
+  class-data G_DATE_FORMAT type CHAR3 .
 
   methods INITIALIZE
     raising
@@ -183,6 +185,13 @@ private section.
       !I_DATA type STRING
     exporting
       !E_FIELD type ANY
+    raising
+      CX_STATIC_CHECK .
+  methods PARSE_DATE
+    importing
+      !I_VALUE type STRING
+    exporting
+      !E_FIELD type D
     raising
       CX_STATIC_CHECK .
   methods BUILD_FILTER
@@ -351,6 +360,14 @@ method CLASS_SET_PARAMS.
   else.
     g_encoding = i_encoding.
   endif.
+
+  if i_date_format is initial
+    or not ( i_date_format = 'DMY' or i_date_format = 'MDY' or i_date_format = 'YMD' ).
+    g_date_format = 'DMY'.
+  else.
+    g_date_format = i_date_format.
+  endif.
+
 endmethod.
 
 
@@ -753,6 +770,68 @@ method parse_data.
 endmethod.
 
 
+method PARSE_DATE.
+
+  data: l_has_sep   type abap_bool,
+        l_idx       type i,
+        l_iter      type i,
+        l_part      type c,
+        l_rawdate   type char8,
+        l_seps      type char2.
+
+  clear e_field.
+  if i_value is initial or i_value co ` `.
+    return.
+  endif.
+
+  " Check separators
+  l_has_sep = boolc( strlen( i_value ) = 10 ).
+  if l_has_sep = abap_false and strlen( i_value ) <> 8.
+    lcx_error=>raise( msg = 'Incorrect date length' code = 'DL' ). "#EC NOTEXT
+  endif.
+
+  do 3 times.
+    l_iter = sy-index - 1.
+    l_part = g_date_format+l_iter(1).
+    case l_part.
+      when 'D'.
+        l_rawdate+6(2) = i_value+l_idx(2).
+        l_idx          = l_idx + 2.
+      when 'M'.
+        l_rawdate+4(2) = i_value+l_idx(2).
+        l_idx          = l_idx + 2.
+      when 'Y'.
+        l_rawdate+0(4) = i_value+l_idx(4).
+        l_idx          = l_idx + 4.
+      when others.
+        lcx_error=>raise( msg = 'Wrong date format' ). "#EC NOTEXT
+    endcase.
+
+    if l_has_sep = abap_true and l_iter < 2.
+      l_seps+l_iter(1) = i_value+l_idx(1).
+      l_idx            = l_idx + 1.
+    endif.
+  enddo.
+
+  " Check separators
+  if l_has_sep = abap_true and ( l_seps+0(1) <> l_seps+1(1) or not l_seps co './-' ).
+    lcx_error=>raise( msg = 'Wrong date separators' code = 'DS' ). "#EC NOTEXT
+  endif.
+
+  try.
+    cl_abap_datfm=>conv_date_ext_to_int(
+      exporting
+        im_datext   = l_rawdate
+        im_datfmdes = '4' " YYYY.MM.DD
+      importing
+        ex_datint   = e_field ).
+    catch cx_abap_datfm.
+      lcx_error=>raise( msg = 'Date format unknown' code = 'DU' ). "#EC NOTEXT
+  endtry.
+
+endmethod.
+
+
 method parse_field.
   data:
         l_mask     type string,
@@ -777,12 +856,8 @@ method parse_field.
   " Parse depending on output type
   case is_component-type_kind.
     when 'D'. " Date
-      call function 'CONVERT_DATE_TO_INTERNAL'
-        exporting
-          date_external            = l_unquoted
-          accept_initial_date      = 'X'
-        importing  date_internal   = e_field
-        exceptions date_external_is_invalid = 4.
+      parse_date( exporting  i_value    = l_unquoted
+                  importing  e_field    = e_field ).
 
     when 'C'. " Char + convexits
       describe field e_field edit mask l_mask.

@@ -48,7 +48,12 @@
   end-of-definition.
 
   define test_parse_positive.
-    test_parse &1 &2.
+    clear lo_ex.
+    try.
+      test_parse &1 &2.
+    catch cx_static_check into lo_ex.
+      fail( lo_ex->get_text( ) ).
+    endtry.
     assert_equals( act = dummy-&1 exp = &3 msg = 'Parse field positive:' && &2 ).
   end-of-definition.
 
@@ -58,9 +63,8 @@
       test_parse &1 &2.
     catch cx_static_check into lo_ex.
     endtry.
-
     assert_not_initial( act = lo_ex msg = 'Parse field negative:' && &2 ).
-    assert_equals( exp = 'PF' act = get_excode( lo_ex ) ).
+    assert_equals( exp = &3 act = get_excode( lo_ex ) ).
   end-of-definition.
 
   define append_dummy.
@@ -521,6 +525,7 @@ class lcl_test_mockup_loader implementation.
     " Positive tests ******************************
     try.
       test_parse_positive TDATE    '01.01.2015'      '20150101'.
+      test_parse_positive TDATE    '01022015'        '20150201'.
       test_parse_positive TCHAR    'ABC'             'ABC'.
       test_parse_positive TSTRING  'The string test' 'The string test'.
       test_parse_positive TALPHA   '100000'          '0000100000'.
@@ -534,8 +539,7 @@ class lcl_test_mockup_loader implementation.
 
     " Negative tests ******************************
 
-    test_parse_negative TDATE    '01.012015'.
-    test_parse_negative TNUMBER  '20ha'.
+    test_parse_negative TNUMBER  '20ha' 'PF'.
 
     " Decimal converion tests *********************
     try.
@@ -568,20 +572,39 @@ class lcl_test_mockup_loader implementation.
     endtry.
 
     zcl_mockup_loader=>class_set_params( i_amt_format = '' ). " Set defaults
-    test_parse_negative TDECIMAL '1 234.12'.
-    test_parse_negative TDECIMAL '1 234_12'.
-    test_parse_negative TDECIMAL '1234,123'. " 3 decimal digits into amount which has just 2
-    test_parse_negative TDECIMAL '1234,12_'.
-    test_parse_negative TDECIMAL 'Not-a-number'.
+    test_parse_negative TDECIMAL '1 234.12' 'PF'.
+    test_parse_negative TDECIMAL '1 234_12' 'PF'.
+    test_parse_negative TDECIMAL '1234,123' 'PF'. " 3 decimal digits into amount which has just 2
+    test_parse_negative TDECIMAL '1234,12_' 'PF'.
+    test_parse_negative TDECIMAL 'Not-a-number' 'PF'.
     zcl_mockup_loader=>class_set_params( i_amt_format = '.,' ).
-    test_parse_negative TDECIMAL '1 234.12'.
-    test_parse_negative TDECIMAL '1,234.12'.
+    test_parse_negative TDECIMAL '1 234.12' 'PF'.
+    test_parse_negative TDECIMAL '1,234.12' 'PF'.
     zcl_mockup_loader=>class_set_params( i_amt_format = ',.' ).
-    test_parse_negative TDECIMAL '1 234,12'.
-    test_parse_negative TDECIMAL '1.234,12'.
+    test_parse_negative TDECIMAL '1 234,12' 'PF'.
+    test_parse_negative TDECIMAL '1.234,12' 'PF'.
+
+    " Date tests **********************************
+
+    zcl_mockup_loader=>class_set_params( i_date_format = 'MDY').
+    test_parse_positive TDATE    '02012015'    '20150201'.
+    zcl_mockup_loader=>class_set_params( i_date_format = 'YMD').
+    test_parse_positive TDATE    '20150201'    '20150201'.
+    test_parse_positive TDATE    '2015-02-01'  '20150201'.
+    zcl_mockup_loader=>class_set_params( i_date_format = 'DMY').
+    test_parse_positive TDATE    `        `    '00000000'.
+    test_parse_positive TDATE    ''            '00000000'.
+
+    " Negative tests
+    test_parse_negative TDATE    '01.012015'   'DL'. " Length
+    test_parse_negative TDATE    '2015020'     'DL'. " Length
+    test_parse_negative TDATE    '01_02_2015'  'DS'. " Wrong separators
+    test_parse_negative TDATE    '01.02-2015'  'DS'. " Wrong separators
+    test_parse_negative TDATE    '40012015'    'DU'.
+    test_parse_negative TDATE    '01132015'    'DU'.
+    test_parse_negative TDATE    'AB022015'    'DU'.
 
     zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4110' ). " Set defaults back
-
 
   endmethod.       "parse_Field
 
