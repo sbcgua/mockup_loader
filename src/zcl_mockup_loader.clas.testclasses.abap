@@ -525,7 +525,7 @@ class lcl_test_mockup_loader implementation.
     " Positive tests ******************************
     try.
       test_parse_positive TDATE    '01.01.2015'      '20150101'.
-      test_parse_positive TDATE    '01022015'        '20150201'.
+      test_parse_positive TDATE    '1.2.2015'        '20150201'.
       test_parse_positive TCHAR    'ABC'             'ABC'.
       test_parse_positive TSTRING  'The string test' 'The string test'.
       test_parse_positive TALPHA   '100000'          '0000100000'.
@@ -590,19 +590,24 @@ class lcl_test_mockup_loader implementation.
     test_parse_positive TDATE    '02012015'    '20150201'.
     zcl_mockup_loader=>class_set_params( i_date_format = 'YMD').
     test_parse_positive TDATE    '20150201'    '20150201'.
+    test_parse_negative TDATE    '2015020'     'DL'.  " Too short
+    zcl_mockup_loader=>class_set_params( i_date_format = 'YMD-').
     test_parse_positive TDATE    '2015-02-01'  '20150201'.
-    zcl_mockup_loader=>class_set_params( i_date_format = 'DMY').
+    test_parse_positive TDATE    '2015-2-1'    '20150201'.
     test_parse_positive TDATE    `        `    '00000000'.
     test_parse_positive TDATE    ''            '00000000'.
+    zcl_mockup_loader=>class_set_params( i_date_format = 'DMY.').
 
     " Negative tests
-    test_parse_negative TDATE    '01.012015'   'DL'. " Length
-    test_parse_negative TDATE    '2015020'     'DL'. " Length
-    test_parse_negative TDATE    '01_02_2015'  'DS'. " Wrong separators
-    test_parse_negative TDATE    '01.02-2015'  'DS'. " Wrong separators
-    test_parse_negative TDATE    '40012015'    'DU'.
-    test_parse_negative TDATE    '01132015'    'DU'.
-    test_parse_negative TDATE    'AB022015'    'DU'.
+    test_parse_negative TDATE    'AB022015'    'DY'. " Wrong symbols
+    test_parse_negative TDATE    '01.02-2015'  'DY'. " Wrong separators
+    test_parse_negative TDATE    '01.02.20156' 'DL'. " Too long
+    test_parse_negative TDATE    '1.2.201567'  'DP'. " Wrong part length
+    test_parse_negative TDATE    '123.2.2015'  'DP'. " Wrong part length
+    test_parse_negative TDATE    '01022015'    'DS'. " No separators
+    test_parse_negative TDATE    '01.012015'   'DS'. " No second separator
+    test_parse_negative TDATE    '40.01.2015'  'DU'. " Incorrect day
+    test_parse_negative TDATE    '01.13.2015'  'DU'. " Incorrect month
 
     zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4110' ). " Set defaults back
 

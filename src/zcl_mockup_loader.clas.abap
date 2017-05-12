@@ -75,7 +75,7 @@ public section.
     importing
       !I_AMT_FORMAT type CHAR2 optional
       !I_ENCODING type ABAP_ENCODING optional
-      !I_DATE_FORMAT type CHAR3 optional .
+      !I_DATE_FORMAT type CHAR4 optional .
   class-methods GET_INSTANCE
     returning
       value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
@@ -138,7 +138,7 @@ private section.
   class-data G_AMT_FORMAT type CHAR2 .
   type-pools ABAP .
   class-data G_ENCODING type ABAP_ENCODING .
-  class-data G_DATE_FORMAT type CHAR3 .
+  class-data G_DATE_FORMAT type CHAR4 .
 
   methods INITIALIZE
     raising
@@ -362,8 +362,11 @@ method CLASS_SET_PARAMS.
   endif.
 
   if i_date_format is initial
-    or not ( i_date_format = 'DMY' or i_date_format = 'MDY' or i_date_format = 'YMD' ).
-    g_date_format = 'DMY'.
+    or not i_date_format+3(1) co ' ./-'
+    or not ( i_date_format+0(3) = 'DMY'
+      or i_date_format+0(3)     = 'MDY'
+      or i_date_format+0(3)     = 'YMD' ).
+    g_date_format = 'DMY.'.
   else.
     g_date_format = i_date_format.
   endif.
@@ -772,52 +775,77 @@ endmethod.
 
 method PARSE_DATE.
 
-  data: l_has_sep   type abap_bool,
-        l_idx       type i,
-        l_iter      type i,
-        l_part      type c,
-        l_rawdate   type char8,
-        l_seps      type char2.
+  data: l_cursor  type i,
+        l_iter    type i,
+        l_part    type c,
+        l_size    type i,
+        l_offs    type i,
+        l_home    type i,
+        l_pad     type i,
+        l_stencil type numc4,
+        l_rawdate type char8,
+        l_charset type char11 value '0123456789',
+        l_sep     type c.
 
   clear e_field.
-  if i_value is initial or i_value co ` `.
+  l_sep           = g_date_format+3(1).
+  l_charset+10(1) = l_sep.
+
+  if i_value is initial or i_value co ` `. " Empty string -> empty date
     return.
   endif.
 
-  " Check separators
-  l_has_sep = boolc( strlen( i_value ) = 10 ).
-  if l_has_sep = abap_false and strlen( i_value ) <> 8.
+  if not i_value co l_charset.  " Check wrong symbols
+    lcx_error=>raise( msg = 'Date contains invalid symbols' code = 'DY' ). "#EC NOTEXT
+  endif.
+
+  " Not separated date must be 8 chars, separated not more than 10
+  if l_sep <> space and strlen( i_value ) > 10  or l_sep = space and strlen( i_value ) <> 8.
     lcx_error=>raise( msg = 'Incorrect date length' code = 'DL' ). "#EC NOTEXT
   endif.
 
   do 3 times.
     l_iter = sy-index - 1.
     l_part = g_date_format+l_iter(1).
+
     case l_part.
       when 'D'.
-        l_rawdate+6(2) = i_value+l_idx(2).
-        l_idx          = l_idx + 2.
+        l_size = 2.
+        l_home = 6.
       when 'M'.
-        l_rawdate+4(2) = i_value+l_idx(2).
-        l_idx          = l_idx + 2.
+        l_size = 2.
+        l_home = 4.
       when 'Y'.
-        l_rawdate+0(4) = i_value+l_idx(4).
-        l_idx          = l_idx + 4.
+        l_size = 4.
+        l_home = 0.
       when others.
         lcx_error=>raise( msg = 'Wrong date format' ). "#EC NOTEXT
     endcase.
 
-    if l_has_sep = abap_true and l_iter < 2.
-      l_seps+l_iter(1) = i_value+l_idx(1).
-      l_idx            = l_idx + 1.
+    if l_sep is initial. " No seps
+      l_rawdate+l_home(l_size) = i_value+l_cursor(l_size).
+      l_cursor                 = l_cursor + l_size.
+    else.
+      if l_iter = 2. " Last part
+        l_offs = strlen( i_value+l_cursor ).
+      else.
+        find first occurrence of l_sep in i_value+l_cursor match offset l_offs.
+      endif.
+      if sy-subrc <> 0.
+        lcx_error=>raise( msg = 'Date separator is missing' code = 'DS' ). "#EC NOTEXT
+      endif.
+      if l_offs > l_size.
+        lcx_error=>raise( msg = 'Too long date part' code = 'DP' ). "#EC NOTEXT
+      endif.
+      l_stencil                = i_value+l_cursor(l_offs).
+      l_pad                    = 4 - l_size. " Offset within stencil
+      l_rawdate+l_home(l_size) = l_stencil+l_pad(l_size).
+      l_cursor                 = l_cursor + l_offs + 1. " Including separator
     endif.
+
   enddo.
 
-  " Check separators
-  if l_has_sep = abap_true and ( l_seps+0(1) <> l_seps+1(1) or not l_seps co './-' ).
-    lcx_error=>raise( msg = 'Wrong date separators' code = 'DS' ). "#EC NOTEXT
-  endif.
-
+  " Native convert
   try.
     cl_abap_datfm=>conv_date_ext_to_int(
       exporting
