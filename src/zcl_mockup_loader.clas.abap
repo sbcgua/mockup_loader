@@ -40,7 +40,7 @@ class ZCL_MOCKUP_LOADER definition
 public section.
 
   types:
-    tt_string type table of string .
+    tt_string type standard table of string with default key.
   types:
     begin of ty_store,
       name    type char40,
@@ -48,7 +48,7 @@ public section.
       data    type ref to data,
     end of ty_store .
   types:
-    tt_store type table of ty_store with key name .
+    tt_store type standard table of ty_store with key name .
   types:
     begin of ty_filter,
       name  type string,
@@ -230,11 +230,35 @@ private section.
       !E_DATA type ANY
     raising
       CX_STATIC_CHECK .
+  class-methods BREAK_TO_LINES
+    importing
+      !I_TEXT type STRING
+    returning
+      value(RT_TAB) type TT_STRING .
 ENDCLASS.
 
 
 
 CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
+
+
+method break_to_lines.
+  data:
+        l_found type i,
+        l_break type string value cl_abap_char_utilities=>cr_lf.
+
+  " Detect line break
+  l_found = find( val = i_text sub = cl_abap_char_utilities=>cr_lf ).
+  if l_found < 0.
+    l_found = find( val = i_text sub = cl_abap_char_utilities=>form_feed ).
+    if l_found >= 0.
+      l_break = cl_abap_char_utilities=>form_feed.
+    endif.
+  endif.
+
+  split i_text at l_break into table rt_tab.
+
+endmethod.
 
 
 method BUILD_FILTER.
@@ -731,7 +755,7 @@ method parse_data.
   endif.
 
   " Read and process header line
-  split i_rawdata at cl_abap_char_utilities=>cr_lf into table lt_lines.
+  lt_lines = break_to_lines( i_rawdata ).
   read table lt_lines into ls_line index 1.
   if sy-subrc <> 0.
     lcx_error=>raise( msg = 'No header line found in the file' code = 'NH' ). "#EC NOTEXT

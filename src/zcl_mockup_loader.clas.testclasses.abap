@@ -124,6 +124,7 @@ class lcl_test_mockup_loader definition for testing
   private section.
     constants c_tab  like cl_abap_char_utilities=>horizontal_tab value cl_abap_char_utilities=>horizontal_tab.
     constants c_crlf like cl_abap_char_utilities=>cr_lf value cl_abap_char_utilities=>cr_lf.
+    constants c_lf   like cl_abap_char_utilities=>form_feed value cl_abap_char_utilities=>form_feed.
 
     data o type ref to zcl_mockup_loader.  "class under test
 
@@ -134,6 +135,7 @@ class lcl_test_mockup_loader definition for testing
     methods integrated_test          for testing.
     methods source_redirect_test     for testing.
     methods utf16_encoding           for testing.
+    methods break_to_lines           for testing.
 
     methods parse_data               for testing.
     methods parse_field              for testing.
@@ -382,6 +384,24 @@ class lcl_test_mockup_loader implementation.
     assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
 
   endmethod. "utf16_encoding
+
+**********************************************************************
+* Break to lines, line break detection
+**********************************************************************
+  method break_to_lines.
+    data:
+          lt_act type string_table,
+          lt_exp type string_table.
+
+    append 'line1' to lt_exp.
+    append 'line2' to lt_exp.
+
+    lt_act = zcl_mockup_loader=>break_to_lines( 'line1' && c_crlf && 'line2' ).
+    assert_equals( act = lt_act exp = lt_exp ).
+    lt_act = zcl_mockup_loader=>break_to_lines( 'line1' && c_lf && 'line2' ).
+    assert_equals( act = lt_act exp = lt_exp ).
+
+  endmethod.  " break_to_lines
 
 **********************************************************************
 * Test of data parser - dummy data is supplied to the tested method
