@@ -466,18 +466,23 @@ method INITIALIZE.
         l_src_type  type char4,
         l_src_path  type string,
         l_type_tmp  type char4,
-        l_path_tmp  type char40.
+        l_path_tmp  type char128.
+
+  l_src_type = g_mockup_src_type.
+  l_src_path = g_mockup_src_path.
 
   " Get re-direction settings from session memory
   get parameter id 'ZMOCKUP_LOADER_STYPE' field l_type_tmp.
-  get parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_tmp.
-
-  if l_type_tmp is not initial and l_path_tmp is not initial.
-    l_src_type = l_type_tmp.
-    l_src_path = l_path_tmp.
-  else.
-    l_src_type = g_mockup_src_type.
-    l_src_path = g_mockup_src_path.
+  if l_type_tmp is not initial.
+    if l_type_tmp = 'MIME'.
+      get parameter id 'ZMOCKUP_LOADER_SMIME' field l_path_tmp.
+    elseif l_type_tmp = 'FILE'.
+      get parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_tmp.
+    endif.
+    if l_path_tmp is not initial.
+      l_src_type = l_type_tmp.
+      l_src_path = l_path_tmp.
+    endif.
   endif.
 
   " Load data

@@ -64,10 +64,12 @@ selection-screen end of line.
 selection-screen begin of line.
 selection-screen comment (15) txt_mp for field p_file .
 parameters: p_mpath type char40.
+selection-screen comment (17) txt_mp2 for field p_file .
 selection-screen end of line.
 selection-screen end of block b1.
 
 selection-screen: function key 1.
+selection-screen: function key 2.
 
 
 *&---------------------------------------------------------------------*
@@ -81,8 +83,10 @@ initialization.
   txt_file = 'FILE'.                                        "#EC NOTEXT
   txt_fp   = 'File path'.                                   "#EC NOTEXT
   txt_mp   = 'MIME object'.                                 "#EC NOTEXT
+  txt_mp2  = '(for upload only)'.                           "#EC NOTEXT
 
   sscrfields-functxt_01 = 'Get SU3 value'.                  "#EC NOTEXT
+  sscrfields-functxt_02 = 'Upload to MIME'.                 "#EC NOTEXT
 
   perform get_stype.
 
@@ -106,13 +110,15 @@ at selection-screen on p_fpath.
 
 at selection-screen on p_mpath.
   if p_mime is not initial.
-    set parameter id 'ZMOCKUP_LOADER_SPATH' field p_mpath.
+    set parameter id 'ZMOCKUP_LOADER_SMIME' field p_mpath.
   endif.
 
 at selection-screen.
   case sy-ucomm.
-    when 'FC01'.          "Get SU3 value
+  when 'FC01'.          "Get SU3 value
     perform get_su3_value.
+  when 'FC02'.
+    perform upload_mime.
   endcase.
 
 *&---------------------------------------------------------------------*
@@ -123,12 +129,10 @@ form set_stype.
 
   if p_file is not initial.
     l_stype = 'FILE'.
-    clear: p_mpath.
-
     loop at screen.
       case screen-name.
-        when 'P_MPATH' or 'TXT_MP'.
-          screen-active = 0.
+        when 'P_MPATH' or 'TXT_MP' or 'TXT_MP2'.
+          screen-active = 1.
         when 'P_FPATH' or 'TXT_FP'.
           screen-active = 1.
       endcase.
@@ -137,22 +141,21 @@ form set_stype.
 
   elseif p_mime is not initial.
     l_stype = 'MIME'.
-    clear: p_fpath.
     loop at screen.
       case screen-name.
         when 'P_MPATH' or 'TXT_MP'.
           screen-active = 1.
-        when 'P_FPATH' or 'TXT_FP'.
+        when 'P_FPATH' or 'TXT_FP' or 'TXT_MP2'.
           screen-active = 0.
       endcase.
       modify screen.
     endloop.
 
   elseif p_undef is not initial.
-    clear l_stype.
+    clear: l_stype, p_mpath, p_fpath.
     loop at screen.
       case screen-name.
-        when 'P_MPATH' or 'P_FPATH' or 'TXT_FP' or 'TXT_MP'.
+        when 'P_MPATH' or 'P_FPATH' or 'TXT_FP' or 'TXT_MP' or 'TXT_MP2'.
           screen-active = 0.
       endcase.
       modify screen.
@@ -168,19 +171,22 @@ endform.                    "set_stype
 *&---------------------------------------------------------------------*
 form get_stype.
   data: l_stype type char4,
+        l_smime type char128,
         l_spath type char128.
 
   get parameter id 'ZMOCKUP_LOADER_STYPE' field l_stype.
   get parameter id 'ZMOCKUP_LOADER_SPATH' field l_spath.
+  get parameter id 'ZMOCKUP_LOADER_SMIME' field l_smime.
   clear: p_fpath, p_mpath.
 
   case l_stype.
     when 'FILE'.
       p_file  = 'X'.
+      p_mpath = l_smime.
       p_fpath = l_spath.
     when 'MIME'.
       p_mime  = 'X'.
-      p_mpath = l_spath.
+      p_mpath = l_smime.
     when others.
       p_undef = 'X'.
   endcase.
@@ -241,14 +247,12 @@ form f4_mime_path changing c_path.
 
   read table lt_return into ls_return index 1.
   p_mpath = ls_return-fieldval.
-  set parameter id 'ZMOCKUP_LOADER_SPATH' field p_mpath.
+  set parameter id 'ZMOCKUP_LOADER_SMIME' field p_mpath.
 endform.                    "set_file_path
 
 *&---------------------------------------------------------------------*
 *&      Form  get_su3_value
 *&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
 form get_su3_value.
   data l_param type usr05-parva.
 
@@ -256,11 +260,69 @@ form get_su3_value.
     exporting parameter_id    = 'ZMOCKUP_LOADER_SPATH'
     importing parameter_value = l_param.
 
-  if p_file is not initial.
-    p_fpath = l_param.
-    set parameter id 'ZMOCKUP_LOADER_SPATH' field l_param.
-  elseif p_mime is not initial.
-    p_mpath = l_param.
-    set parameter id 'ZMOCKUP_LOADER_SPATH' field l_param.
-  endif.
+  p_fpath = l_param.
+  set parameter id 'ZMOCKUP_LOADER_SPATH' field l_param.
+
+  call function 'G_GET_USER_PARAMETER'
+    exporting parameter_id    = 'ZMOCKUP_LOADER_SMIME'
+    importing parameter_value = l_param.
+
+  p_mpath = l_param.
+  set parameter id 'ZMOCKUP_LOADER_SMIME' field l_param.
+
 endform.                    "get_su3_value
+
+*&---------------------------------------------------------------------*
+*&      Form  get_su3_value
+*&---------------------------------------------------------------------*
+form upload_mime.
+  if p_file is initial.
+    message 'Upload only work in FILE mode' type 'E' display like 'S'.
+  endif.
+  if p_mpath is initial.
+    message 'Please enter MIME name' type 'E' display like 'S'.
+  endif.
+  if p_fpath is initial.
+    message 'Please enter file path' type 'E' display like 'S'.
+  endif.
+
+  data:
+        lx     type ref to cx_root,
+        l_str  type string,
+        lo_obj type ref to object.
+  try.
+    create object lo_obj type ('\PROGRAM=ZW3MIMEPOLL\CLASS=LCL_W3MI_STORAGE').
+  catch cx_sy_create_error into lx.
+    message 'Install ZW3MIMEPOLL for this feature to work. https://github.com/sbcgua/abap_w3mi_poller' type 'E' display like 'S'.
+    return.
+  endtry.
+
+  data dref type ref to data.
+  field-symbols <key> type any.
+  field-symbols <fld> type any.
+  create data dref type ('\PROGRAM=ZW3MIMEPOLL\CLASS=LCL_W3MI_STORAGE\TYPE=ty_w3obj_key').
+  assign dref->* to <key>.
+  assign component 'RELID' of structure <key> to <fld>.
+  <fld> = 'MI'.
+  assign component 'OBJID' of structure <key> to <fld>.
+  <fld> = p_mpath.
+
+  try.
+    call method ('\PROGRAM=ZW3MIMEPOLL\CLASS=LCL_W3MI_STORAGE')=>('UPLOAD')
+      exporting
+        iv_filename = |{ p_fpath }|
+        is_w3key    = <key>.
+  catch cx_static_check into lx.
+    assign lx->('MV_MESSAGE') to <fld>.
+    if sy-subrc is initial.
+      l_str = <fld>.
+    else.
+      l_str = lx->get_text( ).
+    endif.
+    message l_str type 'E' display like 'S'.
+    return.
+  endtry.
+
+  message 'Upload successful' type 'S'.
+
+endform.                    "upload_mime

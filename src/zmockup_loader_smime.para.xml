@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_PARA" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <TPARA>
+    <PARAMID>ZMOCKUP_LOADER_SMIME</PARAMID>
+   </TPARA>
+   <TPARAT>
+    <PARAMID>ZMOCKUP_LOADER_SMIME</PARAMID>
+    <SPRACHE>E</SPRACHE>
+    <PARTEXT>Mockup loader mime name</PARTEXT>
+   </TPARAT>
+  </asx:values>
+ </asx:abap>
+</abapGit>

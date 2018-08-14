@@ -339,7 +339,7 @@ class lcl_test_mockup_loader implementation.
 
     get parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_tmp. " Preserve
 
-    l_type = 'MIME'.
+    l_type = 'FILE'.
     l_path = 'ZMOCKUP_LOADER_WRONG_OBJECT'.
     set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
     set parameter id 'ZMOCKUP_LOADER_SPATH' field l_path.
@@ -353,6 +353,27 @@ class lcl_test_mockup_loader implementation.
     clear l_type.
     set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
     set parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_tmp.
+    o->free_instance( ).
+
+    assert_excode 'RE'.
+
+    " MIME
+    get parameter id 'ZMOCKUP_LOADER_SMIME' field l_path_tmp. " Preserve
+
+    l_type = 'MIME'.
+    l_path = 'ZMOCKUP_LOADER_WRONG_OBJECT'.
+    set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
+    set parameter id 'ZMOCKUP_LOADER_SMIME' field l_path.
+    o->free_instance( ).
+
+    try.
+      o = zcl_mockup_loader=>get_instance( ).
+    catch cx_static_check into lo_ex.
+    endtry.
+
+    clear l_type.
+    set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
+    set parameter id 'ZMOCKUP_LOADER_SMIME' field l_path_tmp.
     o->free_instance( ).
 
     assert_excode 'RE'.
