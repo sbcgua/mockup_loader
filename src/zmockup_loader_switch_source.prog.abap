@@ -291,34 +291,19 @@ form upload_mime.
         l_str  type string,
         lo_obj type ref to object.
   try.
-    create object lo_obj type ('\PROGRAM=ZW3MIMEPOLL\CLASS=LCL_W3MI_STORAGE').
+    create object lo_obj type ('ZCL_W3MIME_UTILS').
   catch cx_sy_create_error into lx.
     message 'Install ZW3MIMEPOLL for this feature to work. https://github.com/sbcgua/abap_w3mi_poller' type 'E' display like 'S'.
     return.
   endtry.
 
-  data dref type ref to data.
-  field-symbols <key> type any.
-  field-symbols <fld> type any.
-  create data dref type ('\PROGRAM=ZW3MIMEPOLL\CLASS=LCL_W3MI_STORAGE\TYPE=ty_w3obj_key').
-  assign dref->* to <key>.
-  assign component 'RELID' of structure <key> to <fld>.
-  <fld> = 'MI'.
-  assign component 'OBJID' of structure <key> to <fld>.
-  <fld> = p_mpath.
-
   try.
-    call method ('\PROGRAM=ZW3MIMEPOLL\CLASS=LCL_W3MI_STORAGE')=>('UPLOAD')
+    call method ('ZCL_W3MIME_UTILS')=>('UPLOAD')
       exporting
         iv_filename = |{ p_fpath }|
-        is_w3key    = <key>.
+        iv_key      = p_mpath.
   catch cx_static_check into lx.
-    assign lx->('MV_MESSAGE') to <fld>.
-    if sy-subrc is initial.
-      l_str = <fld>.
-    else.
-      l_str = lx->get_text( ).
-    endif.
+    l_str = lx->get_text( ).
     message l_str type 'E' display like 'S'.
     return.
   endtry.
