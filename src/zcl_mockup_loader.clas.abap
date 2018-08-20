@@ -250,9 +250,9 @@ method break_to_lines.
   " Detect line break
   l_found = find( val = i_text sub = cl_abap_char_utilities=>cr_lf ).
   if l_found < 0.
-    l_found = find( val = i_text sub = cl_abap_char_utilities=>form_feed ).
+    l_found = find( val = i_text sub = cl_abap_char_utilities=>newline ).
     if l_found >= 0.
-      l_break = cl_abap_char_utilities=>form_feed.
+      l_break = cl_abap_char_utilities=>newline.
     endif.
   endif.
 

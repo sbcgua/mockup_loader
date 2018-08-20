@@ -124,7 +124,7 @@ class lcl_test_mockup_loader definition for testing
   private section.
     constants c_tab  like cl_abap_char_utilities=>horizontal_tab value cl_abap_char_utilities=>horizontal_tab.
     constants c_crlf like cl_abap_char_utilities=>cr_lf value cl_abap_char_utilities=>cr_lf.
-    constants c_lf   like cl_abap_char_utilities=>form_feed value cl_abap_char_utilities=>form_feed.
+    constants c_lf   like cl_abap_char_utilities=>newline value cl_abap_char_utilities=>newline.
 
     data o type ref to zcl_mockup_loader.  "class under test
 
