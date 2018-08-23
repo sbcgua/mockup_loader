@@ -103,8 +103,8 @@ public section.
   class-methods BUILD_FILTER
     importing
       !I_WHERE type ANY
-    exporting
-      !E_FILTER type TT_FILTER
+    returning
+      value(R_FILTER) type TT_FILTER
     raising
       ZCX_MOCKUP_LOADER_ERROR .
   class-methods DOES_LINE_FIT_FILTER
@@ -232,7 +232,6 @@ method BUILD_FILTER.
   field-symbols <ftable> type any table.
   field-symbols <cond>   type string.
 
-  clear     e_filter.
   dy_type   = cl_abap_typedescr=>describe_by_data( i_where ).
   dy_templ ?= cl_abap_typedescr=>describe_by_name( 'SVER_TABLE_TYPE_VERI_RANGE' ).
 
@@ -317,7 +316,7 @@ method BUILD_FILTER.
     zcx_mockup_loader_error=>raise( msg = |CX_SY_MOVE_CAST_ERROR @BUILD_FILTER()| code = 'CE' ).   "#EC NOTEXT
   endtry.
 
-  e_filter = lt_filter.
+  r_filter = lt_filter.
 
 endmethod.
 
@@ -714,8 +713,7 @@ method parse_data.
 
   " Build filter hash if supplied
   if i_where is not initial.
-    me->build_filter( exporting i_where  = i_where
-                      importing e_filter = lt_filter ).
+    lt_filter = me->build_filter( i_where ).
   endif.
 
   " Read and process header line

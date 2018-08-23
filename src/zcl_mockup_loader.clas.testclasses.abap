@@ -922,18 +922,14 @@ class lcl_test_mockup_loader implementation.
 
     " Component is not a range table
     try.
-      o->build_filter(
-        exporting i_where = l_where_err1
-        importing e_filter = l_filter ).
+      l_filter = o->build_filter( l_where_err1 ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'WS'.
 
     " Component is not a table
     try.
-      o->build_filter(
-        exporting i_where = l_where_err2
-        importing e_filter = l_filter ).
+      l_filter = o->build_filter( l_where_err2 ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'WS'.
@@ -942,9 +938,7 @@ class lcl_test_mockup_loader implementation.
     l_tywhere-name = 'TNUMBER'.
     get reference of l_where into l_tywhere-range.
     try.
-      o->build_filter(
-        exporting i_where = l_tywhere
-        importing e_filter = l_filter ).
+      l_filter = o->build_filter( l_tywhere ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'CE'.
@@ -953,9 +947,7 @@ class lcl_test_mockup_loader implementation.
     l_tywhere-name = 'TNUMBER'.
     get reference of dummy_tab_exp into l_tywhere-range.
     try.
-      o->build_filter(
-        exporting i_where = l_tywhere
-        importing e_filter = l_filter ).
+      l_filter = o->build_filter( l_tywhere ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'RT'.
@@ -965,9 +957,7 @@ class lcl_test_mockup_loader implementation.
     get reference of dummy_tab_exp into l_tywhere-range.
     append l_tywhere to lt_tywhere.
     try.
-      o->build_filter(
-        exporting i_where = lt_tywhere
-        importing e_filter = l_filter ).
+      l_filter = o->build_filter( lt_tywhere ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     clear lt_tywhere.
@@ -975,27 +965,21 @@ class lcl_test_mockup_loader implementation.
 
     " Wrong type of table
     try.
-      o->build_filter(
-        exporting i_where = dummy_tab_exp
-        importing e_filter = l_filter ).
+      l_filter = o->build_filter( dummy_tab_exp ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'WT'.
 
     " Parameter is an unsupported type
     try.
-      o->build_filter(
-        exporting i_where = lo_ex
-        importing e_filter = l_filter ).
+      l_filter = o->build_filter( lo_ex ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'UT'.
 
     " parameter is incorrect string pattern
     try.
-      o->build_filter(
-        exporting i_where = 'TNUMBER??'
-        importing e_filter = l_filter ).
+      l_filter = o->build_filter( 'TNUMBER??' ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'SP'.
@@ -1010,15 +994,14 @@ class lcl_test_mockup_loader implementation.
     add_range other  'I' 'GE' 'A'.
 
     try.
-      o->build_filter(
-        exporting i_where = l_where
-        importing e_filter = l_filter ).
+      l_filter = o->build_filter( l_where ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    cl_abap_unit_assert=>assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
-                   exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals(
+      act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
+      exp = dummy_tab_exp ).
 
     " Positive test TY_WHERE TABLE --------------------------------------------------
     " REUSE dummy_tab_exp and ranges from above
@@ -1031,24 +1014,21 @@ class lcl_test_mockup_loader implementation.
     append l_tywhere to lt_tywhere.
 
     try .
-      o->build_filter(
-        exporting i_where = lt_tywhere
-        importing e_filter = l_filter ).
+      l_filter = o->build_filter( lt_tywhere ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    cl_abap_unit_assert=>assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
-                   exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals(
+      act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
+      exp = dummy_tab_exp ).
 
     " Positive test STRING --------------------------------------------------------------
     dummy_tab_exp[] = dummy_tab_src[].
     delete dummy_tab_exp where tnumber <> '2015'.
 
     try .
-      o->build_filter(
-        exporting i_where = 'TNUMBER = 2015'
-        importing e_filter = l_filter ).
+      l_filter = o->build_filter( 'TNUMBER = 2015' ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
@@ -1058,15 +1038,14 @@ class lcl_test_mockup_loader implementation.
 
     " Same but with lower case name
     try .
-      o->build_filter(
-        exporting i_where = 'TnumBER = 2015'
-        importing e_filter = l_filter ).
+      l_filter = o->build_filter( 'TnumBER = 2015' ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    cl_abap_unit_assert=>assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
-                   exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals(
+      act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
+      exp = dummy_tab_exp ).
 
 
     " Positive test TY_WHERE STRUCTURE --------------------------------------------------
@@ -1075,15 +1054,14 @@ class lcl_test_mockup_loader implementation.
     get reference of l_where-tnumber into l_tywhere-range.
 
     try .
-      o->build_filter(
-        exporting i_where = l_tywhere
-        importing e_filter = l_filter ).
+      l_filter = o->build_filter( l_tywhere ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    cl_abap_unit_assert=>assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
-                   exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals(
+      act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
+      exp = dummy_tab_exp ).
 
   endmethod.       "range_filtering
 
