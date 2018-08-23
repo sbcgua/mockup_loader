@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_MOCKUP_LOADER_STORE</CLSNAME>
+    <VERSION>1</VERSION>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Mem store of mockups</DESCRIPT>
+    <STATE>1</STATE>
+    <CLSFINAL>X</CLSFINAL>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+    <WITH_UNIT_TESTS>X</WITH_UNIT_TESTS>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER_STORE</CLSNAME>
+     <CMPNAME>FREE_INSTANCE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Free singleton instance</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER_STORE</CLSNAME>
+     <CMPNAME>GET_INSTANCE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Get store singleton instance</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER_STORE</CLSNAME>
+     <CMPNAME>GO_INSTANCE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Mem store of mockups</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER_STORE</CLSNAME>
+     <CMPNAME>PURGE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Purge data from store</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER_STORE</CLSNAME>
+     <CMPNAME>RETRIEVE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Retrieve data from store</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER_STORE</CLSNAME>
+     <CMPNAME>STORE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Save data to store</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER_STORE</CLSNAME>
+     <CMPNAME>_RETRIEVE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Retrieve data from store HELPER</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER_STORE</CLSNAME>
+     <CMPNAME>_STORE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Save data to store HELPER</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

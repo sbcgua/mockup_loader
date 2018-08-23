@@ -23,13 +23,6 @@
 *| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  |
 *| SOFTWARE.                                                                      |
 *\--------------------------------------------------------------------------------/
-*/--------------------------------------------------------------------------------\
-*| CONTRIBUTORS                                                                   |
-*|--------------------------------------------------------------------------------|
-*| Leading developers : Alexander Tsybulsky (atsybulsky@sbcg.com.ua)              |
-*|                      Svetlana Shlapak    (sshlapak@sbcg.com.ua)                |
-*| Testing and ideas:   Bohdan Petruschak   (b.petrushchak@sbcg.com.ua)           |
-*|--------------------------------------------------------------------------------|
 *| project homepage: https://github.com/sbcgua/mockup_loader                      |
 *\--------------------------------------------------------------------------------/
 
@@ -143,11 +136,7 @@ class lcl_test_mockup_loader definition for testing
     methods map_file_structure       for testing.
     methods range_filtering          for testing.
 
-    methods store_retrieve           for testing.
-    methods retrieve_types           for testing.
-    methods store_retrieve_with_key  for testing.
-    methods store_retrieve_with_where for testing.
-    methods load_and_store           for testing.
+    methods load_and_store. "           for testing.
     methods load_raw                 for testing.
     methods parse_apply_exit         for testing.
 
@@ -819,223 +808,6 @@ class lcl_test_mockup_loader implementation.
   endmethod.       "map_file_structure
 
 **********************************************************************
-* STORE tests - basic functionality
-**********************************************************************
-  method store_retrieve.
-    data:
-          dummy_exp      type ty_dummy,
-          dummy_tab_exp  type tt_dummy,
-          dummy_act      type ty_dummy,
-          dummy_tab_act  type tt_dummy,
-          lo_ex          type ref to cx_static_check.
-
-    get_dummy_data( importing e_dummy_struc = dummy_exp
-                              e_dummy_tab   = dummy_tab_exp ).
-
-    " Instance method ********************************
-    try.
-      o->store( i_name = 'STRUC' i_data = dummy_exp ).
-      o->store( i_name = 'TAB'   i_data = dummy_tab_exp ).
-
-      call method o->_retrieve
-        exporting i_name  = 'STRUC'
-        importing e_data = dummy_act.
-
-      call method o->_retrieve
-        exporting i_name  = 'TAB'
-        importing e_data = dummy_tab_act.
-
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
-    endtry.
-
-    assert_equals( act = dummy_act      exp = dummy_exp ).
-    assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
-
-    " Instance method - NEGATIVE **********************
-    try.
-      call method o->_retrieve
-        exporting i_name  = 'NOT_EXISTING'
-        importing e_data = dummy_act.
-    catch cx_static_check into lo_ex.
-    endtry.
-    assert_excode 'NF'.
-
-    " Static method ***********************************
-    clear: dummy_act, dummy_tab_act.
-
-    call method zcl_mockup_loader=>retrieve
-      exporting i_name  = 'STRUC'
-      importing e_data = dummy_act
-      exceptions others = 4.
-    assert_subrc( act = sy-subrc ).
-
-    call method zcl_mockup_loader=>retrieve
-      exporting i_name  = 'TAB'
-      importing e_data = dummy_tab_act
-      exceptions others = 4.
-    assert_subrc( act = sy-subrc ).
-
-    assert_equals( act = dummy_act      exp = dummy_exp ).
-    assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
-
-    " Static method - NEGATIVE ************************
-    call method zcl_mockup_loader=>retrieve
-      exporting i_name  = 'NOT_EXISTING'
-      importing e_data = dummy_act
-      exceptions others = 4.
-
-    assert_subrc(  act = sy-subrc       exp = 4 ).
-    assert_equals( act = sy-msgno       exp = 499 ). " SY(499) -> & & & &
-
-    " Purge tests
-    try.
-      o->store( i_name = 'ANOTHER_STRUC' i_data = dummy_exp ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
-    endtry.
-
-    assert_equals( act = lines( o->at_store ) exp = 3 ).
-    o->purge( 'ANOTHER_STRUC' ).
-    assert_equals( act = lines( o->at_store ) exp = 2 ).
-    o->purge( '*' ).
-    assert_equals( act = lines( o->at_store ) exp = 0 ).
-
-  endmethod.       "store_retrieve
-
-**********************************************************************
-* STORE RETRIEVE types checking test
-**********************************************************************
-  method retrieve_types.
-    data:
-          lo_ex        type ref to cx_static_check,
-          lt_src       type scarr_tab,
-          lt_dst_tab   type scarr_tab,
-          lt_dst_tt    type table of scarr,
-          lt_dst_ts    type sorted table of scarr with unique key carrid,
-          l_dst_struc  type scarr,
-          lt_dst_diff  type table of sflight.
-
-    append initial line to lt_src.
-    try. o->store( i_name = 'DATA' i_data = lt_src ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
-    endtry.
-
-    " Store to different kinds of same table *******************
-    try.
-      call method o->_retrieve exporting i_name  = 'DATA' importing e_data = lt_dst_tab.
-      call method o->_retrieve exporting i_name  = 'DATA' importing e_data = lt_dst_tt.
-      call method o->_retrieve exporting i_name  = 'DATA' importing e_data = lt_dst_ts.
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
-    endtry.
-
-    " Store to structure ***************************************
-    try. call method o->_retrieve exporting i_name  = 'DATA' importing e_data = l_dst_struc.
-    catch cx_static_check into lo_ex.
-    endtry.
-    assert_excode 'TT'.
-
-    " Store to table with different structure ******************
-    clear lo_ex.
-    try. call method o->_retrieve exporting i_name  = 'DATA' importing e_data = lt_dst_diff.
-    catch cx_static_check into lo_ex.
-    endtry.
-    assert_excode 'TS'.
-
-  endmethod.       "retrieve_types
-
-**********************************************************************
-* STORE RETRIEVE with table key and sieving (filtering)
-**********************************************************************
-  method store_retrieve_with_key.
-    data:
-          dummy_exp      type ty_dummy,
-          dummy_tab_exp  type tt_dummy,
-          dummy_act      type ty_dummy,
-          dummy_tab_act  type tt_dummy,
-          ls_wrong       type sflight,
-          lo_ex          type ref to cx_static_check.
-
-    get_dummy_data( importing e_dummy_struc = dummy_exp
-                              e_dummy_tab   = dummy_tab_exp ).
-
-    try. o->store( i_name = 'TAB' i_data = dummy_tab_exp i_tabkey = 'TNUMBER' ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
-    endtry.
-
-    delete dummy_tab_exp where tnumber <> '2016'.
-
-    " Positive *****************************************
-    try.
-      call method o->_retrieve
-        exporting i_name   = 'TAB'
-                  i_sift   = '2015'
-        importing e_data   = dummy_act.
-
-      call method o->_retrieve
-        exporting i_name   = 'TAB'
-                  i_sift   = '2016'
-        importing e_data   = dummy_tab_act.
-
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
-    endtry.
-
-    assert_equals( act = dummy_act      exp = dummy_exp ).
-    assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
-
-    " Retrieve to wrong structure **********************
-    clear lo_ex.
-    try.
-      call method o->_retrieve
-        exporting i_name   = 'TAB'
-                  i_sift   = '2015'
-        importing e_data   = ls_wrong.
-    catch cx_static_check into lo_ex.
-    endtry.
-    assert_excode 'TS'.
-
-    " Retrieve - no data selected **********************
-    clear lo_ex.
-    try.
-      call method o->_retrieve
-        exporting i_name   = 'TAB'
-                  i_sift   = '2000'
-        importing e_data   = dummy_tab_act. " Table
-    catch cx_static_check into lo_ex.
-    endtry.
-    assert_excode '04'.
-
-    clear lo_ex.
-    try.
-      call method o->_retrieve
-        exporting i_name   = 'TAB'
-                  i_sift   = '2000'
-        importing e_data   = dummy_act.    " Structure
-    catch cx_static_check into lo_ex.
-    endtry.
-    assert_excode '04'.
-
-    " Save structure ************************************
-    clear lo_ex.
-    try. o->store( i_name = 'STRUC' i_data = dummy_exp i_tabkey = 'TNUMBER' ).
-    catch cx_static_check into lo_ex.
-    endtry.
-    assert_excode 'TO'.
-
-    " Tab key that does not exist in the structure ******
-    clear lo_ex.
-    try. o->store( i_name = 'TAB' i_data = dummy_tab_exp i_tabkey = 'UNDEFINED' ).
-    catch cx_static_check into lo_ex.
-    endtry.
-    assert_excode 'FM'.
-
-  endmethod.       "store_retrieve_with_key
-
-**********************************************************************
 * LOAD AND STORE at once
 **********************************************************************
   method load_and_store.
@@ -1048,14 +820,14 @@ class lcl_test_mockup_loader implementation.
 
     " Positive test ************************************
     try.
-      call method o->load_and_store
-        exporting i_obj       = 'testdir/testfile_complete'
-                  i_name      = 'TAB'
-                  i_type      = 'LCL_TEST_MOCKUP_LOADER=>TT_DUMMY'.
-
-      call method o->_retrieve
-        exporting i_name   = 'TAB'
-        importing e_data   = dummy_tab_act.
+*      call method o->load_and_store
+*        exporting i_obj       = 'testdir/testfile_complete'
+*                  i_name      = 'TAB'
+*                  i_type      = 'LCL_TEST_MOCKUP_LOADER=>TT_DUMMY'.
+*
+*      call method o->_retrieve
+*        exporting i_name   = 'TAB'
+*        importing e_data   = dummy_tab_act.
 
     catch cx_static_check into lo_ex.
       fail( lo_ex->get_text( ) ).
@@ -1333,60 +1105,5 @@ class lcl_test_mockup_loader implementation.
     assert_excode 'EM'.
 
   endmethod. "parse_apply_exit
-
-**********************************************************************
-* STORE_RETRIEVE_WITH_WHERE - New logic with i_where in store
-**********************************************************************
-  method store_retrieve_with_where.
-    data:
-          dummy_exp      type ty_dummy,
-          dummy_tab_exp  type tt_dummy,
-          dummy_act      type ty_dummy,
-          lo_ex          type ref to cx_static_check.
-
-    get_dummy_data( importing e_dummy_tab   = dummy_tab_exp ).
-    read table dummy_tab_exp into dummy_exp with key tnumber = '2016'.
-
-    " POSITIVE - use i_where
-    try .
-      o->store( i_name = 'STRUC' i_data = dummy_exp ).
-      o->store( i_name = 'TAB'   i_data = dummy_tab_exp ).
-
-      o->_retrieve( exporting i_name = 'TAB' i_where = 'TNUMBER=2016'
-                    importing e_data = dummy_act ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
-    endtry.
-    assert_equals( act = dummy_act exp = dummy_exp ).
-
-    " NEGATIVE - Pass both filter simultaneously
-    clear lo_ex.
-    try .
-      o->_retrieve( exporting i_name = 'TAB' i_sift = 'X' i_where = 'Y'
-                    importing e_data = dummy_act ).
-    catch cx_static_check into lo_ex.
-    endtry.
-    assert_excode 'WP'.
-
-    " NEGATIVE - Store without tab key
-    clear lo_ex.
-    try .
-      o->_retrieve( exporting i_name = 'TAB' i_sift = 'X'
-                    importing e_data = dummy_act ).
-    catch cx_static_check into lo_ex.
-    endtry.
-    assert_excode 'FM'.
-
-    " NEGATIVE - Filter tables only
-    clear lo_ex.
-    try .
-      o->_retrieve( exporting i_name = 'STRUC' i_where = 'TNUMBER=2016'
-                    importing e_data = dummy_act ).
-    catch cx_static_check into lo_ex.
-    endtry.
-    assert_excode 'TO'.
-
-
-  endmethod. "store_retrieve_with_where
 
 endclass.       "lcl_Test_Mockup_Loader
