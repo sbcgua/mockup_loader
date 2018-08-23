@@ -40,7 +40,7 @@ class ZCL_MOCKUP_LOADER definition
 public section.
 
   types:
-    tt_string type standard table of string with default key.
+    tt_string type standard table of string with default key .
   types:
     begin of ty_store,
       name    type char40,
@@ -80,7 +80,7 @@ public section.
     returning
       value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   class-methods FREE_INSTANCE .
   methods LOAD_RAW
     importing
@@ -89,7 +89,7 @@ public section.
     exporting
       !E_CONTENT type XSTRING
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   methods LOAD_AND_STORE
     importing
       !I_OBJ type STRING
@@ -98,7 +98,7 @@ public section.
       !I_TYPE type CSEQUENCE
       !I_TABKEY type ABAP_COMPNAME optional
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   methods LOAD_DATA
     importing
       !I_OBJ type STRING
@@ -107,7 +107,7 @@ public section.
     exporting
       !E_CONTAINER type ANY
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   methods PURGE
     importing
       !I_NAME type CHAR40 .
@@ -126,7 +126,7 @@ public section.
       !I_DATA type ANY
       !I_TABKEY type ABAP_COMPNAME optional
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
 protected section.
 private section.
 
@@ -142,7 +142,7 @@ private section.
 
   methods INITIALIZE
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   methods MAP_FILE_STRUCTURE
     importing
       !I_LINE type STRING
@@ -151,7 +151,7 @@ private section.
     exporting
       !ET_MAP type INT4_TABLE
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   methods PARSE_APPLY_EXIT
     importing
       !I_DATA type STRING
@@ -159,7 +159,7 @@ private section.
     exporting
       !E_FIELD type ANY
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   methods PARSE_DATA
     importing
       !I_RAWDATA type STRING
@@ -168,7 +168,7 @@ private section.
     exporting
       !E_CONTAINER type ANY
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   methods PARSE_LINE
     importing
       !I_LINE type STRING
@@ -178,7 +178,7 @@ private section.
     exporting
       !ES_CONTAINER type ANY
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   methods PARSE_FIELD
     importing
       !IS_COMPONENT type ABAP_COMPDESCR
@@ -186,21 +186,21 @@ private section.
     exporting
       !E_FIELD type ANY
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   methods PARSE_DATE
     importing
       !I_VALUE type STRING
     exporting
       !E_FIELD type D
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   methods BUILD_FILTER
     importing
       !I_WHERE type ANY
     exporting
       !E_FILTER type TT_FILTER
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   methods DOES_LINE_FIT_FILTER
     importing
       !I_LINE type ANY
@@ -213,14 +213,14 @@ private section.
     exporting
       !E_RAWDATA type STRING
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   methods _STORE
     importing
       !I_NAME type CHAR40
       !I_DATA_REF type ref to DATA
       !I_TABKEY type ABAP_COMPNAME optional
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   methods _RETRIEVE
     importing
       !I_NAME type CHAR40
@@ -229,7 +229,7 @@ private section.
     exporting
       !E_DATA type ANY
     raising
-      CX_STATIC_CHECK .
+      ZCX_MOCKUP_LOADER_ERROR .
   class-methods BREAK_TO_LINES
     importing
       !I_TEXT type STRING
@@ -286,7 +286,7 @@ method BUILD_FILTER.
       dy_table ?= dy_type.
       dy_struc ?= dy_table->get_table_line_type( ).
       if not dy_struc->absolute_name cs '\CLASS=ZCL_MOCKUP_LOADER\TYPE=TY_WHERE'.
-        lcx_error=>raise( msg = |I_WHERE table must be of TT_WHERE type| code = 'WT' ).   "#EC NOTEXT
+        zcx_mockup_loader_error=>raise( msg = |I_WHERE table must be of TT_WHERE type| code = 'WT' ).   "#EC NOTEXT
       endif.
 
       assign i_where to <ftable>.
@@ -296,7 +296,7 @@ method BUILD_FILTER.
         l_filter-type  = 'R'. " Range
         dy_table ?= cl_abap_typedescr=>describe_by_data_ref( l_filter-range ). " Assume table, cast_error otherwise
         if dy_table->key ne dy_templ->key. " Not range ?
-          lcx_error=>raise( msg = |I_WHERE-RANGE must be a range table| code = 'RT' ).   "#EC NOTEXT
+          zcx_mockup_loader_error=>raise( msg = |I_WHERE-RANGE must be a range table| code = 'RT' ).   "#EC NOTEXT
         endif.
         append l_filter to lt_filter.
       endloop.
@@ -311,7 +311,7 @@ method BUILD_FILTER.
         l_filter-type  = 'R'. " Range
         dy_table ?= cl_abap_typedescr=>describe_by_data_ref( l_filter-range ). " Assume table, cast_error otherwise
         if dy_table->key ne dy_templ->key. " Not range ?
-          lcx_error=>raise( msg = |I_WHERE-RANGE must be a range table| code = 'RT' ).   "#EC NOTEXT
+          zcx_mockup_loader_error=>raise( msg = |I_WHERE-RANGE must be a range table| code = 'RT' ).   "#EC NOTEXT
         endif.
         append l_filter to lt_filter.
 
@@ -319,12 +319,12 @@ method BUILD_FILTER.
         lt_components  = dy_struc->get_components( ).
         loop at lt_components into l_component.
           if l_component-type->kind <> cl_abap_typedescr=>kind_table.
-            lcx_error=>raise( msg = |I_WHERE must be a structure of ranges or TY_WHERE| code = 'WS' ).   "#EC NOTEXT
+            zcx_mockup_loader_error=>raise( msg = |I_WHERE must be a structure of ranges or TY_WHERE| code = 'WS' ).   "#EC NOTEXT
           endif.
 
           dy_table ?= l_component-type.
           if dy_table->key ne dy_templ->key. " Not range-like structure ?
-            lcx_error=>raise( msg = |I_WHERE must be a structure of ranges or TY_WHERE| code = 'WS' ).   "#EC NOTEXT
+            zcx_mockup_loader_error=>raise( msg = |I_WHERE must be a structure of ranges or TY_WHERE| code = 'WS' ).   "#EC NOTEXT
           endif.
 
           l_filter-name = l_component-name.
@@ -348,17 +348,17 @@ method BUILD_FILTER.
       translate l_filter-name to upper case.
 
       if l_filter-name is initial or <cond> is initial.
-        lcx_error=>raise( msg = |Incorrect I_WHERE string pattern| code = 'SP' ).   "#EC NOTEXT
+        zcx_mockup_loader_error=>raise( msg = |Incorrect I_WHERE string pattern| code = 'SP' ).   "#EC NOTEXT
       endif.
 
       append l_filter to lt_filter.
 
     when others.
-      lcx_error=>raise( msg = |Unsupported type { dy_type->absolute_name } of I_WHERE| code = 'UT' ).   "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = |Unsupported type { dy_type->absolute_name } of I_WHERE| code = 'UT' ).   "#EC NOTEXT
     endcase.
 
   catch cx_sy_move_cast_error.
-    lcx_error=>raise( msg = |CX_SY_MOVE_CAST_ERROR @BUILD_FILTER()| code = 'CE' ).   "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = |CX_SY_MOVE_CAST_ERROR @BUILD_FILTER()| code = 'CE' ).   "#EC NOTEXT
   endtry.
 
   e_filter = lt_filter.
@@ -500,7 +500,7 @@ method INITIALIZE.
         others = 1.
 
     if sy-subrc is not initial.
-      lcx_error=>raise( msg = 'SMW0 data import error' code = 'RE' ).  "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = 'SMW0 data import error' code = 'RE' ).  "#EC NOTEXT
     endif.
 
     describe table lt_w3mime lines l_size.
@@ -519,12 +519,12 @@ method INITIALIZE.
       others = 1.
 
     if sy-subrc is not initial.
-      lcx_error=>raise( msg = |Cannot upload file: { l_src_path }| code = 'RE' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = |Cannot upload file: { l_src_path }| code = 'RE' ). "#EC NOTEXT
     endif.
 
   when others.
     if sy-subrc is not initial.
-      lcx_error=>raise( msg = 'Wrong source type' code = 'WS' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = 'Wrong source type' code = 'WS' ). "#EC NOTEXT
     endif.
 
   endcase.
@@ -541,7 +541,7 @@ method INITIALIZE.
       failed       = 1.
 
   if sy-subrc is not initial.
-    lcx_error=>raise( 'Binary to string error' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( 'Binary to string error' ). "#EC NOTEXT
   endif.
 
   " Extract zip
@@ -553,7 +553,7 @@ method INITIALIZE.
                exceptions others = 4 ).
 
   if sy-subrc is not initial or lines( o_zip->files ) = 0.
-    lcx_error=>raise( msg = 'ZIP load failed' code = 'ZE' ).  "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = 'ZIP load failed' code = 'ZE' ).  "#EC NOTEXT
   endif.
 endmethod.
 
@@ -573,7 +573,7 @@ method load_and_store.
     exceptions others      = 4 ).
 
   if sy-subrc is not initial.
-    lcx_error=>raise( msg = |Type { i_type } not found|  code = 'WT' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = |Type { i_type } not found|  code = 'WT' ). "#EC NOTEXT
   endif.
 
   lo_dtype ?= lo_type.
@@ -597,7 +597,7 @@ method load_data.
   data l_rawdata  type string.
 
   if e_container is not supplied.
-    lcx_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
   endif.
 
   me->read_zip( exporting i_name    = i_obj && '.txt'
@@ -615,7 +615,7 @@ method load_raw.
   data l_filename type string.
 
   if e_content is not supplied.
-    lcx_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
   endif.
 
   if i_ext is initial.
@@ -645,7 +645,7 @@ method map_file_structure.
   " Check if the line ends with TAB
   find all occurrences of cl_abap_char_utilities=>horizontal_tab in i_line match count l_tabcnt.
   if l_tabcnt = lines( lt_fields ). " Line ends with TAB, last empty field is not added to table, see help for 'split'
-    lcx_error=>raise( msg = |Empty field at the end @{ l_struc_name }| code = 'EN' ).   "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = |Empty field at the end @{ l_struc_name }| code = 'EN' ).   "#EC NOTEXT
   endif.
 
   " Compare number of fields, check structure similarity
@@ -662,7 +662,7 @@ method map_file_structure.
     endif.
 
     if l_fieldcnt <> lines( io_struc_descr->components ).
-      lcx_error=>raise( msg = |Different columns number @{ l_struc_name }| code = 'CN' ).   "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = |Different columns number @{ l_struc_name }| code = 'CN' ).   "#EC NOTEXT
     endif.
   endif.
 
@@ -671,20 +671,20 @@ method map_file_structure.
   sort lt_dupcheck[].
   delete adjacent duplicates from lt_dupcheck[].
   if lines( lt_dupcheck ) <> lines( lt_fields ).
-    lcx_error=>raise( msg = |Duplicate field names found @{ l_struc_name }| code = 'DN' ).   "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = |Duplicate field names found @{ l_struc_name }| code = 'DN' ).   "#EC NOTEXT
   endif.
 
   " Compare columns names and make map
   loop at lt_fields into l_field_name.
     if l_field_name is initial. " Check empty fields
-      lcx_error=>raise( msg = |Empty field name found @{ l_struc_name }| code = 'EN' ).   "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = |Empty field name found @{ l_struc_name }| code = 'EN' ).   "#EC NOTEXT
     endif.
 
     read table io_struc_descr->components with key name = l_field_name transporting no fields.
     if sy-subrc is initial.
       append sy-tabix to et_map.
     else.
-      lcx_error=>raise( msg = |{ l_field_name } not found in structure @{ l_struc_name }| code = 'MC' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = |{ l_field_name } not found in structure @{ l_struc_name }| code = 'MC' ). "#EC NOTEXT
     endif.
   endloop.
 
@@ -704,7 +704,7 @@ method parse_apply_exit.
       others             = 2.
 
   if sy-subrc <> 0.
-    lcx_error=>raise( msg = 'Conversion exit not found' code = 'EM' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = 'Conversion exit not found' code = 'EM' ). "#EC NOTEXT
   endif.
 
   call function l_fmname
@@ -713,7 +713,7 @@ method parse_apply_exit.
     exceptions others = 1.
 
   if sy-subrc <> 0.
-    lcx_error=>raise( msg = 'Conversion exit failed' code = 'EF' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = 'Conversion exit failed' code = 'EF' ). "#EC NOTEXT
   endif.
 
 endmethod.
@@ -750,7 +750,7 @@ method parse_data.
     lo_struc_descr ?= lo_type_descr.
     assign e_container to <container>.
   when others. " Not a table or structure ?
-    lcx_error=>raise( msg = 'Table or structure containers only' code = 'DT' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = 'Table or structure containers only' code = 'DT' ). "#EC NOTEXT
   endcase.
 
   " Build filter hash if supplied
@@ -763,10 +763,10 @@ method parse_data.
   lt_lines = break_to_lines( i_rawdata ).
   read table lt_lines into ls_line index 1.
   if sy-subrc <> 0.
-    lcx_error=>raise( msg = 'No header line found in the file' code = 'NH' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = 'No header line found in the file' code = 'NH' ). "#EC NOTEXT
   endif.
   if ls_line is initial.
-    lcx_error=>raise( msg = 'Header line is empty'  code = 'HE' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = 'Header line is empty'  code = 'HE' ). "#EC NOTEXT
   endif.
 
   delete lt_lines index 1.
@@ -780,7 +780,7 @@ method parse_data.
   loop at lt_lines into ls_line.
     if ls_line is initial. " Check empty lines
       check sy-tabix < lines( lt_lines ). " Last line of a file may be empty, others - not
-      lcx_error=>raise( msg = |Empty line { sy-tabix + 1 } cannot be parsed|  code = 'LE' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = |Empty line { sy-tabix + 1 } cannot be parsed|  code = 'LE' ). "#EC NOTEXT
     endif.
 
     me->parse_line( exporting i_line         = ls_line
@@ -825,12 +825,12 @@ method PARSE_DATE.
   endif.
 
   if not i_value co l_charset.  " Check wrong symbols
-    lcx_error=>raise( msg = 'Date contains invalid symbols' code = 'DY' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = 'Date contains invalid symbols' code = 'DY' ). "#EC NOTEXT
   endif.
 
   " Not separated date must be 8 chars, separated not more than 10
   if l_sep <> space and strlen( i_value ) > 10  or l_sep = space and strlen( i_value ) <> 8.
-    lcx_error=>raise( msg = 'Incorrect date length' code = 'DL' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = 'Incorrect date length' code = 'DL' ). "#EC NOTEXT
   endif.
 
   do 3 times.
@@ -848,7 +848,7 @@ method PARSE_DATE.
         l_size = 4.
         l_home = 0.
       when others.
-        lcx_error=>raise( msg = 'Wrong date format' ). "#EC NOTEXT
+        zcx_mockup_loader_error=>raise( msg = 'Wrong date format' ). "#EC NOTEXT
     endcase.
 
     if l_sep is initial. " No seps
@@ -861,10 +861,10 @@ method PARSE_DATE.
         find first occurrence of l_sep in i_value+l_cursor match offset l_offs.
       endif.
       if sy-subrc <> 0.
-        lcx_error=>raise( msg = 'Date separator is missing' code = 'DS' ). "#EC NOTEXT
+        zcx_mockup_loader_error=>raise( msg = 'Date separator is missing' code = 'DS' ). "#EC NOTEXT
       endif.
       if l_offs > l_size.
-        lcx_error=>raise( msg = 'Too long date part' code = 'DP' ). "#EC NOTEXT
+        zcx_mockup_loader_error=>raise( msg = 'Too long date part' code = 'DP' ). "#EC NOTEXT
       endif.
       l_stencil                = i_value+l_cursor(l_offs).
       l_pad                    = 4 - l_size. " Offset within stencil
@@ -883,7 +883,7 @@ method PARSE_DATE.
       importing
         ex_datint   = e_field ).
     catch cx_abap_datfm.
-      lcx_error=>raise( msg = 'Date format unknown' code = 'DU' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = 'Date format unknown' code = 'DU' ). "#EC NOTEXT
   endtry.
 
 endmethod.
@@ -989,7 +989,7 @@ method parse_field.
   endcase.
 
   if sy-subrc is not initial.
-    lcx_error=>raise( msg = |Field: { is_component-name }| code = 'PF' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = |Field: { is_component-name }| code = 'PF' ). "#EC NOTEXT
   endif.
 
 endmethod.
@@ -1014,9 +1014,9 @@ method parse_line.
 
   " Check field number is the same as in header
   if l_tabcnt > lines( it_map ).
-    lcx_error=>raise( msg = |More fields than in header @{ i_index }| code = '>H' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = |More fields than in header @{ i_index }| code = '>H' ). "#EC NOTEXT
   elseif l_tabcnt < lines( it_map ).
-    lcx_error=>raise( msg = |Less fields than in header @{ i_index }| code = '<H' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = |Less fields than in header @{ i_index }| code = '<H' ). "#EC NOTEXT
   endif.
 
   " Move data to table line
@@ -1025,7 +1025,7 @@ method parse_line.
 
     read table io_struc_descr->components into ls_component index l_index. " Get component
     if sy-subrc is not initial.
-      lcx_error=>raise( 'No component found?!' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( 'No component found?!' ). "#EC NOTEXT
     endif.
 
     check ls_component-name ne 'MANDT'. " Skip client fields
@@ -1033,7 +1033,7 @@ method parse_line.
     unassign <field>.
     assign component ls_component-name of structure es_container to <field>.
     if <field> is not assigned.
-      lcx_error=>raise( 'Field assign failed?!' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( 'Field assign failed?!' ). "#EC NOTEXT
     endif.
 
     me->parse_field( exporting is_component = ls_component
@@ -1076,7 +1076,7 @@ method read_zip.
               exceptions zip_index_error = 1 ).
 
   if sy-subrc is not initial.
-    lcx_error=>raise( msg = |Cannot read { i_name }| code = 'ZF' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = |Cannot read { i_name }| code = 'ZF' ). "#EC NOTEXT
   endif.
 
   " Remove unicide signatures
@@ -1091,14 +1091,14 @@ method read_zip.
     lo_conv = cl_abap_conv_in_ce=>create( encoding = g_encoding ).
     lo_conv->convert( exporting input = l_xstring importing data = e_rawdata ).
   catch cx_root into l_ex.
-    lcx_error=>raise( msg = 'Codepage conversion error' code = 'CP' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = 'Codepage conversion error' code = 'CP' ). "#EC NOTEXT
   endtry.
 
 endmethod.
 
 
 method retrieve.
-  data lx_error type ref to lcx_error.
+  data lx_error type ref to zcx_mockup_loader_error.
   data lx_unexp type ref to cx_static_check.
 
   try .
@@ -1107,7 +1107,7 @@ method retrieve.
                                           i_where = i_where
                                 importing e_data  = e_data ).
 
-  catch lcx_error into lx_error.
+  catch zcx_mockup_loader_error into lx_error.
 
     " Switch to non-class exceptions to ensure better code readability
     " and compatibility with substituted select results
@@ -1174,13 +1174,13 @@ method _retrieve.
 
   " Validate parameters
   if i_sift is not initial and i_where is not initial.
-    lcx_error=>raise( msg = |Pass just one filter param| code = 'WP' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = |Pass just one filter param| code = 'WP' ). "#EC NOTEXT
   endif.
 
   " Find store
   read table at_store with key name = i_name into l_store.
   if sy-subrc is not initial.
-    lcx_error=>raise( msg = |Cannot find store { i_name }| code = 'NF' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = |Cannot find store { i_name }| code = 'NF' ). "#EC NOTEXT
   endif.
 
   assign l_store-data->* to <data>.
@@ -1188,7 +1188,7 @@ method _retrieve.
   " Build filter
   if i_sift is not initial.
     if l_store-tabkey is initial.
-      lcx_error=>raise( msg = 'Tabkey field not found' code = 'FM' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = 'Tabkey field not found' code = 'FM' ). "#EC NOTEXT
     endif.
     build_filter( exporting i_where  = l_store-tabkey && '=' && i_sift
                   importing e_filter = lt_filter ).
@@ -1208,7 +1208,7 @@ method _retrieve.
 
   " Ensure filter is applied to a table
   if lt_filter is not initial and ld_src->kind <> 'T'.
-    lcx_error=>raise( msg = 'Filtering is relevant for tables only' code = 'TO' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = 'Filtering is relevant for tables only' code = 'TO' ). "#EC NOTEXT
   endif.
 
   " If types are not equal try going deeper to table line structure
@@ -1219,11 +1219,11 @@ method _retrieve.
     elseif lt_filter is not initial and ld_src->kind = 'T' and ld_dst->kind = 'S'. " Table + filter => Structure
       ld_dst_line ?= ld_dst.
     else.
-      lcx_error=>raise( msg = |Types differ for store { i_name }| code = 'TT' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = |Types differ for store { i_name }| code = 'TT' ). "#EC NOTEXT
     endif.
 
     if ld_src_line->absolute_name ne ld_dst_line->absolute_name.
-      lcx_error=>raise( msg = |Types differ for store { i_name }| code = 'TS' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = |Types differ for store { i_name }| code = 'TS' ). "#EC NOTEXT
     endif.
   endif.
 
@@ -1263,7 +1263,7 @@ method _retrieve.
   endif.
 
   if e_data is initial.
-    lcx_error=>raise( msg = 'No data returned' code = '04' ). "#EC NOTEXT
+    zcx_mockup_loader_error=>raise( msg = 'No data returned' code = '04' ). "#EC NOTEXT
   endif.
 
 endmethod.
@@ -1280,7 +1280,7 @@ method _store.
   if i_tabkey is not initial.
     lo_type = cl_abap_typedescr=>describe_by_data_ref( i_data_ref ).
     if lo_type->kind <> 'T'. " Not table ?
-      lcx_error=>raise( msg = 'Tabkey is relevant for tables only' code = 'TO' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = 'Tabkey is relevant for tables only' code = 'TO' ). "#EC NOTEXT
     endif.
 
     lo_tab_type ?= lo_type.
@@ -1288,7 +1288,7 @@ method _store.
 
     read table lo_str_type->components with key name = i_tabkey transporting no fields.
     if sy-subrc <> 0.
-      lcx_error=>raise( msg = 'Tabkey field not found' code = 'FM' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = 'Tabkey field not found' code = 'FM' ). "#EC NOTEXT
     endif.
   endif.
 

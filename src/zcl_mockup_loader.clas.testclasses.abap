@@ -161,7 +161,7 @@ class lcl_test_mockup_loader definition for testing
                            returning value(e_tab) type tt_dummy.
 
     class-methods get_excode importing ix_error type ref to cx_static_check
-                             returning value(rv_code) like lcx_error=>code.
+                             returning value(rv_code) like zcx_mockup_loader_error=>code.
 
 endclass.       "lcl_test_mockup_loader
 
@@ -201,7 +201,7 @@ class lcl_test_mockup_loader implementation.
   endmethod.       "setup
 
   method get_excode.
-    data lo_error type ref to lcx_error.
+    data lo_error type ref to zcx_mockup_loader_error.
     lo_error ?= ix_error.
     rv_code   = lo_error->code.
   endmethod.
