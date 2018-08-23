@@ -32,32 +32,32 @@
   define test_parse.
     clear dummy.
     read table lo_struc_descr->components into ls_component with key name = '&1'.
-    call method o->parse_field
+    o->parse_field(
       exporting
         is_component = ls_component
         i_data       = &2
       importing
-        e_field      = dummy-&1.
+        e_field      = dummy-&1 ).
   end-of-definition.
 
   define test_parse_positive.
     clear lo_ex.
     try.
       test_parse &1 &2.
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
-    assert_equals( act = dummy-&1 exp = &3 msg = 'Parse field positive:' && &2 ).
+    cl_abap_unit_assert=>assert_equals( act = dummy-&1 exp = &3 msg = 'Parse field positive:' && &2 ).
   end-of-definition.
 
   define test_parse_negative.
     clear lo_ex.
     try.
       test_parse &1 &2.
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
-    assert_not_initial( act = lo_ex msg = 'Parse field negative:' && &2 ).
-    assert_equals( exp = &3 act = get_excode( lo_ex ) ).
+    cl_abap_unit_assert=>assert_not_initial( act = lo_ex msg = 'Parse field negative:' && &2 ).
+    cl_abap_unit_assert=>assert_equals( exp = &3 act = lo_ex->code ).
   end-of-definition.
 
   define append_dummy.
@@ -82,8 +82,8 @@
   end-of-definition.
 
   define assert_excode.
-    assert_not_initial( act = lo_ex ).
-    assert_equals( exp = &1 act = get_excode( lo_ex ) ).
+    cl_abap_unit_assert=>assert_not_initial( act = lo_ex ).
+    cl_abap_unit_assert=>assert_equals( exp = &1 act = lo_ex->code ).
   end-of-definition.
 
 
@@ -93,7 +93,7 @@
 
 class lcl_test_mockup_loader definition for testing
   duration short
-  inheriting from cl_aunit_assert  risk level harmless.
+  risk level harmless.
 
 * ================
   public section.
@@ -109,9 +109,8 @@ class lcl_test_mockup_loader definition for testing
         tdecimal type veri_cur13,
         tnumber  type veri_n04,
         tinteger type i,
-      end of ty_dummy.
-
-    types: tt_dummy type table of ty_dummy with default key.
+      end of ty_dummy,
+      tt_dummy type table of ty_dummy with default key.
 
 * ================
   private section.
@@ -140,17 +139,19 @@ class lcl_test_mockup_loader definition for testing
     methods load_raw                 for testing.
     methods parse_apply_exit         for testing.
 
-    methods get_dummy_data importing i_strict       type abap_bool default abap_true
-                           exporting e_dummy_struc  type ty_dummy
-                                     e_dummy_tab    type tt_dummy
-                                     e_dummy_string type string.
+    methods get_dummy_data
+      importing
+        i_strict       type abap_bool default abap_true
+      exporting
+        e_dummy_struc  type ty_dummy
+        e_dummy_tab    type tt_dummy
+        e_dummy_string type string.
 
-    methods filter_helper  importing i_tab        type tt_dummy
-                                     i_filter     type zcl_mockup_loader=>tt_filter
-                           returning value(e_tab) type tt_dummy.
-
-    class-methods get_excode importing ix_error type ref to cx_static_check
-                             returning value(rv_code) like zcx_mockup_loader_error=>code.
+    methods filter_helper
+      importing
+        i_tab        type tt_dummy
+        i_filter     type zcl_mockup_loader=>tt_filter
+      returning value(e_tab) type tt_dummy.
 
 endclass.       "lcl_test_mockup_loader
 
@@ -171,7 +172,7 @@ class lcl_test_mockup_loader implementation.
 
     get parameter id 'ZMOCKUP_LOADER_STYPE' field l_type_tmp.
     if l_type_tmp is not initial.
-      fail( quit = class
+      cl_abap_unit_assert=>fail( quit = 2 "calcel-class
             msg  = 'Load source is redirected, please reset with ZMOCKUP_LOADER_SWITCH_SOURCE before running the test' ). "#EC NOTEXT
     endif.
 
@@ -180,20 +181,14 @@ class lcl_test_mockup_loader implementation.
   endmethod.       "class_setup
 
   method setup.
-    data lo_ex type ref to cx_static_check.
+    data lo_ex type ref to zcx_mockup_loader_error.
 
     try.
       o = zcl_mockup_loader=>get_instance( ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
   endmethod.       "setup
-
-  method get_excode.
-    data lo_error type ref to zcx_mockup_loader_error.
-    lo_error ?= ix_error.
-    rv_code   = lo_error->code.
-  endmethod.
 
 **********************************************************************
 * Dummy data generation
@@ -237,49 +232,54 @@ class lcl_test_mockup_loader implementation.
           dummy_exp      type ty_dummy,
           dummy_tab_act  type tt_dummy,
           dummy_tab_exp  type tt_dummy,
-          lo_ex          type ref to cx_static_check.
+          lo_ex          type ref to zcx_mockup_loader_error.
 
-    get_dummy_data( importing e_dummy_struc = dummy_exp
-                              e_dummy_tab   = dummy_tab_exp ).
+    get_dummy_data(
+      importing
+        e_dummy_struc = dummy_exp
+        e_dummy_tab   = dummy_tab_exp ).
 
     " Strict ********************************************************
     try.
-      call method o->load_data
+      o->load_data(
         exporting i_obj       = 'testdir/testfile_complete'
-        importing e_container = dummy_tab_act.
+        importing e_container = dummy_tab_act ).
 
-      assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+      cl_abap_unit_assert=>assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
 
-      call method o->load_data
+      o->load_data(
         exporting i_obj       = 'testdir/testfile_complete'
-        importing e_container = dummy_act.
+        importing e_container = dummy_act ).
 
-      assert_equals( act = dummy_act exp = dummy_exp ).
+      cl_abap_unit_assert=>assert_equals( act = dummy_act exp = dummy_exp ).
 
-      call method o->load_data " No MANDT field in file
+      o->load_data( " No MANDT field in file
         exporting i_obj       = 'testdir/testfile_no_mandt'
-        importing e_container = dummy_tab_act.
+        importing e_container = dummy_tab_act ).
 
-      assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+      cl_abap_unit_assert=>assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
 
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
     " NOT Strict ****************************************************
-    get_dummy_data( exporting i_strict    = abap_false
-                    importing e_dummy_tab = dummy_tab_exp ).
+    get_dummy_data(
+      exporting i_strict    = abap_false
+      importing e_dummy_tab = dummy_tab_exp ).
 
     try.
-      call method o->load_data
-        exporting i_obj       = 'testdir/testfile_no_strict'
-                  i_strict    = abap_false
-        importing e_container = dummy_tab_act.
+      o->load_data(
+        exporting
+          i_obj       = 'testdir/testfile_no_strict'
+          i_strict    = abap_false
+        importing
+          e_container = dummy_tab_act ).
 
-      assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+      cl_abap_unit_assert=>assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
 
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
     " With where ****************************************************
@@ -289,28 +289,32 @@ class lcl_test_mockup_loader implementation.
     delete dummy_tab_exp where tnumber <> '2016'.
 
     try.
-      call method o->load_data
-        exporting i_obj       = 'testdir/testfile_complete'
-                  i_where     = 'TNUMBER = 2016'
-        importing e_container = dummy_tab_act.
+      o->load_data(
+        exporting
+          i_obj       = 'testdir/testfile_complete'
+          i_where     = 'TNUMBER = 2016'
+        importing
+          e_container = dummy_tab_act ).
 
-      assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+      cl_abap_unit_assert=>assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
 
-      call method o->load_data
-        exporting i_obj       = 'testdir/testfile_complete'
-                  i_where     = 'TNUMBER = 2016'
-        importing e_container = dummy_act.
+      o->load_data(
+        exporting
+          i_obj       = 'testdir/testfile_complete'
+          i_where     = 'TNUMBER = 2016'
+        importing
+          e_container = dummy_act ).
 
-      assert_equals( act = dummy_act exp = dummy_exp ).
+      cl_abap_unit_assert=>assert_equals( act = dummy_act exp = dummy_exp ).
 
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
     " No container ***************************************************
     try.
-      call method o->load_data exporting i_obj = 'testdir/testfile_complete'.
-    catch cx_static_check into lo_ex.
+      o->load_data( i_obj = 'testdir/testfile_complete' ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'NC'.
 
@@ -321,7 +325,7 @@ class lcl_test_mockup_loader implementation.
 **********************************************************************
   method source_redirect_test.
     data:
-          lo_ex      type ref to cx_static_check,
+          lo_ex      type ref to zcx_mockup_loader_error,
           l_type     type char4,
           l_path     type char40,
           l_path_tmp type char40.
@@ -336,7 +340,7 @@ class lcl_test_mockup_loader implementation.
 
     try.
       o = zcl_mockup_loader=>get_instance( ).
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
 
     clear l_type.
@@ -357,7 +361,7 @@ class lcl_test_mockup_loader implementation.
 
     try.
       o = zcl_mockup_loader=>get_instance( ).
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
 
     clear l_type.
@@ -376,22 +380,22 @@ class lcl_test_mockup_loader implementation.
     data:
           dummy_tab_act  type tt_dummy,
           dummy_tab_exp  type tt_dummy,
-          lo_ex          type ref to cx_static_check.
+          lo_ex          type ref to zcx_mockup_loader_error.
 
     get_dummy_data( importing e_dummy_tab   = dummy_tab_exp ).
 
     try.
       zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4103' ). " UTF16
-      call method o->load_data
+      o->load_data(
         exporting i_obj       = 'testdir/testfile_complete_utf16'
-        importing e_container = dummy_tab_act.
+        importing e_container = dummy_tab_act ).
       zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4110' ). " Back to SETUP defaults
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
       zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4110' ). " Back to SETUP defaults
-      fail( lo_ex->get_text( ) ).
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
 
   endmethod. "utf16_encoding
 
@@ -407,9 +411,9 @@ class lcl_test_mockup_loader implementation.
     append 'line2' to lt_exp.
 
     lt_act = zcl_mockup_loader=>break_to_lines( 'line1' && c_crlf && 'line2' ).
-    assert_equals( act = lt_act exp = lt_exp ).
+    cl_abap_unit_assert=>assert_equals( act = lt_act exp = lt_exp ).
     lt_act = zcl_mockup_loader=>break_to_lines( 'line1' && c_lf && 'line2' ).
-    assert_equals( act = lt_act exp = lt_exp ).
+    cl_abap_unit_assert=>assert_equals( act = lt_act exp = lt_exp ).
 
   endmethod.  " break_to_lines
 
@@ -426,7 +430,7 @@ class lcl_test_mockup_loader implementation.
           dummy_exp      type ty_dummy,
           dummy_tab_exp  type tt_dummy,
           l_string       type string,
-          lo_ex          type ref to cx_static_check.
+          lo_ex          type ref to zcx_mockup_loader_error.
 
     " Strict parsing *********************************
     get_dummy_data( importing e_dummy_struc  = dummy_exp
@@ -434,41 +438,41 @@ class lcl_test_mockup_loader implementation.
                               e_dummy_string = l_string ).
 
     try.
-      call method o->parse_data
+      o->parse_data(
         exporting i_rawdata   = l_string
-        importing e_container = dummy_act.
+        importing e_container = dummy_act ).
 
-      call method o->parse_data
+      o->parse_data(
         exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act.
+        importing e_container = dummy_tab_act ).
 
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = dummy_act     exp = dummy_exp ).
-    assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_act     exp = dummy_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
 
     " Parse to sorted and hashed tables ***************
     try.
-      call method o->parse_data
+      o->parse_data(
         exporting i_rawdata   = l_string
-        importing e_container = dummy_stab.
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+        importing e_container = dummy_stab ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = dummy_stab exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_stab exp = dummy_tab_exp ).
 
     try.
-      call method o->parse_data
+      o->parse_data(
         exporting i_rawdata   = l_string
-        importing e_container = dummy_htab.
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+        importing e_container = dummy_htab ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = dummy_htab exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_htab exp = dummy_tab_exp ).
 
     " NOT STRICT parsing ******************************
     get_dummy_data( exporting i_strict       = abap_false
@@ -476,16 +480,18 @@ class lcl_test_mockup_loader implementation.
                               e_dummy_string = l_string ).
 
     try.
-      call method o->parse_data
-        exporting i_rawdata   = l_string
-                  i_strict    = ''
-        importing e_container = dummy_tab_act.
+      o->parse_data(
+        exporting
+          i_rawdata   = l_string
+          i_strict    = ''
+        importing
+          e_container = dummy_tab_act ).
 
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
 
     " Fields out of bound (more fields than in header) ***
     clear lo_ex.
@@ -493,10 +499,10 @@ class lcl_test_mockup_loader implementation.
     replace first occurrence of '1111' in l_string with '1111' && c_tab && 'EXCESS_FIELD'.
 
     try.
-      call method o->parse_data
+      o->parse_data(
         exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act.
-    catch cx_static_check into lo_ex.
+        importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode '>H'.
 
@@ -506,10 +512,10 @@ class lcl_test_mockup_loader implementation.
     replace first occurrence of c_tab && '1111' in l_string with ''.
 
     try.
-      call method o->parse_data
+      o->parse_data(
         exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act.
-    catch cx_static_check into lo_ex.
+        importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode '<H'.
 
@@ -518,10 +524,10 @@ class lcl_test_mockup_loader implementation.
     get_dummy_data( importing e_dummy_string = l_string ).
 
     try.
-      call method o->parse_data
+      o->parse_data(
         exporting i_rawdata   = l_string
-        importing e_container = dummy_val.
-    catch cx_static_check into lo_ex.
+        importing e_container = dummy_val ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'DT'.
 
@@ -530,10 +536,10 @@ class lcl_test_mockup_loader implementation.
     clear l_string.
 
     try.
-      call method o->parse_data
+      o->parse_data(
         exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act.
-    catch cx_static_check into lo_ex.
+        importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'NH'.
 
@@ -548,7 +554,7 @@ class lcl_test_mockup_loader implementation.
           dummy          type ty_dummy,
           lo_struc_descr type ref to cl_abap_structdescr,
           ls_component   type abap_compdescr,
-          lo_ex          type ref to cx_static_check.
+          lo_ex          type ref to zcx_mockup_loader_error.
 
     lo_struc_descr ?= cl_abap_structdescr=>describe_by_data( dummy ).
 
@@ -563,8 +569,8 @@ class lcl_test_mockup_loader implementation.
       test_parse_positive TINTEGER '123'             123.
       test_parse_positive TRAW     '8E'              '8E'.
       test_parse_positive TNUMBER  '"2015"'          '2015'. " Quoted
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
     " Negative tests ******************************
@@ -597,8 +603,8 @@ class lcl_test_mockup_loader implementation.
       test_parse_positive TDECIMAL '14.12'           '14.12'.
       test_parse_positive TDECIMAL '1,234,567.12'    '1234567.12'.
 
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
     zcl_mockup_loader=>class_set_params( i_amt_format = '' ). " Set defaults
@@ -649,37 +655,37 @@ class lcl_test_mockup_loader implementation.
   method read_zip.
     data:
           l_str      type string,
-          lo_ex      type ref to cx_static_check.
+          lo_ex      type ref to zcx_mockup_loader_error.
 
-    assert_not_initial( act = lines( o->o_zip->files ) ).
+    cl_abap_unit_assert=>assert_not_initial( act = lines( o->o_zip->files ) ).
 
     " Positive ***************************************
     try.
-      call method o->read_zip
+      o->read_zip(
         exporting i_name    = 'testdir/testfile_complete.txt'
-        importing e_rawdata = l_str.
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+        importing e_rawdata = l_str ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
-    assert_not_initial( act = l_str ).
+    cl_abap_unit_assert=>assert_not_initial( act = l_str ).
 
     " NEGATIVE - wrong file name **********************
     clear lo_ex.
     try.
-      call method o->read_zip
+      o->read_zip(
         exporting i_name    = 'testdir/wrong_filename.xyz'
-        importing e_rawdata = l_str.
-    catch cx_static_check into lo_ex.
+        importing e_rawdata = l_str ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'ZF'.
 
     " NEGATIVE - wrong code page **********************
     clear lo_ex.
     try.
-      call method o->read_zip
+      o->read_zip(
         exporting i_name    = 'testdir/testfile_complete_utf16.txt'
-        importing e_rawdata = l_str.
-    catch cx_static_check into lo_ex.
+        importing e_rawdata = l_str ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'CP'.
 
@@ -693,7 +699,7 @@ class lcl_test_mockup_loader implementation.
           dummy_tab_exp type tt_dummy,
           dummy_tab_act type tt_dummy,
           l_string      type string,
-          lo_ex         type ref to cx_static_check.
+          lo_ex         type ref to zcx_mockup_loader_error.
 
     get_dummy_data( importing e_dummy_tab    = dummy_tab_exp
                               e_dummy_string = l_string ).
@@ -702,24 +708,24 @@ class lcl_test_mockup_loader implementation.
     l_string = l_string && c_crlf.
 
     try.
-      call method o->parse_data
+      o->parse_data(
         exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act.
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+        importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
 
     " Add empty line in the middle ***************************
     replace first occurrence of c_crlf in l_string with c_crlf && c_crlf.
     clear lo_ex.
 
     try.
-      call method o->parse_data
+      o->parse_data(
         exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act.
-    catch cx_static_check into lo_ex.
+        importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'LE'.
 
@@ -728,10 +734,10 @@ class lcl_test_mockup_loader implementation.
     clear lo_ex.
 
     try.
-      call method o->parse_data
+      o->parse_data(
         exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act.
-    catch cx_static_check into lo_ex.
+        importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'HE'.
 
@@ -746,62 +752,86 @@ class lcl_test_mockup_loader implementation.
           dummy_tab_act type tt_dummy,
           l_string      type string,
           l_string_bak  type string,
-          lo_ex         type ref to cx_static_check.
+          lo_ex         type ref to zcx_mockup_loader_error.
 
     get_dummy_data( importing e_dummy_tab    = dummy_tab_exp
                               e_dummy_string = l_string_bak ).
 
     " Duplicate field names *******************************
-    clear lo_ex. l_string = l_string_bak.
+    clear lo_ex.
+    l_string = l_string_bak.
     replace first occurrence of 'TCHAR' in l_string with 'TDATE'.
 
-    try. o->parse_data( exporting i_rawdata   = l_string importing e_container = dummy_tab_act ).
-    catch cx_static_check into lo_ex.
+    try.
+      o->parse_data(
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'DN'.
 
     " Empty field names ***********************************
-    clear lo_ex. l_string = l_string_bak.
+    clear lo_ex.
+    l_string = l_string_bak.
     replace first occurrence of 'TCHAR' in l_string with ''.
 
-    try. o->parse_data( exporting i_rawdata   = l_string importing e_container = dummy_tab_act ).
-    catch cx_static_check into lo_ex.
+    try.
+      o->parse_data(
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'EN'.
 
     " Unknown field in text *******************************
-    clear lo_ex. l_string = l_string_bak.
+    clear lo_ex.
+    l_string = l_string_bak.
     replace first occurrence of 'TCHAR' in l_string with 'UNKNOWN'.
 
-    try. o->parse_data( exporting i_rawdata   = l_string importing e_container = dummy_tab_act ).
-    catch cx_static_check into lo_ex.
+    try.
+      o->parse_data(
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'MC'.
 
     " More fields than in target structure ****************
-    clear lo_ex. l_string = l_string_bak.
+    clear lo_ex.
+    l_string = l_string_bak.
     replace first occurrence of 'TINTEGER' in l_string with 'TINTEGER' && c_tab && 'EXCESS_FIELD'.
 
-    try. o->parse_data( exporting i_rawdata   = l_string importing e_container = dummy_tab_act ).
-    catch cx_static_check into lo_ex.
+    try.
+      o->parse_data(
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'CN'.
 
     " Empty field at the end ******************************
-    clear lo_ex. l_string = l_string_bak.
+    clear lo_ex.
+    l_string = l_string_bak.
     replace first occurrence of 'TINTEGER' in l_string with 'TINTEGER' && c_tab.
 
-    try. o->parse_data( exporting i_rawdata   = l_string importing e_container = dummy_tab_act ).
-    catch cx_static_check into lo_ex.
+    try.
+      o->parse_data(
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'EN'.
 
     " Empty field at the end of data line ******************
-    clear lo_ex. l_string = l_string_bak.
+    clear lo_ex.
+    l_string = l_string_bak.
     replace first occurrence of '1111' in l_string with '1111' && c_tab.
 
-    try. o->parse_data( exporting i_rawdata   = l_string importing e_container = dummy_tab_act ).
-    catch cx_static_check into lo_ex.
+    try.
+      o->parse_data(
+        exporting i_rawdata   = l_string
+        importing e_container = dummy_tab_act ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode '>H'.
 
@@ -814,36 +844,36 @@ class lcl_test_mockup_loader implementation.
     data:
           dummy_tab_exp  type tt_dummy,
           dummy_tab_act  type tt_dummy,
-          lo_ex          type ref to cx_static_check.
+          lo_ex          type ref to zcx_mockup_loader_error.
 
     get_dummy_data( importing e_dummy_tab   = dummy_tab_exp ).
 
     " Positive test ************************************
     try.
-      call method o->load_and_store
+      o->load_and_store(
         exporting i_obj       = 'testdir/testfile_complete'
                   i_name      = 'TAB'
-                  i_type      = 'LCL_TEST_MOCKUP_LOADER=>TT_DUMMY'.
+                  i_type      = 'LCL_TEST_MOCKUP_LOADER=>TT_DUMMY' ).
 
       zcl_mockup_loader_store=>retrieve(
         exporting i_name   = 'TAB'
         importing e_data   = dummy_tab_act ).
 
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
 
     " Negative: type that not exists ********************
     clear lo_ex.
     try.
-      call method o->load_and_store
+      o->load_and_store(
         exporting i_obj       = 'testdir/testfile_complete'
                   i_name      = 'TAB'
-                  i_type      = '************'.
+                  i_type      = '************' ).
 
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'WT'.
 
@@ -859,7 +889,7 @@ class lcl_test_mockup_loader implementation.
           dummy          type ty_dummy,
 
           l_filter       type zcl_mockup_loader=>tt_filter,
-          lo_ex          type ref to cx_static_check,
+          lo_ex          type ref to zcx_mockup_loader_error,
 
           lt_tywhere     type zcl_mockup_loader=>tt_where,
           l_tywhere      type zcl_mockup_loader=>ty_where,
@@ -891,30 +921,42 @@ class lcl_test_mockup_loader implementation.
     " Negative tests --------------------------------------------------------------------
 
     " Component is not a range table
-    try.  o->build_filter( exporting i_where = l_where_err1 importing e_filter = l_filter ).
-    catch cx_static_check into lo_ex.
+    try.
+      o->build_filter(
+        exporting i_where = l_where_err1
+        importing e_filter = l_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'WS'.
 
     " Component is not a table
-    try.  o->build_filter( exporting i_where = l_where_err2 importing e_filter = l_filter ).
-    catch cx_static_check into lo_ex.
+    try.
+      o->build_filter(
+        exporting i_where = l_where_err2
+        importing e_filter = l_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'WS'.
 
     " Unexpected types of filters
     l_tywhere-name = 'TNUMBER'.
     get reference of l_where into l_tywhere-range.
-    try.  o->build_filter( exporting i_where = l_tywhere importing e_filter = l_filter ).
-    catch cx_static_check into lo_ex.
+    try.
+      o->build_filter(
+        exporting i_where = l_tywhere
+        importing e_filter = l_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'CE'.
 
     " Filter is not range
     l_tywhere-name = 'TNUMBER'.
     get reference of dummy_tab_exp into l_tywhere-range.
-    try.  o->build_filter( exporting i_where = l_tywhere importing e_filter = l_filter ).
-    catch cx_static_check into lo_ex.
+    try.
+      o->build_filter(
+        exporting i_where = l_tywhere
+        importing e_filter = l_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'RT'.
 
@@ -922,27 +964,39 @@ class lcl_test_mockup_loader implementation.
     l_tywhere-name = 'TNUMBER'.
     get reference of dummy_tab_exp into l_tywhere-range.
     append l_tywhere to lt_tywhere.
-    try.  o->build_filter( exporting i_where = lt_tywhere importing e_filter = l_filter ).
-    catch cx_static_check into lo_ex.
+    try.
+      o->build_filter(
+        exporting i_where = lt_tywhere
+        importing e_filter = l_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     clear lt_tywhere.
     assert_excode 'RT'.
 
     " Wrong type of table
-    try.  o->build_filter( exporting i_where = dummy_tab_exp importing e_filter = l_filter ).
-    catch cx_static_check into lo_ex.
+    try.
+      o->build_filter(
+        exporting i_where = dummy_tab_exp
+        importing e_filter = l_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'WT'.
 
     " Parameter is an unsupported type
-    try.  o->build_filter( exporting i_where = lo_ex importing e_filter = l_filter ).
-    catch cx_static_check into lo_ex.
+    try.
+      o->build_filter(
+        exporting i_where = lo_ex
+        importing e_filter = l_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'UT'.
 
     " parameter is incorrect string pattern
-    try.  o->build_filter( exporting i_where = 'TNUMBER??' importing e_filter = l_filter ).
-    catch cx_static_check into lo_ex.
+    try.
+      o->build_filter(
+        exporting i_where = 'TNUMBER??'
+        importing e_filter = l_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'SP'.
 
@@ -956,12 +1010,14 @@ class lcl_test_mockup_loader implementation.
     add_range other  'I' 'GE' 'A'.
 
     try.
-      o->build_filter( exporting i_where = l_where importing e_filter = l_filter ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+      o->build_filter(
+        exporting i_where = l_where
+        importing e_filter = l_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
+    cl_abap_unit_assert=>assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
                    exp = dummy_tab_exp ).
 
     " Positive test TY_WHERE TABLE --------------------------------------------------
@@ -975,12 +1031,14 @@ class lcl_test_mockup_loader implementation.
     append l_tywhere to lt_tywhere.
 
     try .
-      o->build_filter( exporting i_where = lt_tywhere importing e_filter = l_filter ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+      o->build_filter(
+        exporting i_where = lt_tywhere
+        importing e_filter = l_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
+    cl_abap_unit_assert=>assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
                    exp = dummy_tab_exp ).
 
     " Positive test STRING --------------------------------------------------------------
@@ -988,22 +1046,26 @@ class lcl_test_mockup_loader implementation.
     delete dummy_tab_exp where tnumber <> '2015'.
 
     try .
-      o->build_filter( exporting i_where = 'TNUMBER = 2015' importing e_filter = l_filter ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+      o->build_filter(
+        exporting i_where = 'TNUMBER = 2015'
+        importing e_filter = l_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
+    cl_abap_unit_assert=>assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
                    exp = dummy_tab_exp ).
 
     " Same but with lower case name
     try .
-      o->build_filter( exporting i_where = 'TnumBER = 2015' importing e_filter = l_filter ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+      o->build_filter(
+        exporting i_where = 'TnumBER = 2015'
+        importing e_filter = l_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
+    cl_abap_unit_assert=>assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
                    exp = dummy_tab_exp ).
 
 
@@ -1013,12 +1075,14 @@ class lcl_test_mockup_loader implementation.
     get reference of l_where-tnumber into l_tywhere-range.
 
     try .
-      o->build_filter( exporting i_where = l_tywhere importing e_filter = l_filter ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+      o->build_filter(
+        exporting i_where = l_tywhere
+        importing e_filter = l_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
+    cl_abap_unit_assert=>assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
                    exp = dummy_tab_exp ).
 
   endmethod.       "range_filtering
@@ -1038,7 +1102,7 @@ class lcl_test_mockup_loader implementation.
   method load_raw.
     data:
           lo_exr     type ref to cx_root,
-          lo_ex      type ref to cx_static_check,
+          lo_ex      type ref to zcx_mockup_loader_error,
           l_str_exp  type string,
           l_xstr_act type xstring,
           l_str_act  type string,
@@ -1048,29 +1112,37 @@ class lcl_test_mockup_loader implementation.
 
     try. " .XML
       lo_conv = cl_abap_conv_in_ce=>create( encoding = '4110' ).
-      o->load_raw( exporting i_obj = 'testdir/test_raw'
-                             i_ext = '.xml'
-                   importing e_content = l_xstr_act ).
-      lo_conv->convert( exporting input = l_xstr_act importing data = l_str_act ).
+      o->load_raw(
+        exporting
+          i_obj = 'testdir/test_raw'
+          i_ext = '.xml'
+        importing
+          e_content = l_xstr_act ).
+      lo_conv->convert(
+        exporting input = l_xstr_act
+        importing data  = l_str_act ).
     catch cx_root into lo_exr.
-      fail( lo_ex->get_text( ) ).
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = l_str_act exp = l_str_exp ).
+    cl_abap_unit_assert=>assert_equals( act = l_str_act exp = l_str_exp ).
 
     try. " .TXT
-      o->load_raw( exporting i_obj = 'testdir/test_raw'
-                   importing e_content = l_xstr_act ).
-      lo_conv->convert( exporting input = l_xstr_act importing data = l_str_act ).
+      o->load_raw(
+        exporting i_obj = 'testdir/test_raw'
+        importing e_content = l_xstr_act ).
+      lo_conv->convert(
+        exporting input = l_xstr_act
+        importing data  = l_str_act ).
     catch cx_root into lo_exr.
-      fail( lo_ex->get_text( ) ).
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = l_str_act exp = l_str_exp ).
+    cl_abap_unit_assert=>assert_equals( act = l_str_act exp = l_str_exp ).
 
     try. " No container
-      o->load_raw( exporting i_obj = 'testdir/test_raw' ).
-    catch cx_static_check into lo_ex.
+      o->load_raw( i_obj = 'testdir/test_raw' ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'NC'.
 
@@ -1082,25 +1154,31 @@ class lcl_test_mockup_loader implementation.
   method parse_apply_exit.
     data:
           l_dummy  type ty_dummy,
-          lo_ex    type ref to cx_static_check.
+          lo_ex    type ref to zcx_mockup_loader_error.
 
     try .
-      o->parse_apply_exit( exporting i_convexit = 'ALPHA'
-                                     i_data     = '123'
-                           importing e_field    = l_dummy-talpha ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+      o->parse_apply_exit(
+        exporting
+          i_convexit = 'ALPHA'
+          i_data     = '123'
+        importing
+          e_field    = l_dummy-talpha ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = l_dummy-talpha exp = '0000000123' ).
+    cl_abap_unit_assert=>assert_equals( act = l_dummy-talpha exp = '0000000123' ).
 
     " Check wrong exit
     clear lo_ex.
     try .
-      o->parse_apply_exit( exporting i_convexit = 'NONAME'
-                                     i_data     = '123'
-                           importing e_field    = l_dummy-talpha ).
-    catch cx_static_check into lo_ex.
+      o->parse_apply_exit(
+        exporting
+          i_convexit = 'NONAME'
+          i_data     = '123'
+        importing
+          e_field    = l_dummy-talpha ).
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'EM'.
 

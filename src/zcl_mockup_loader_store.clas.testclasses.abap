@@ -42,8 +42,8 @@
   end-of-definition.
 
   define assert_excode.
-    assert_not_initial( act = lo_ex ).
-    assert_equals( exp = &1 act = get_excode( lo_ex ) ).
+    cl_abap_unit_assert=>assert_not_initial( act = lo_ex ).
+    cl_abap_unit_assert=>assert_equals( exp = &1 act = lo_ex->code ).
   end-of-definition.
 
 **********************************************************************
@@ -52,7 +52,7 @@
 
 class lcl_test_mockup_store definition for testing
   duration short
-  inheriting from cl_aunit_assert risk level harmless.
+  risk level harmless.
 
 * ================
   public section.
@@ -86,11 +86,6 @@ class lcl_test_mockup_store definition for testing
         e_dummy_struc type ty_dummy
         e_dummy_tab   type tt_dummy.
 
-    class-methods get_excode
-      importing
-        ix_error type ref to cx_static_check
-      returning value(rv_code) like zcx_mockup_loader_error=>code.
-
 endclass.       "lcl_test_mockup_loader
 
 * Friends
@@ -106,21 +101,15 @@ class lcl_test_mockup_store implementation.
 * Setup methods
 **********************************************************************
   method setup.
-    data lo_ex type ref to cx_static_check.
+    data lo_ex type ref to zcx_mockup_loader_error.
 
     try.
       zcl_mockup_loader_store=>free_instance( ).
       o = zcl_mockup_loader_store=>get_instance( ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
   endmethod.       "setup
-
-  method get_excode.
-    data lo_error type ref to zcx_mockup_loader_error.
-    lo_error ?= ix_error.
-    rv_code   = lo_error->code.
-  endmethod.
 
 **********************************************************************
 * Dummy data generation
@@ -146,7 +135,7 @@ class lcl_test_mockup_store implementation.
           dummy_tab_exp  type tt_dummy,
           dummy_act      type ty_dummy,
           dummy_tab_act  type tt_dummy,
-          lo_ex          type ref to cx_static_check.
+          lo_ex          type ref to zcx_mockup_loader_error.
 
     get_dummy_data(
       importing
@@ -166,19 +155,19 @@ class lcl_test_mockup_store implementation.
         exporting i_name  = 'TAB'
         importing e_data = dummy_tab_act ).
 
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = dummy_act      exp = dummy_exp ).
-    assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_act      exp = dummy_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
 
     " Instance method - NEGATIVE **********************
     try.
       o->_retrieve(
         exporting i_name = 'NOT_EXISTING'
         importing e_data = dummy_act ).
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'NF'.
 
@@ -189,16 +178,16 @@ class lcl_test_mockup_store implementation.
       exporting i_name  = 'STRUC'
       importing e_data = dummy_act
       exceptions others = 4 ).
-    assert_subrc( act = sy-subrc ).
+    cl_abap_unit_assert=>assert_subrc( act = sy-subrc ).
 
     zcl_mockup_loader_store=>retrieve(
       exporting i_name  = 'TAB'
       importing e_data = dummy_tab_act
       exceptions others = 4 ).
-    assert_subrc( act = sy-subrc ).
+    cl_abap_unit_assert=>assert_subrc( act = sy-subrc ).
 
-    assert_equals( act = dummy_act      exp = dummy_exp ).
-    assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_act      exp = dummy_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
 
     " Static method - NEGATIVE ************************
     zcl_mockup_loader_store=>retrieve(
@@ -206,21 +195,21 @@ class lcl_test_mockup_store implementation.
       importing e_data = dummy_act
       exceptions others = 4 ).
 
-    assert_subrc(  act = sy-subrc       exp = 4 ).
-    assert_equals( act = sy-msgno       exp = 499 ). " SY(499) -> & & & &
+    cl_abap_unit_assert=>assert_subrc(  act = sy-subrc       exp = 4 ).
+    cl_abap_unit_assert=>assert_equals( act = sy-msgno       exp = 499 ). " SY(499) -> & & & &
 
     " Purge tests
     try.
       o->store( i_name = 'ANOTHER_STRUC' i_data = dummy_exp ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = lines( o->mt_store ) exp = 3 ).
+    cl_abap_unit_assert=>assert_equals( act = lines( o->mt_store ) exp = 3 ).
     o->purge( 'ANOTHER_STRUC' ).
-    assert_equals( act = lines( o->mt_store ) exp = 2 ).
+    cl_abap_unit_assert=>assert_equals( act = lines( o->mt_store ) exp = 2 ).
     o->purge( '*' ).
-    assert_equals( act = lines( o->mt_store ) exp = 0 ).
+    cl_abap_unit_assert=>assert_equals( act = lines( o->mt_store ) exp = 0 ).
 
   endmethod.       "store_retrieve
 
@@ -229,7 +218,7 @@ class lcl_test_mockup_store implementation.
 **********************************************************************
   method retrieve_types.
     data:
-          lo_ex        type ref to cx_static_check,
+          lo_ex        type ref to zcx_mockup_loader_error,
           lt_src       type scarr_tab,
           lt_dst_tab   type scarr_tab,
           lt_dst_tt    type table of scarr,
@@ -240,8 +229,8 @@ class lcl_test_mockup_store implementation.
     append initial line to lt_src.
     try.
       o->store( i_name = 'DATA' i_data = lt_src ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
     " Store to different kinds of same table *******************
@@ -249,14 +238,14 @@ class lcl_test_mockup_store implementation.
       o->_retrieve( exporting i_name  = 'DATA' importing e_data = lt_dst_tab ).
       o->_retrieve( exporting i_name  = 'DATA' importing e_data = lt_dst_tt ).
       o->_retrieve( exporting i_name  = 'DATA' importing e_data = lt_dst_ts ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
     " Store to structure ***************************************
     try.
       o->_retrieve( exporting i_name  = 'DATA' importing e_data = l_dst_struc ).
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'TT'.
 
@@ -264,7 +253,7 @@ class lcl_test_mockup_store implementation.
     clear lo_ex.
     try.
       o->_retrieve( exporting i_name  = 'DATA' importing e_data = lt_dst_diff ).
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'TS'.
 
@@ -280,7 +269,7 @@ class lcl_test_mockup_store implementation.
           dummy_act      type ty_dummy,
           dummy_tab_act  type tt_dummy,
           ls_wrong       type sflight,
-          lo_ex          type ref to cx_static_check.
+          lo_ex          type ref to zcx_mockup_loader_error.
 
     get_dummy_data(
       importing
@@ -289,8 +278,8 @@ class lcl_test_mockup_store implementation.
 
     try.
       o->store( i_name = 'TAB' i_data = dummy_tab_exp i_tabkey = 'TNUMBER' ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
     delete dummy_tab_exp where tnumber <> '2016'.
@@ -311,12 +300,12 @@ class lcl_test_mockup_store implementation.
         importing
           e_data   = dummy_tab_act ).
 
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    assert_equals( act = dummy_act      exp = dummy_exp ).
-    assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_act      exp = dummy_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
 
     " Retrieve to wrong structure **********************
     clear lo_ex.
@@ -327,7 +316,7 @@ class lcl_test_mockup_store implementation.
           i_sift   = '2015'
         importing
           e_data   = ls_wrong ).
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'TS'.
 
@@ -340,7 +329,7 @@ class lcl_test_mockup_store implementation.
           i_sift   = '2000'
         importing
           e_data   = dummy_tab_act ). " Table
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode '04'.
 
@@ -352,7 +341,7 @@ class lcl_test_mockup_store implementation.
           i_sift   = '2000'
         importing
           e_data   = dummy_act ).    " Structure
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode '04'.
 
@@ -360,7 +349,7 @@ class lcl_test_mockup_store implementation.
     clear lo_ex.
     try.
       o->store( i_name = 'STRUC' i_data = dummy_exp i_tabkey = 'TNUMBER' ).
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'TO'.
 
@@ -368,7 +357,7 @@ class lcl_test_mockup_store implementation.
     clear lo_ex.
     try.
       o->store( i_name = 'TAB' i_data = dummy_tab_exp i_tabkey = 'UNDEFINED' ).
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'FM'.
 
@@ -382,7 +371,7 @@ class lcl_test_mockup_store implementation.
           dummy_exp      type ty_dummy,
           dummy_tab_exp  type tt_dummy,
           dummy_act      type ty_dummy,
-          lo_ex          type ref to cx_static_check.
+          lo_ex          type ref to zcx_mockup_loader_error.
 
     get_dummy_data( importing e_dummy_tab = dummy_tab_exp ).
     read table dummy_tab_exp into dummy_exp with key tnumber = '2016'.
@@ -398,10 +387,10 @@ class lcl_test_mockup_store implementation.
           i_where = 'TNUMBER=2016'
         importing
           e_data = dummy_act ).
-    catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
-    assert_equals( act = dummy_act exp = dummy_exp ).
+    cl_abap_unit_assert=>assert_equals( act = dummy_act exp = dummy_exp ).
 
     " NEGATIVE - Pass both filter simultaneously
     clear lo_ex.
@@ -412,7 +401,7 @@ class lcl_test_mockup_store implementation.
           i_sift = 'X' i_where = 'Y'
         importing
           e_data = dummy_act ).
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'WP'.
 
@@ -425,7 +414,7 @@ class lcl_test_mockup_store implementation.
           i_sift = 'X'
         importing
           e_data = dummy_act ).
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'FM'.
 
@@ -438,7 +427,7 @@ class lcl_test_mockup_store implementation.
           i_where = 'TNUMBER=2016'
         importing
           e_data = dummy_act ).
-    catch cx_static_check into lo_ex.
+    catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'TO'.
 
