@@ -533,18 +533,21 @@ method load_and_store.
   endif.
 
   lo_dtype ?= lo_type.
-
   create data lr_data type handle lo_dtype.
   assign lr_data->* to <data>.
 
   " Load from zip and store
-  me->load_data( exporting i_obj       = i_obj
-                           i_strict    = i_strict
-                 importing e_container = <data> ).
+  me->load_data(
+    exporting
+      i_obj       = i_obj
+      i_strict    = i_strict
+    importing
+      e_container = <data> ).
 
-*  me->_store( i_name     = i_name
-*              i_data_ref = lr_data
-*              i_tabkey   = i_tabkey ).
+  zcl_mockup_loader_store=>get_instance( )->_store(
+    i_name     = i_name
+    i_data_ref = lr_data
+    i_tabkey   = i_tabkey ).
 
 endmethod.
 

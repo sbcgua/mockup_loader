@@ -136,7 +136,7 @@ class lcl_test_mockup_loader definition for testing
     methods map_file_structure       for testing.
     methods range_filtering          for testing.
 
-    methods load_and_store. "           for testing.
+    methods load_and_store           for testing.
     methods load_raw                 for testing.
     methods parse_apply_exit         for testing.
 
@@ -820,14 +820,14 @@ class lcl_test_mockup_loader implementation.
 
     " Positive test ************************************
     try.
-*      call method o->load_and_store
-*        exporting i_obj       = 'testdir/testfile_complete'
-*                  i_name      = 'TAB'
-*                  i_type      = 'LCL_TEST_MOCKUP_LOADER=>TT_DUMMY'.
-*
-*      call method o->_retrieve
-*        exporting i_name   = 'TAB'
-*        importing e_data   = dummy_tab_act.
+      call method o->load_and_store
+        exporting i_obj       = 'testdir/testfile_complete'
+                  i_name      = 'TAB'
+                  i_type      = 'LCL_TEST_MOCKUP_LOADER=>TT_DUMMY'.
+
+      zcl_mockup_loader_store=>retrieve(
+        exporting i_name   = 'TAB'
+        importing e_data   = dummy_tab_act ).
 
     catch cx_static_check into lo_ex.
       fail( lo_ex->get_text( ) ).

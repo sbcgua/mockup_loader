@@ -1,7 +1,9 @@
 class ZCL_MOCKUP_LOADER_STORE definition
   public
   final
-  create private .
+  create private
+
+  global friends ZCL_MOCKUP_LOADER .
 
 public section.
 
