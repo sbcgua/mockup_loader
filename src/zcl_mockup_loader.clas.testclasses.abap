@@ -127,17 +127,12 @@ class lcl_test_mockup_loader definition for testing
     methods integrated_test          for testing.
     methods source_redirect_test     for testing.
     methods utf16_encoding           for testing.
-    methods break_to_lines           for testing.
 
     methods parse_data               for testing.
-    methods parse_field              for testing.
-    methods empty_lines              for testing.
-    methods map_file_structure       for testing.
     methods range_filtering          for testing.
 
     methods load_and_store           for testing.
     methods load_raw                 for testing.
-    methods parse_apply_exit         for testing.
 
     methods get_dummy_data
       importing
@@ -172,7 +167,7 @@ class lcl_test_mockup_loader implementation.
 
     get parameter id 'ZMOCKUP_LOADER_STYPE' field l_type_tmp.
     if l_type_tmp is not initial.
-      cl_abap_unit_assert=>fail( quit = 2 "calcel-class
+      cl_abap_unit_assert=>fail( quit = 2 "cancel-class
             msg  = 'Load source is redirected, please reset with ZMOCKUP_LOADER_SWITCH_SOURCE before running the test' ). "#EC NOTEXT
     endif.
 
@@ -400,24 +395,6 @@ class lcl_test_mockup_loader implementation.
   endmethod. "utf16_encoding
 
 **********************************************************************
-* Break to lines, line break detection
-**********************************************************************
-  method break_to_lines.
-    data:
-          lt_act type string_table,
-          lt_exp type string_table.
-
-    append 'line1' to lt_exp.
-    append 'line2' to lt_exp.
-
-    lt_act = zcl_mockup_loader=>break_to_lines( 'line1' && c_crlf && 'line2' ).
-    cl_abap_unit_assert=>assert_equals( act = lt_act exp = lt_exp ).
-    lt_act = zcl_mockup_loader=>break_to_lines( 'line1' && c_lf && 'line2' ).
-    cl_abap_unit_assert=>assert_equals( act = lt_act exp = lt_exp ).
-
-  endmethod.  " break_to_lines
-
-**********************************************************************
 * Test of data parser - dummy data is supplied to the tested method
 **********************************************************************
   method parse_data.
@@ -433,9 +410,11 @@ class lcl_test_mockup_loader implementation.
           lo_ex          type ref to zcx_mockup_loader_error.
 
     " Strict parsing *********************************
-    get_dummy_data( importing e_dummy_struc  = dummy_exp
-                              e_dummy_tab    = dummy_tab_exp
-                              e_dummy_string = l_string ).
+    get_dummy_data(
+      importing
+        e_dummy_struc  = dummy_exp
+        e_dummy_tab    = dummy_tab_exp
+        e_dummy_string = l_string ).
 
     try.
       o->parse_data(
@@ -475,15 +454,18 @@ class lcl_test_mockup_loader implementation.
     cl_abap_unit_assert=>assert_equals( act = dummy_htab exp = dummy_tab_exp ).
 
     " NOT STRICT parsing ******************************
-    get_dummy_data( exporting i_strict       = abap_false
-                    importing e_dummy_tab    = dummy_tab_exp
-                              e_dummy_string = l_string ).
+    get_dummy_data(
+      exporting
+        i_strict       = abap_false
+      importing
+        e_dummy_tab    = dummy_tab_exp
+        e_dummy_string = l_string ).
 
     try.
       o->parse_data(
         exporting
           i_rawdata   = l_string
-          i_strict    = ''
+          i_strict    = abap_false
         importing
           e_container = dummy_tab_act ).
 
@@ -493,10 +475,10 @@ class lcl_test_mockup_loader implementation.
 
     cl_abap_unit_assert=>assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
 
-    " Fields out of bound (more fields than in header) ***
+    " Catch parser errors, e.g. unknown field
     clear lo_ex.
     get_dummy_data( importing e_dummy_string = l_string ).
-    replace first occurrence of '1111' in l_string with '1111' && c_tab && 'EXCESS_FIELD'.
+    replace first occurrence of 'TDATE' in l_string with 'UNKNOWN_FIELD'.
 
     try.
       o->parse_data(
@@ -504,20 +486,7 @@ class lcl_test_mockup_loader implementation.
         importing e_container = dummy_tab_act ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
-    assert_excode '>H'.
-
-    " Fields out of bound (less fields than in header) ***
-    clear lo_ex.
-    get_dummy_data( importing e_dummy_string = l_string ).
-    replace first occurrence of c_tab && '1111' in l_string with ''.
-
-    try.
-      o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode '<H'.
+    assert_excode 'XE'.
 
     " Parse to field (not table or structure) *************
     clear lo_ex.
@@ -541,113 +510,10 @@ class lcl_test_mockup_loader implementation.
         importing e_container = dummy_tab_act ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
-    assert_excode 'NH'.
+    assert_excode 'XE'. " parser error
 
 
-  endmethod.       "parse_Data
-
-**********************************************************************
-* Individual field parsing test
-**********************************************************************
-  method parse_field.
-    data:
-          dummy          type ty_dummy,
-          lo_struc_descr type ref to cl_abap_structdescr,
-          ls_component   type abap_compdescr,
-          lo_ex          type ref to zcx_mockup_loader_error.
-
-    lo_struc_descr ?= cl_abap_structdescr=>describe_by_data( dummy ).
-
-    " Positive tests ******************************
-    try.
-      test_parse_positive TDATE    '01.01.2015'      '20150101'.
-      test_parse_positive TDATE    '1.2.2015'        '20150201'.
-      test_parse_positive TCHAR    'ABC'             'ABC'.
-      test_parse_positive TSTRING  'The string test' 'The string test'.
-      test_parse_positive TALPHA   '100000'          '0000100000'.
-      test_parse_positive TNUMBER  '2015'            '2015'.
-      test_parse_positive TINTEGER '123'             123.
-      test_parse_positive TRAW     '8E'              '8E'.
-      test_parse_positive TNUMBER  '"2015"'          '2015'. " Quoted
-    catch zcx_mockup_loader_error into lo_ex.
-      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
-    endtry.
-
-    " Negative tests ******************************
-
-    test_parse_negative TNUMBER  '20ha' 'PF'.
-
-    " Decimal converion tests *********************
-    try.
-      test_parse_positive TDECIMAL '1234.12'         '1234.12'. " Native ABAP format
-      test_parse_positive TDECIMAL '-1234.12'        '-1234.12'." Native ABAP format
-
-      zcl_mockup_loader=>class_set_params( i_amt_format = '' ). " Set defaults
-      test_parse_positive TDECIMAL '-1234,12'        '-1234.12'.
-      test_parse_positive TDECIMAL '1234,12'         '1234.12'.
-      test_parse_positive TDECIMAL '1 234,12'        '1234.12'.
-      test_parse_positive TDECIMAL '14,12'           '14.12'.
-      test_parse_positive TDECIMAL '1 234 567,12'    '1234567.12'.
-
-      zcl_mockup_loader=>class_set_params( i_amt_format = '.,' ).
-      test_parse_positive TDECIMAL '1234,12'         '1234.12'.
-      test_parse_positive TDECIMAL '1 234,12'        '1234.12'.
-      test_parse_positive TDECIMAL '1.234,12'        '1234.12'.
-      test_parse_positive TDECIMAL '14,12'           '14.12'.
-      test_parse_positive TDECIMAL '1.234.567,12'    '1234567.12'.
-
-      zcl_mockup_loader=>class_set_params( i_amt_format = ',.' ).
-      test_parse_positive TDECIMAL '1234.12'         '1234.12'.
-      test_parse_positive TDECIMAL '1 234.12'        '1234.12'.
-      test_parse_positive TDECIMAL '1,234.12'        '1234.12'.
-      test_parse_positive TDECIMAL '14.12'           '14.12'.
-      test_parse_positive TDECIMAL '1,234,567.12'    '1234567.12'.
-
-    catch zcx_mockup_loader_error into lo_ex.
-      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
-    endtry.
-
-    zcl_mockup_loader=>class_set_params( i_amt_format = '' ). " Set defaults
-    test_parse_negative TDECIMAL '1 234.12' 'PF'.
-    test_parse_negative TDECIMAL '1 234_12' 'PF'.
-    test_parse_negative TDECIMAL '1234,123' 'PF'. " 3 decimal digits into amount which has just 2
-    test_parse_negative TDECIMAL '1234,12_' 'PF'.
-    test_parse_negative TDECIMAL 'Not-a-number' 'PF'.
-    zcl_mockup_loader=>class_set_params( i_amt_format = '.,' ).
-    test_parse_negative TDECIMAL '1 234.12' 'PF'.
-    test_parse_negative TDECIMAL '1,234.12' 'PF'.
-    zcl_mockup_loader=>class_set_params( i_amt_format = ',.' ).
-    test_parse_negative TDECIMAL '1 234,12' 'PF'.
-    test_parse_negative TDECIMAL '1.234,12' 'PF'.
-
-    " Date tests **********************************
-
-    zcl_mockup_loader=>class_set_params( i_date_format = 'MDY').
-    test_parse_positive TDATE    '02012015'    '20150201'.
-    zcl_mockup_loader=>class_set_params( i_date_format = 'YMD').
-    test_parse_positive TDATE    '20150201'    '20150201'.
-    test_parse_negative TDATE    '2015020'     'DL'.  " Too short
-    zcl_mockup_loader=>class_set_params( i_date_format = 'YMD-').
-    test_parse_positive TDATE    '2015-02-01'  '20150201'.
-    test_parse_positive TDATE    '2015-2-1'    '20150201'.
-    test_parse_positive TDATE    `        `    '00000000'.
-    test_parse_positive TDATE    ''            '00000000'.
-    zcl_mockup_loader=>class_set_params( i_date_format = 'DMY.').
-
-    " Negative tests
-    test_parse_negative TDATE    'AB022015'    'DY'. " Wrong symbols
-    test_parse_negative TDATE    '01.02-2015'  'DY'. " Wrong separators
-    test_parse_negative TDATE    '01.02.20156' 'DL'. " Too long
-    test_parse_negative TDATE    '1.2.201567'  'DP'. " Wrong part length
-    test_parse_negative TDATE    '123.2.2015'  'DP'. " Wrong part length
-    test_parse_negative TDATE    '01022015'    'DS'. " No separators
-    test_parse_negative TDATE    '01.012015'   'DS'. " No second separator
-    test_parse_negative TDATE    '40.01.2015'  'DU'. " Incorrect day
-    test_parse_negative TDATE    '01.13.2015'  'DU'. " Incorrect month
-
-    zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4110' ). " Set defaults back
-
-  endmethod.       "parse_Field
+  endmethod.       "parse_data
 
 **********************************************************************
 * ZIP file read test - gets data from SMW0 ZMOCKUP_LOADER_UNIT_TEST
@@ -690,152 +556,6 @@ class lcl_test_mockup_loader implementation.
     assert_excode 'CP'.
 
   endmethod.        " read_zip
-
-**********************************************************************
-* Identification of empty lines in the text files
-**********************************************************************
-  method empty_lines.
-    data:
-          dummy_tab_exp type tt_dummy,
-          dummy_tab_act type tt_dummy,
-          l_string      type string,
-          lo_ex         type ref to zcx_mockup_loader_error.
-
-    get_dummy_data( importing e_dummy_tab    = dummy_tab_exp
-                              e_dummy_string = l_string ).
-
-    " Add empty line at the end *****************************
-    l_string = l_string && c_crlf.
-
-    try.
-      o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act ).
-    catch zcx_mockup_loader_error into lo_ex.
-      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
-    endtry.
-
-    cl_abap_unit_assert=>assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
-
-    " Add empty line in the middle ***************************
-    replace first occurrence of c_crlf in l_string with c_crlf && c_crlf.
-    clear lo_ex.
-
-    try.
-      o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'LE'.
-
-    " Add empty line at the beginning ************************
-    l_string = c_crlf && l_string.
-    clear lo_ex.
-
-    try.
-      o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'HE'.
-
-  endmethod.       "empty_lines
-
-**********************************************************************
-* Test check of in and out data types
-**********************************************************************
-  method map_file_structure.
-    data:
-          dummy_tab_exp type tt_dummy,
-          dummy_tab_act type tt_dummy,
-          l_string      type string,
-          l_string_bak  type string,
-          lo_ex         type ref to zcx_mockup_loader_error.
-
-    get_dummy_data( importing e_dummy_tab    = dummy_tab_exp
-                              e_dummy_string = l_string_bak ).
-
-    " Duplicate field names *******************************
-    clear lo_ex.
-    l_string = l_string_bak.
-    replace first occurrence of 'TCHAR' in l_string with 'TDATE'.
-
-    try.
-      o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'DN'.
-
-    " Empty field names ***********************************
-    clear lo_ex.
-    l_string = l_string_bak.
-    replace first occurrence of 'TCHAR' in l_string with ''.
-
-    try.
-      o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'EN'.
-
-    " Unknown field in text *******************************
-    clear lo_ex.
-    l_string = l_string_bak.
-    replace first occurrence of 'TCHAR' in l_string with 'UNKNOWN'.
-
-    try.
-      o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'MC'.
-
-    " More fields than in target structure ****************
-    clear lo_ex.
-    l_string = l_string_bak.
-    replace first occurrence of 'TINTEGER' in l_string with 'TINTEGER' && c_tab && 'EXCESS_FIELD'.
-
-    try.
-      o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'CN'.
-
-    " Empty field at the end ******************************
-    clear lo_ex.
-    l_string = l_string_bak.
-    replace first occurrence of 'TINTEGER' in l_string with 'TINTEGER' && c_tab.
-
-    try.
-      o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'EN'.
-
-    " Empty field at the end of data line ******************
-    clear lo_ex.
-    l_string = l_string_bak.
-    replace first occurrence of '1111' in l_string with '1111' && c_tab.
-
-    try.
-      o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode '>H'.
-
-  endmethod.       "map_file_structure
 
 **********************************************************************
 * LOAD AND STORE at once
@@ -1033,8 +753,9 @@ class lcl_test_mockup_loader implementation.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
-    cl_abap_unit_assert=>assert_equals( act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
-                   exp = dummy_tab_exp ).
+    cl_abap_unit_assert=>assert_equals(
+      act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
+      exp = dummy_tab_exp ).
 
     " Same but with lower case name
     try .
@@ -1126,40 +847,4 @@ class lcl_test_mockup_loader implementation.
 
   endmethod. "load_raw
 
-**********************************************************************
-* PARSE_APPLY_EXIT - apply exit test
-**********************************************************************
-  method parse_apply_exit.
-    data:
-          l_dummy  type ty_dummy,
-          lo_ex    type ref to zcx_mockup_loader_error.
-
-    try .
-      o->parse_apply_exit(
-        exporting
-          i_convexit = 'ALPHA'
-          i_data     = '123'
-        importing
-          e_field    = l_dummy-talpha ).
-    catch zcx_mockup_loader_error into lo_ex.
-      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
-    endtry.
-
-    cl_abap_unit_assert=>assert_equals( act = l_dummy-talpha exp = '0000000123' ).
-
-    " Check wrong exit
-    clear lo_ex.
-    try .
-      o->parse_apply_exit(
-        exporting
-          i_convexit = 'NONAME'
-          i_data     = '123'
-        importing
-          e_field    = l_dummy-talpha ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'EM'.
-
-  endmethod. "parse_apply_exit
-
-endclass.       "lcl_Test_Mockup_Loader
+endclass.       "lcl_test_mockup_loader

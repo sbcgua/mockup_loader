@@ -128,23 +128,6 @@ private section.
   methods INITIALIZE
     raising
       ZCX_MOCKUP_LOADER_ERROR .
-  methods MAP_FILE_STRUCTURE
-    importing
-      !I_LINE type STRING
-      !IO_STRUC_DESCR type ref to CL_ABAP_STRUCTDESCR
-      !I_STRICT type ABAP_BOOL
-    exporting
-      !ET_MAP type INT4_TABLE
-    raising
-      ZCX_MOCKUP_LOADER_ERROR .
-  methods PARSE_APPLY_EXIT
-    importing
-      !I_DATA type STRING
-      !I_CONVEXIT type STRING
-    exporting
-      !E_FIELD type ANY
-    raising
-      ZCX_MOCKUP_LOADER_ERROR .
   methods PARSE_DATA
     importing
       !I_RAWDATA type STRING
@@ -154,31 +137,6 @@ private section.
       !E_CONTAINER type ANY
     raising
       ZCX_MOCKUP_LOADER_ERROR .
-  methods PARSE_LINE
-    importing
-      !I_LINE type STRING
-      !IT_MAP type INT4_TABLE
-      !IO_STRUC_DESCR type ref to CL_ABAP_STRUCTDESCR
-      !I_INDEX type INT4
-    exporting
-      !ES_CONTAINER type ANY
-    raising
-      ZCX_MOCKUP_LOADER_ERROR .
-  methods PARSE_FIELD
-    importing
-      !IS_COMPONENT type ABAP_COMPDESCR
-      !I_DATA type STRING
-    exporting
-      !E_FIELD type ANY
-    raising
-      ZCX_MOCKUP_LOADER_ERROR .
-  methods PARSE_DATE
-    importing
-      !I_VALUE type STRING
-    exporting
-      !E_FIELD type D
-    raising
-      ZCX_MOCKUP_LOADER_ERROR .
   methods READ_ZIP
     importing
       !I_NAME type STRING
@@ -186,35 +144,11 @@ private section.
       !E_RAWDATA type STRING
     raising
       ZCX_MOCKUP_LOADER_ERROR .
-  class-methods BREAK_TO_LINES
-    importing
-      !I_TEXT type STRING
-    returning
-      value(RT_TAB) type TT_STRING .
 ENDCLASS.
 
 
 
 CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
-
-
-method break_to_lines.
-  data:
-        l_found type i,
-        l_break type string value cl_abap_char_utilities=>cr_lf.
-
-  " Detect line break
-  l_found = find( val = i_text sub = cl_abap_char_utilities=>cr_lf ).
-  if l_found < 0.
-    l_found = find( val = i_text sub = cl_abap_char_utilities=>newline ).
-    if l_found >= 0.
-      l_break = cl_abap_char_utilities=>newline.
-    endif.
-  endif.
-
-  split i_text at l_break into table rt_tab.
-
-endmethod.
 
 
 method BUILD_FILTER.
@@ -504,8 +438,9 @@ method INITIALIZE.
     create object o_zip.
   endif.
 
-  o_zip->load( exporting  zip    = l_xstring
-               exceptions others = 4 ).
+  o_zip->load(
+    exporting  zip    = l_xstring
+    exceptions others = 4 ).
 
   if sy-subrc is not initial or lines( o_zip->files ) = 0.
     zcx_mockup_loader_error=>raise( msg = 'ZIP load failed' code = 'ZE' ).  "#EC NOTEXT
@@ -558,13 +493,19 @@ method load_data.
     zcx_mockup_loader_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
   endif.
 
-  me->read_zip( exporting i_name    = i_obj && '.txt'
-                importing e_rawdata = l_rawdata ).
+  me->read_zip(
+    exporting
+      i_name    = i_obj && '.txt'
+    importing
+      e_rawdata = l_rawdata ).
 
-  me->parse_data( exporting i_rawdata   = l_rawdata
-                            i_strict    = i_strict
-                            i_where     = i_where
-                  importing e_container = e_container ).
+  me->parse_data(
+    exporting
+      i_rawdata   = l_rawdata
+      i_strict    = i_strict
+      i_where     = i_where
+    importing
+      e_container = e_container ).
 
 endmethod.
 
@@ -582,422 +523,94 @@ method load_raw.
     l_filename = i_obj && i_ext.
   endif.
 
-  o_zip->get( exporting name    = l_filename
-              importing content = e_content ).
-
-endmethod.
-
-
-method map_file_structure.
-  data:
-        l_tabcnt     type i,
-        l_fieldcnt   type i,
-        lt_fields    type tt_string,
-        l_field_name type string,
-        lt_dupcheck  type tt_string,
-        l_struc_name type string.
-
-  l_struc_name = io_struc_descr->get_relative_name( ).
-  split i_line at cl_abap_char_utilities=>horizontal_tab into table lt_fields.
-
-  " Check if the line ends with TAB
-  find all occurrences of cl_abap_char_utilities=>horizontal_tab in i_line match count l_tabcnt.
-  if l_tabcnt = lines( lt_fields ). " Line ends with TAB, last empty field is not added to table, see help for 'split'
-    zcx_mockup_loader_error=>raise( msg = |Empty field at the end @{ l_struc_name }| code = 'EN' ).   "#EC NOTEXT
-  endif.
-
-  " Compare number of fields, check structure similarity
-  if i_strict = abap_true.
-    l_fieldcnt = lines( lt_fields ).
-
-    " MANDT field may be skipped
-    read table io_struc_descr->components with key name = 'MANDT' transporting no fields.
-    if sy-subrc is initial. " Found in strcuture components
-      read table lt_fields with key table_line = 'MANDT' transporting no fields.
-      if sy-subrc is not initial. " But not found in the file
-        add 1 to l_fieldcnt.
-      endif.
-    endif.
-
-    if l_fieldcnt <> lines( io_struc_descr->components ).
-      zcx_mockup_loader_error=>raise( msg = |Different columns number @{ l_struc_name }| code = 'CN' ).   "#EC NOTEXT
-    endif.
-  endif.
-
-  " Check duplicate field names in incoming structure
-  lt_dupcheck[] = lt_fields[].
-  sort lt_dupcheck[].
-  delete adjacent duplicates from lt_dupcheck[].
-  if lines( lt_dupcheck ) <> lines( lt_fields ).
-    zcx_mockup_loader_error=>raise( msg = |Duplicate field names found @{ l_struc_name }| code = 'DN' ).   "#EC NOTEXT
-  endif.
-
-  " Compare columns names and make map
-  loop at lt_fields into l_field_name.
-    if l_field_name is initial. " Check empty fields
-      zcx_mockup_loader_error=>raise( msg = |Empty field name found @{ l_struc_name }| code = 'EN' ).   "#EC NOTEXT
-    endif.
-
-    read table io_struc_descr->components with key name = l_field_name transporting no fields.
-    if sy-subrc is initial.
-      append sy-tabix to et_map.
-    else.
-      zcx_mockup_loader_error=>raise( msg = |{ l_field_name } not found in structure @{ l_struc_name }| code = 'MC' ). "#EC NOTEXT
-    endif.
-  endloop.
-
-endmethod.                    "analyse_structure
-
-
-method parse_apply_exit.
-  data l_fmname type rs38l_fnam value 'CONVERSION_EXIT_XXXXX_INPUT'.
-
-  replace first occurrence of 'XXXXX' in l_fmname with i_convexit.
-
-  call function 'FUNCTION_EXISTS'
-    exporting
-      funcname           = l_fmname
-    exceptions
-      function_not_exist = 1
-      others             = 2.
-
-  if sy-subrc <> 0.
-    zcx_mockup_loader_error=>raise( msg = 'Conversion exit not found' code = 'EM' ). "#EC NOTEXT
-  endif.
-
-  call function l_fmname
-    exporting  input  = i_data
-    importing  output = e_field
-    exceptions others = 1.
-
-  if sy-subrc <> 0.
-    zcx_mockup_loader_error=>raise( msg = 'Conversion exit failed' code = 'EF' ). "#EC NOTEXT
-  endif.
+  o_zip->get(
+    exporting name    = l_filename
+    importing content = e_content ).
 
 endmethod.
 
 
 method parse_data.
   data:
-        lt_lines       type table of string,
-        ls_line        type string,
-        lt_map         type int4_table,
+        lx_dp          type ref to zcx_data_parser_error,
         lt_filter      type tt_filter,
-
         lo_type_descr  type ref to cl_abap_typedescr,
         lo_table_descr type ref to cl_abap_tabledescr,
-        lo_struc_descr type ref to cl_abap_structdescr,
-        ref_tab_line   type ref to data.
-
+        lo_struc_descr type ref to cl_abap_structdescr.
+  data:
+        ld_record   type ref to data,
+        ld_temp_tab type ref to data.
   field-symbols:
-                 <table>      type any table,
-                 <container>  type any.
+        <record>        type any,
+        <container_tab> type any table,
+        <temp_tab>      type standard table.
 
   clear e_container.
 
   " Identify container type and create temp container
   lo_type_descr = cl_abap_typedescr=>describe_by_data( e_container ).
   case lo_type_descr->kind.
-  when 'T'. " Table
-    lo_table_descr ?= lo_type_descr.
-    lo_struc_descr ?= lo_table_descr->get_table_line_type( ).
-    create data ref_tab_line type handle lo_struc_descr.
-    assign ref_tab_line->* to <container>.
-    assign e_container     to <table>.
-  when 'S'. " Structure
-    lo_struc_descr ?= lo_type_descr.
-    assign e_container to <container>.
-  when others. " Not a table or structure ?
-    zcx_mockup_loader_error=>raise( msg = 'Table or structure containers only' code = 'DT' ). "#EC NOTEXT
+    when 'T'. " Table
+      lo_table_descr ?= lo_type_descr.
+      lo_struc_descr ?= lo_table_descr->get_table_line_type( ).
+      assign e_container to <container_tab>.
+    when 'S'. " Structure
+      lo_struc_descr ?= lo_type_descr.
+    when others. " Not a table or structure ?
+      zcx_mockup_loader_error=>raise( msg = 'Table or structure containers only' code = 'DT' ). "#EC NOTEXT
   endcase.
+
+  lo_table_descr ?= cl_abap_tabledescr=>create(
+    p_line_type  = lo_struc_descr
+    p_table_kind = cl_abap_tabledescr=>tablekind_std ).
+  create data ld_record type handle lo_struc_descr.
+  assign ld_record->* to <record>.
+  create data ld_temp_tab type handle lo_table_descr.
+  assign ld_temp_tab->* to <temp_tab>.
+
+  try.
+    data lo_data_parser type ref to zcl_data_parser.
+    lo_data_parser = zcl_data_parser=>create(
+      i_pattern       = <record>
+      i_amount_format = g_amt_format
+      i_date_format   = g_date_format ).
+
+    lo_data_parser->parse(
+      exporting
+        i_data = i_rawdata
+        i_strict = i_strict
+        i_has_head = abap_true " assume head always, maybe change later
+      importing
+        e_container = <temp_tab> ).
+  catch zcx_data_parser_error into lx_dp.
+    zcx_mockup_loader_error=>raise( msg = lx_dp->get_text( ) code = 'XE' ).
+  endtry.
 
   " Build filter hash if supplied
   if i_where is not initial.
     lt_filter = me->build_filter( i_where ).
-  endif.
 
-  " Read and process header line
-  lt_lines = break_to_lines( i_rawdata ).
-  read table lt_lines into ls_line index 1.
-  if sy-subrc <> 0.
-    zcx_mockup_loader_error=>raise( msg = 'No header line found in the file' code = 'NH' ). "#EC NOTEXT
-  endif.
-  if ls_line is initial.
-    zcx_mockup_loader_error=>raise( msg = 'Header line is empty'  code = 'HE' ). "#EC NOTEXT
-  endif.
+    loop at <temp_tab> assigning <record>.
 
-  delete lt_lines index 1.
-
-  me->map_file_structure( exporting i_line         = ls_line
-                                    io_struc_descr = lo_struc_descr
-                                    i_strict       = i_strict
-                          importing et_map         = lt_map ).
-
-  " Main data parsing loop
-  loop at lt_lines into ls_line.
-    if ls_line is initial. " Check empty lines
-      check sy-tabix < lines( lt_lines ). " Last line of a file may be empty, others - not
-      zcx_mockup_loader_error=>raise( msg = |Empty line { sy-tabix + 1 } cannot be parsed|  code = 'LE' ). "#EC NOTEXT
-    endif.
-
-    me->parse_line( exporting i_line         = ls_line
-                              io_struc_descr = lo_struc_descr
-                              it_map         = lt_map
-                              i_index        = sy-tabix + 1
-                    importing es_container   = <container> ).
-
-    if does_line_fit_filter( i_line = <container> i_filter = lt_filter ) = abap_true.
-      if lo_type_descr->kind = 'S'. " Structure
-        exit. " Only first line goes to structure and then exits
-      else. " Table
-        insert <container> into table <table>.
-      endif.
-    endif.
-
-  endloop.
-
-endmethod.
-
-
-method PARSE_DATE.
-
-  data: l_cursor  type i,
-        l_iter    type i,
-        l_part    type c,
-        l_size    type i,
-        l_offs    type i,
-        l_home    type i,
-        l_pad     type i,
-        l_stencil type numc4,
-        l_rawdate type char8,
-        l_charset type char11 value '0123456789',
-        l_sep     type c.
-
-  clear e_field.
-  l_sep           = g_date_format+3(1).
-  l_charset+10(1) = l_sep.
-
-  if i_value is initial or i_value co ` `. " Empty string -> empty date
-    return.
-  endif.
-
-  if not i_value co l_charset.  " Check wrong symbols
-    zcx_mockup_loader_error=>raise( msg = 'Date contains invalid symbols' code = 'DY' ). "#EC NOTEXT
-  endif.
-
-  " Not separated date must be 8 chars, separated not more than 10
-  if l_sep <> space and strlen( i_value ) > 10  or l_sep = space and strlen( i_value ) <> 8.
-    zcx_mockup_loader_error=>raise( msg = 'Incorrect date length' code = 'DL' ). "#EC NOTEXT
-  endif.
-
-  do 3 times.
-    l_iter = sy-index - 1.
-    l_part = g_date_format+l_iter(1).
-
-    case l_part.
-      when 'D'.
-        l_size = 2.
-        l_home = 6.
-      when 'M'.
-        l_size = 2.
-        l_home = 4.
-      when 'Y'.
-        l_size = 4.
-        l_home = 0.
-      when others.
-        zcx_mockup_loader_error=>raise( msg = 'Wrong date format' ). "#EC NOTEXT
-    endcase.
-
-    if l_sep is initial. " No seps
-      l_rawdate+l_home(l_size) = i_value+l_cursor(l_size).
-      l_cursor                 = l_cursor + l_size.
-    else.
-      if l_iter = 2. " Last part
-        l_offs = strlen( i_value+l_cursor ).
-      else.
-        find first occurrence of l_sep in i_value+l_cursor match offset l_offs.
-      endif.
-      if sy-subrc <> 0.
-        zcx_mockup_loader_error=>raise( msg = 'Date separator is missing' code = 'DS' ). "#EC NOTEXT
-      endif.
-      if l_offs > l_size.
-        zcx_mockup_loader_error=>raise( msg = 'Too long date part' code = 'DP' ). "#EC NOTEXT
-      endif.
-      l_stencil                = i_value+l_cursor(l_offs).
-      l_pad                    = 4 - l_size. " Offset within stencil
-      l_rawdate+l_home(l_size) = l_stencil+l_pad(l_size).
-      l_cursor                 = l_cursor + l_offs + 1. " Including separator
-    endif.
-
-  enddo.
-
-  " Native convert
-  try.
-    cl_abap_datfm=>conv_date_ext_to_int(
-      exporting
-        im_datext   = l_rawdate
-        im_datfmdes = '4' " YYYY.MM.DD
-      importing
-        ex_datint   = e_field ).
-    catch cx_abap_datfm.
-      zcx_mockup_loader_error=>raise( msg = 'Date format unknown' code = 'DU' ). "#EC NOTEXT
-  endtry.
-
-endmethod.
-
-
-method parse_field.
-  data:
-        l_mask     type string,
-        l_tmp      type string,
-        l_unquoted type string,
-        l_regex    type string,
-        l_len      type i.
-
-  clear e_field.
-
-  " Unquote field
-  l_len = strlen( i_data ).
-  if l_len >= 2
-     and substring( val = i_data off = 0         len = 1 ) = '"'
-     and substring( val = i_data off = l_len - 1 len = 1 ) = '"'.
-    l_unquoted = substring( val = i_data off = 1 len = l_len - 2 ).
-  else.
-    l_unquoted = i_data.
-  endif.
-  clear l_len.
-
-  " Parse depending on output type
-  case is_component-type_kind.
-    when 'D'. " Date
-      parse_date( exporting  i_value    = l_unquoted
-                  importing  e_field    = e_field ).
-
-    when 'C'. " Char + convexits
-      describe field e_field edit mask l_mask.
-      if l_mask is initial.
-        e_field = l_unquoted.
-      else.
-        shift l_mask left deleting leading '='.
-        me->parse_apply_exit( exporting i_data     = l_unquoted
-                                        i_convexit = l_mask
-                              importing e_field    = e_field ).
-      endif.
-
-    when 'g'. " String
-      e_field = l_unquoted.
-
-    when 'P'. " Amount
-      try .
-        e_field = l_unquoted. " Try native format first - xxxx.xx
-
-      catch cx_sy_arithmetic_error cx_sy_conversion_error.
-        l_tmp   = l_unquoted.
-        l_regex = '^-?\d{1,3}(T\d{3})*(\D\d{1,C})?$'. "#EC NOTEXT
-        condense l_tmp no-gaps.
-        replace 'C' in l_regex with |{ is_component-decimals }|.
-
-        " Validate number
-        find first occurrence of g_amt_format+0(1) in l_tmp.
-        if sy-subrc is initial. " Found
-          replace 'T' in l_regex with g_amt_format+0(1).
-        else.
-          replace 'T' in l_regex with ''.
+      if does_line_fit_filter( i_line = <record> i_filter = lt_filter ) = abap_true.
+        if lo_type_descr->kind = 'S'. " Structure
+          e_container = <record>.
+          exit. " Only first line goes to structure and then exits
+        else. " Table
+          insert <record> into table <container_tab>.
         endif.
-
-        replace 'D' in l_regex with g_amt_format+1(1).
-        find all occurrences of regex l_regex in l_tmp match count sy-tabix.
-
-        if sy-tabix = 1.
-          if not g_amt_format+0(1) is initial.  " Remove thousand separators
-            replace all occurrences of g_amt_format+0(1) in l_tmp with ''.
-          endif.
-
-          if g_amt_format+1(1) <> '.'.          " Replace decimal separator
-            replace g_amt_format+1(1) in l_tmp with '.'.
-          endif.
-
-          try. " Try converting again
-            clear sy-subrc.
-            e_field = l_tmp.
-          catch cx_sy_arithmetic_error cx_sy_conversion_error.
-            sy-subrc = 4.
-          endtry.
-        else. " Not matched
-          sy-subrc = 4.
-        endif.
-
-      endtry.
-
-    when 'N' or 'I'. " Integer number
-      if l_unquoted co '0123456789'.
-        e_field = l_unquoted.
-      else.
-        sy-subrc = 4.
       endif.
 
-    when 'X'.        " Raw
-      try .
-        e_field = l_unquoted.
-      catch cx_sy_conversion_no_raw cx_sy_conversion_error.
-        sy-subrc = 4.
-      endtry.
+    endloop.
 
-  endcase.
-
-  if sy-subrc is not initial.
-    zcx_mockup_loader_error=>raise( msg = |Field: { is_component-name }| code = 'PF' ). "#EC NOTEXT
+  else. " Copy all
+    if lo_type_descr->kind = 'S'. " Structure
+      read table <temp_tab> into e_container index 1.
+    else. " Table
+      e_container = <temp_tab>.
+    endif.
   endif.
 
-endmethod.
-
-
-method parse_line.
-  data:
-        l_tabcnt       type i,
-        lt_fields      type table of string,
-        ls_field       type string,
-        ls_component   type abap_compdescr,
-        l_index        type int4.
-
-  field-symbols <field> type any.
-
-  clear es_container.
-  split i_line at cl_abap_char_utilities=>horizontal_tab into table lt_fields.
-
-  " Count TABs, if line ends with TAB last empty field is not added to table, see help for 'split'
-  find all occurrences of cl_abap_char_utilities=>horizontal_tab in i_line match count l_tabcnt.
-  add 1 to l_tabcnt. " Number of fields in the line
-
-  " Check field number is the same as in header
-  if l_tabcnt > lines( it_map ).
-    zcx_mockup_loader_error=>raise( msg = |More fields than in header @{ i_index }| code = '>H' ). "#EC NOTEXT
-  elseif l_tabcnt < lines( it_map ).
-    zcx_mockup_loader_error=>raise( msg = |Less fields than in header @{ i_index }| code = '<H' ). "#EC NOTEXT
-  endif.
-
-  " Move data to table line
-  loop at lt_fields into ls_field.
-    read table it_map into l_index index sy-tabix. " Read map
-
-    read table io_struc_descr->components into ls_component index l_index. " Get component
-    if sy-subrc is not initial.
-      zcx_mockup_loader_error=>raise( 'No component found?!' ). "#EC NOTEXT
-    endif.
-
-    check ls_component-name ne 'MANDT'. " Skip client fields
-
-    unassign <field>.
-    assign component ls_component-name of structure es_container to <field>.
-    if <field> is not assigned.
-      zcx_mockup_loader_error=>raise( 'Field assign failed?!' ). "#EC NOTEXT
-    endif.
-
-    me->parse_field( exporting is_component = ls_component
-                               i_data       = ls_field
-                     importing e_field      = <field> ).
-
-  endloop.
 
 endmethod.
 
