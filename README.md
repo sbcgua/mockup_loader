@@ -6,7 +6,7 @@
 ## Major changes in version 2
 
 - `zcl_mockup_loader` split into several classes to separate loading, store and utils
-- parsing logic is separated into [abap_data_parse](https://github.com/sbcgua/abap_data_parser) which is now a prerequisite. Sorry for this. We believe this is for good.
+- parsing logic is separated into [abap_data_parser](https://github.com/sbcgua/abap_data_parser) which is now a prerequisite. Sorry for this. We believe this is for good.
 - `zcl_mockup_loader` is not a singleton anymore. Must be instantiated with `create` method. `zcl_mockup_loader_store` remained the singleton.
 - VBA zip compiler depreciated, see below 'Conversion to Excel' section
 - TODO new upcoming feature ... ;)
@@ -72,7 +72,7 @@ BUKRS BELNR GJAHR BUZEI BSCHL KOART ...
 
 ### Store/Retrieve ###
 
-**Disclaimer**: *Some people reckon that this is a 'code smell' to add test-related code to the production code. I sincerely agree in general. If you designed your code from the beginning so that it uses accessor interfaces or something similar - smart you are ! :) Still 'store' functionality can be useful for some older code to be tested without much refactoring.*
+**Disclaimer**: *There is an opinion that adding test-related code to the production code is a 'code smell'. I sincerely agree in general. If the code was designed to use e.g. accessor interfaces from the beginning this is good. Still 'store' functionality can be useful for some older code to be tested without much refactoring.*
 
 Later another objective was identified: some code is quite difficult to test when it has a *db select* in the middle. Of course, good code design would assume isolation of DB operations from business logic code, but it is not always possible (or was not done in proper time). So we needed to create a way to substitute *selects* in code to a simple call, which would take the prepared test data instead if test environment was identified. We came up with the solution we called `store`. 
    
@@ -147,7 +147,7 @@ Some design facts about `store`:
 The most convenient way to install the package is to use [abapGit](https://github.com/larshp/abapGit) - it is easily installed itself and then a couple of click to clone the repo into the system. There is also an option for offline installation - download the repo as zip file and import it with abapGit. Unit test execution is always recommended after-installation.
 
 Dependencies (to install before mockup loader):
-- [abap_data_parse](https://github.com/sbcgua/abap_data_parser) - tab-delimited text parser (was a part of *mockup loader* but now a separate reusable tool)
+- [abap_data_parser](https://github.com/sbcgua/abap_data_parser) - tab-delimited text parser (was a part of *mockup loader* but now a separate reusable tool)
 - [abap_w3mi_poller](https://github.com/sbcgua/abap_w3mi_poller) - *optional* - enables 'Upload to MIME' button in `ZMOCKUP_LOADER_SWSRC`. The mockup loader **can**  be compiled without this package (the call is dynamic).
 
 ## Load source redirection
