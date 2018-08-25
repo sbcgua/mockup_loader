@@ -324,7 +324,6 @@ endmethod.
 method parse_data.
   data:
         lx_dp          type ref to zcx_data_parser_error,
-        lt_filter      type zcl_mockup_loader_utils=>tt_filter,
         lo_type_descr  type ref to cl_abap_typedescr,
         lo_table_descr type ref to cl_abap_tabledescr,
         lo_struc_descr type ref to cl_abap_structdescr,
@@ -373,10 +372,9 @@ method parse_data.
   " Build filter hash if supplied
   data lv_fit type abap_bool.
   if i_where is not initial.
-    lt_filter = zcl_mockup_loader_utils=>build_filter( i_where ).
     zcl_mockup_loader_utils=>filter_table(
       exporting
-        i_filter    = lt_filter
+        i_where     = i_where
         i_tab       = <temp_tab>
       importing
         e_container = e_container ).

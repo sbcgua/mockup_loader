@@ -385,6 +385,21 @@ class lcl_test_mockup_utils implementation.
     read table dummy_tab_src into ls_exp index 2.
     cl_abap_unit_assert=>assert_equals( act = ls_act exp = ls_exp ).
 
+    " Filter with i_where (second line !)
+    try .
+      zcl_mockup_loader_utils=>filter_table(
+        exporting
+          i_where     = 'TNUMBER=2016'
+          i_tab       = dummy_tab_src
+        importing
+          e_container = ls_act ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
+    endtry.
+    read table dummy_tab_src into ls_exp index 2.
+    cl_abap_unit_assert=>assert_equals( act = ls_act exp = ls_exp ).
+
+
   endmethod.  " filter_table.
 
   method filter_table_neg.
@@ -430,6 +445,19 @@ class lcl_test_mockup_utils implementation.
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'WT'.
+
+    clear lo_ex.
+    try . " Wrong container type
+      zcl_mockup_loader_utils=>filter_table(
+        exporting
+          i_tab       = dummy_tab_src
+          i_filter    = lt_filter
+          i_where     = 'a=b'
+        importing
+          e_container = lo_ex ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'OO'.
 
   endmethod.  " filter_table_neg.
 

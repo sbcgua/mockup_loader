@@ -27,8 +27,9 @@ public section.
 
   class-methods FILTER_TABLE
     importing
-      !I_FILTER type TT_FILTER
+      !I_FILTER type TT_FILTER optional
       !I_TAB type ANY TABLE
+      !I_WHERE type ANY optional
     exporting
       !E_CONTAINER type ANY
     raising
@@ -233,6 +234,17 @@ method FILTER_TABLE.
 
   field-symbols <container_tab> type any table.
 
+  if boolc( i_filter is supplied ) = boolc( i_where is supplied ). " XOR
+    zcx_mockup_loader_error=>raise( msg = 'i_where or i_filter must be supplied' code = 'OO' ). "#EC NOTEXT
+  endif.
+
+  data lt_filter like i_filter.
+  if i_where is supplied.
+    lt_filter = build_filter( i_where ).
+  else. " i_filter is supplied
+    lt_filter = i_filter.
+  endif.
+
   clear e_container.
 
   " Check proper type
@@ -265,7 +277,7 @@ method FILTER_TABLE.
   loop at i_tab assigning <record>.
     lv_fit = does_line_fit_filter(
       i_line   = <record>
-      i_filter = i_filter ).
+      i_filter = lt_filter ).
     if lv_fit = abap_true.
       if dy_type2->kind = cl_abap_typedescr=>kind_struct. " Structure requested
         e_container = <record>.
