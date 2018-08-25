@@ -43,7 +43,7 @@ tables sscrfields.
 selection-screen begin of block b1 with frame title txt_b1.
 selection-screen begin of line.
 parameters p_undef type char1 radiobutton group gr1 user-command gr1.
-selection-screen comment (10) txt_und  for field p_undef.
+selection-screen comment (12) txt_und  for field p_undef.
 selection-screen end of line.
 
 selection-screen begin of line.
@@ -78,7 +78,7 @@ selection-screen: function key 2.
 initialization.
 
   txt_b1   = 'Source type (switch saves parameter immediately)'. "#EC NOTEXT
-  txt_und  = 'Undefined'.                                   "#EC NOTEXT
+  txt_und  = 'No override'.                                 "#EC NOTEXT
   txt_mime = 'MIME'.                                        "#EC NOTEXT
   txt_file = 'FILE'.                                        "#EC NOTEXT
   txt_fp   = 'File path'.                                   "#EC NOTEXT
