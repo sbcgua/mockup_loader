@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_MOCKUP_LOADER_UTILS</CLSNAME>
+    <VERSION>1</VERSION>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Mockup loader common utils</DESCRIPT>
+    <EXPOSURE>2</EXPOSURE>
+    <STATE>1</STATE>
+    <CLSFINAL>X</CLSFINAL>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+    <WITH_UNIT_TESTS>X</WITH_UNIT_TESTS>
+   </VSEOCLASS>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER_UTILS</CLSNAME>
+     <CMPNAME>BUILD_FILTER</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Build filter hash</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER_UTILS</CLSNAME>
+     <CMPNAME>CLASS_CONSTRUCTOR</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Class constructor</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER_UTILS</CLSNAME>
+     <CMPNAME>CONV_STRING_TO_FILTER</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Convert where structure to filter structure</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER_UTILS</CLSNAME>
+     <CMPNAME>CONV_WHERE_TO_FILTER</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Convert where structure to filter structure</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER_UTILS</CLSNAME>
+     <CMPNAME>DOES_LINE_FIT_FILTER</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Check if data line fit filters</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER_UTILS</CLSNAME>
+     <CMPNAME>FILTER_TABLE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Apply filter to table</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

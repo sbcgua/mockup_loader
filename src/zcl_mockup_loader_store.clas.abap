@@ -170,8 +170,7 @@ endmethod.
 method _retrieve.
   data:
         l_store     type ty_store,
-        lt_filter   type zcl_mockup_loader=>tt_filter,
-        r_data_tab  type ref to data,
+        lt_filter   type zcl_mockup_loader_utils=>tt_filter,
         ld_src      type ref to cl_abap_typedescr,
         ld_dst      type ref to cl_abap_typedescr,
         ld_tab      type ref to cl_abap_tabledescr,
@@ -179,10 +178,7 @@ method _retrieve.
         ld_dst_line type ref to cl_abap_structdescr.
 
   field-symbols:
-        <line>    type any,
-        <tabkey>  type any,
         <src_tab> type any table,
-        <tmp_tab> type standard table,
         <data>    type any.
 
   clear e_data.
@@ -205,9 +201,9 @@ method _retrieve.
     if l_store-tabkey is initial.
       zcx_mockup_loader_error=>raise( msg = 'Tabkey field not found' code = 'FM' ). "#EC NOTEXT
     endif.
-    lt_filter = zcl_mockup_loader=>build_filter( |{ l_store-tabkey }={ i_sift }| ).
+    lt_filter = zcl_mockup_loader_utils=>build_filter( |{ l_store-tabkey }={ i_sift }| ).
   elseif i_where is not initial.
-    lt_filter = zcl_mockup_loader=>build_filter( i_where ).
+    lt_filter = zcl_mockup_loader_utils=>build_filter( i_where ).
   endif.
 
   " Ensure types are the same
@@ -248,32 +244,12 @@ method _retrieve.
     assert ld_dst->kind ca 'ST'.
     assign l_store-data->* to <src_tab>.
 
-    if ld_dst->kind = 'T'.
-      ld_tab = cl_abap_tabledescr=>create(
-        p_line_type  = ld_src_line
-        p_table_kind = cl_abap_tabledescr=>tablekind_std
-        p_unique     = abap_false ).
-
-      create data r_data_tab type handle ld_tab.
-      assign r_data_tab->* to <tmp_tab>.
-    endif.
-
-    loop at <src_tab> assigning <line>.
-      if zcl_mockup_loader=>does_line_fit_filter( i_line = <line> i_filter = lt_filter ) = abap_true.
-        if ld_dst->kind = 'S'. " Structure
-          e_data = <line>.
-          exit. " Only first line goes to structure and then exits
-        else. " Table
-          append <line> to <tmp_tab>.
-        endif.
-      endif.
-    endloop.
-
-    if ld_dst->kind = 'T'.
-      e_data = <tmp_tab>.
-      free r_data_tab.
-    endif.
-
+    zcl_mockup_loader_utils=>filter_table(
+      exporting
+        i_filter    = lt_filter
+        i_tab       = <src_tab>
+      importing
+        e_container = e_data ).
   endif.
 
   if e_data is initial.

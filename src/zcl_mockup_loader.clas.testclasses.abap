@@ -74,13 +74,6 @@
     append e_dummy_struc to e_dummy_tab.
   end-of-definition.
 
-  define add_range.
-    r_&1-sign   = &2.
-    r_&1-option = &3.
-    r_&1-low    = &4.
-    append r_&1 to l_where-t&1.
-  end-of-definition.
-
   define assert_excode.
     cl_abap_unit_assert=>assert_not_initial( act = lo_ex ).
     cl_abap_unit_assert=>assert_equals( exp = &1 act = lo_ex->code ).
@@ -129,8 +122,6 @@ class lcl_test_mockup_loader definition for testing
     methods utf16_encoding           for testing.
 
     methods parse_data               for testing.
-    methods range_filtering          for testing.
-
     methods load_and_store           for testing.
     methods load_raw                 for testing.
 
@@ -141,12 +132,6 @@ class lcl_test_mockup_loader definition for testing
         e_dummy_struc  type ty_dummy
         e_dummy_tab    type tt_dummy
         e_dummy_string type string.
-
-    methods filter_helper
-      importing
-        i_tab        type tt_dummy
-        i_filter     type zcl_mockup_loader=>tt_filter
-      returning value(e_tab) type tt_dummy.
 
 endclass.       "lcl_test_mockup_loader
 
@@ -598,202 +583,6 @@ class lcl_test_mockup_loader implementation.
     assert_excode 'WT'.
 
   endmethod.       "load_and_store
-
-**********************************************************************
-* RANGE_FILTERING - test build_filter and does_line_fit_filter
-**********************************************************************
-  method range_filtering.
-    data:
-          dummy_tab_src  type tt_dummy,
-          dummy_tab_exp  type tt_dummy,
-          dummy          type ty_dummy,
-
-          l_filter       type zcl_mockup_loader=>tt_filter,
-          lo_ex          type ref to zcx_mockup_loader_error,
-
-          lt_tywhere     type zcl_mockup_loader=>tt_where,
-          l_tywhere      type zcl_mockup_loader=>ty_where,
-
-          begin of l_where_err1,
-            tnumber  type range of veri_n04,
-            tdate    type range of datum,
-            tother   type tt_dummy,
-          end of l_where_err1,
-
-          begin of l_where_err2,
-            tnumber  type range of veri_n04,
-            tdate    type range of datum,
-            tother   type c,
-          end of l_where_err2,
-
-          begin of l_where,
-            tnumber  type range of veri_n04,
-            tdate    type range of datum,
-            tother   type range of c,
-          end of l_where,
-
-          r_number  like line of l_where-tnumber,
-          r_date    like line of l_where-tdate,
-          r_other   like line of l_where-tother.
-
-    get_dummy_data( importing e_dummy_tab = dummy_tab_src ).
-
-    " Negative tests --------------------------------------------------------------------
-
-    " Component is not a range table
-    try.
-      l_filter = o->build_filter( l_where_err1 ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'WS'.
-
-    " Component is not a table
-    try.
-      l_filter = o->build_filter( l_where_err2 ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'WS'.
-
-    " Unexpected types of filters
-    l_tywhere-name = 'TNUMBER'.
-    get reference of l_where into l_tywhere-range.
-    try.
-      l_filter = o->build_filter( l_tywhere ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'CE'.
-
-    " Filter is not range
-    l_tywhere-name = 'TNUMBER'.
-    get reference of dummy_tab_exp into l_tywhere-range.
-    try.
-      l_filter = o->build_filter( l_tywhere ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'RT'.
-
-    " Filter is not range + TABLE
-    l_tywhere-name = 'TNUMBER'.
-    get reference of dummy_tab_exp into l_tywhere-range.
-    append l_tywhere to lt_tywhere.
-    try.
-      l_filter = o->build_filter( lt_tywhere ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    clear lt_tywhere.
-    assert_excode 'RT'.
-
-    " Wrong type of table
-    try.
-      l_filter = o->build_filter( dummy_tab_exp ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'WT'.
-
-    " Parameter is an unsupported type
-    try.
-      l_filter = o->build_filter( lo_ex ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'UT'.
-
-    " parameter is incorrect string pattern
-    try.
-      l_filter = o->build_filter( 'TNUMBER??' ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'SP'.
-
-
-    " Positive test RANGE STRUCTURE -----------------------------------------------------
-    dummy_tab_exp[] = dummy_tab_src[].
-    delete dummy_tab_exp where tnumber <> '2015' or tdate < '20160101'.
-
-    add_range number 'I' 'EQ' '2015'.
-    add_range date   'I' 'GE' '20160101'.
-    add_range other  'I' 'GE' 'A'.
-
-    try.
-      l_filter = o->build_filter( l_where ).
-    catch zcx_mockup_loader_error into lo_ex.
-      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
-    endtry.
-
-    cl_abap_unit_assert=>assert_equals(
-      act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
-      exp = dummy_tab_exp ).
-
-    " Positive test TY_WHERE TABLE --------------------------------------------------
-    " REUSE dummy_tab_exp and ranges from above
-    l_tywhere-name = 'TNUMBER'.
-    get reference of l_where-tnumber into l_tywhere-range.
-    append l_tywhere to lt_tywhere.
-
-    l_tywhere-name = 'TDATE'.
-    get reference of l_where-tdate into l_tywhere-range.
-    append l_tywhere to lt_tywhere.
-
-    try .
-      l_filter = o->build_filter( lt_tywhere ).
-    catch zcx_mockup_loader_error into lo_ex.
-      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
-    endtry.
-
-    cl_abap_unit_assert=>assert_equals(
-      act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
-      exp = dummy_tab_exp ).
-
-    " Positive test STRING --------------------------------------------------------------
-    dummy_tab_exp[] = dummy_tab_src[].
-    delete dummy_tab_exp where tnumber <> '2015'.
-
-    try .
-      l_filter = o->build_filter( 'TNUMBER = 2015' ).
-    catch zcx_mockup_loader_error into lo_ex.
-      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
-    endtry.
-
-    cl_abap_unit_assert=>assert_equals(
-      act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
-      exp = dummy_tab_exp ).
-
-    " Same but with lower case name
-    try .
-      l_filter = o->build_filter( 'TnumBER = 2015' ).
-    catch zcx_mockup_loader_error into lo_ex.
-      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
-    endtry.
-
-    cl_abap_unit_assert=>assert_equals(
-      act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
-      exp = dummy_tab_exp ).
-
-
-    " Positive test TY_WHERE STRUCTURE --------------------------------------------------
-    " REUSE dummy_tab_exp and ranges from above
-    l_tywhere-name = 'TNUMBER'.
-    get reference of l_where-tnumber into l_tywhere-range.
-
-    try .
-      l_filter = o->build_filter( l_tywhere ).
-    catch zcx_mockup_loader_error into lo_ex.
-      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
-    endtry.
-
-    cl_abap_unit_assert=>assert_equals(
-      act = filter_helper( i_tab = dummy_tab_src i_filter = l_filter )
-      exp = dummy_tab_exp ).
-
-  endmethod.       "range_filtering
-
-  method filter_helper.
-    data dummy type ty_dummy.
-    loop at i_tab into dummy.
-      if o->does_line_fit_filter( i_line = dummy i_filter = i_filter ) = abap_true.
-        append dummy to e_tab.
-      endif.
-    endloop.
-  endmethod.       " filter_helper
 
 **********************************************************************
 * LOAD_RAW - test load only method e.g. for XMLs

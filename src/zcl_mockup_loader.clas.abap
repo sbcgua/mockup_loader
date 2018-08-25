@@ -39,24 +39,6 @@ class ZCL_MOCKUP_LOADER definition
 
 public section.
 
-  types:
-    tt_string type standard table of string with default key .
-  types:
-    begin of ty_filter,
-      name  type string,
-      range type ref to data,
-      type  type char1,
-    end of ty_filter .
-  types:
-    tt_filter type standard table of ty_filter with key name .
-  types:
-    begin of ty_where,
-      name  type string,
-      range type ref to data,
-    end of ty_where .
-  types:
-    tt_where type standard table of ty_where with key name .
-
   class-methods CLASS_CONSTRUCTOR .
   class-methods CLASS_SET_SOURCE
     importing
@@ -100,19 +82,6 @@ public section.
       !E_CONTAINER type ANY
     raising
       ZCX_MOCKUP_LOADER_ERROR .
-  class-methods BUILD_FILTER
-    importing
-      !I_WHERE type ANY
-    returning
-      value(R_FILTER) type TT_FILTER
-    raising
-      ZCX_MOCKUP_LOADER_ERROR .
-  class-methods DOES_LINE_FIT_FILTER
-    importing
-      !I_LINE type ANY
-      !I_FILTER type TT_FILTER
-    returning
-      value(R_YESNO) type ABAP_BOOL .
 protected section.
 private section.
 
@@ -121,7 +90,6 @@ private section.
   class-data G_MOCKUP_SRC_PATH type STRING .
   class-data G_MOCKUP_SRC_TYPE type CHAR4 .
   class-data G_AMT_FORMAT type CHAR2 .
-  type-pools ABAP .
   class-data G_ENCODING type ABAP_ENCODING .
   class-data G_DATE_FORMAT type CHAR4 .
 
@@ -149,110 +117,6 @@ ENDCLASS.
 
 
 CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
-
-
-method BUILD_FILTER.
-  data dy_templ      type ref to cl_abap_tabledescr.
-  data dy_type       type ref to cl_abap_typedescr.
-  data dy_struc      type ref to cl_abap_structdescr.
-  data dy_table      type ref to cl_abap_tabledescr.
-
-  data l_filter      type ty_filter.
-  data l_where       type ty_where.
-  data lt_filter     type tt_filter.
-  data lt_components type cl_abap_structdescr=>component_table.
-  data l_component   like line of lt_components.
-
-  field-symbols <ftable> type any table.
-  field-symbols <cond>   type string.
-
-  dy_type   = cl_abap_typedescr=>describe_by_data( i_where ).
-  dy_templ ?= cl_abap_typedescr=>describe_by_name( 'SVER_TABLE_TYPE_VERI_RANGE' ).
-
-  try.
-    case dy_type->type_kind.
-    when cl_abap_typedescr=>typekind_table. " Table -> expect tt_where
-      dy_table ?= dy_type.
-      dy_struc ?= dy_table->get_table_line_type( ).
-      if not dy_struc->absolute_name cs '\CLASS=ZCL_MOCKUP_LOADER\TYPE=TY_WHERE'.
-        zcx_mockup_loader_error=>raise( msg = |I_WHERE table must be of TT_WHERE type| code = 'WT' ).   "#EC NOTEXT
-      endif.
-
-      assign i_where to <ftable>.
-      loop at <ftable> into l_where.
-        l_filter-name  = l_where-name.
-        l_filter-range = l_where-range.
-        l_filter-type  = 'R'. " Range
-        dy_table ?= cl_abap_typedescr=>describe_by_data_ref( l_filter-range ). " Assume table, cast_error otherwise
-        if dy_table->key ne dy_templ->key. " Not range ?
-          zcx_mockup_loader_error=>raise( msg = |I_WHERE-RANGE must be a range table| code = 'RT' ).   "#EC NOTEXT
-        endif.
-        append l_filter to lt_filter.
-      endloop.
-
-    when cl_abap_typedescr=>typekind_struct2.
-      dy_struc      ?= dy_type.
-
-      if dy_struc->absolute_name = '\CLASS=ZCL_MOCKUP_LOADER\TYPE=TY_WHERE'.
-        l_where        = i_where.
-        l_filter-name  = l_where-name.
-        l_filter-range = l_where-range.
-        l_filter-type  = 'R'. " Range
-        dy_table ?= cl_abap_typedescr=>describe_by_data_ref( l_filter-range ). " Assume table, cast_error otherwise
-        if dy_table->key ne dy_templ->key. " Not range ?
-          zcx_mockup_loader_error=>raise( msg = |I_WHERE-RANGE must be a range table| code = 'RT' ).   "#EC NOTEXT
-        endif.
-        append l_filter to lt_filter.
-
-      else.                      " structure with named components per range
-        lt_components  = dy_struc->get_components( ).
-        loop at lt_components into l_component.
-          if l_component-type->kind <> cl_abap_typedescr=>kind_table.
-            zcx_mockup_loader_error=>raise( msg = |I_WHERE must be a structure of ranges or TY_WHERE| code = 'WS' ).   "#EC NOTEXT
-          endif.
-
-          dy_table ?= l_component-type.
-          if dy_table->key ne dy_templ->key. " Not range-like structure ?
-            zcx_mockup_loader_error=>raise( msg = |I_WHERE must be a structure of ranges or TY_WHERE| code = 'WS' ).   "#EC NOTEXT
-          endif.
-
-          l_filter-name = l_component-name.
-          l_filter-type = 'R'. " Range
-          assign component l_component-name of structure i_where to <ftable>.
-          get reference of <ftable> into l_filter-range.
-          append l_filter to lt_filter.
-        endloop.
-      endif.
-
-    when cl_abap_typedescr=>typekind_char or cl_abap_typedescr=>typekind_string.
-      l_filter-type = 'S'. " String
-      create data l_filter-range type string.
-      assign l_filter-range->* to <cond>.
-
-      split i_where at '=' into l_filter-name <cond>.
-      shift l_filter-name right deleting trailing space.
-      shift l_filter-name left  deleting leading space.
-      shift <cond>        right deleting trailing space.
-      shift <cond>        left  deleting leading space.
-      translate l_filter-name to upper case.
-
-      if l_filter-name is initial or <cond> is initial.
-        zcx_mockup_loader_error=>raise( msg = |Incorrect I_WHERE string pattern| code = 'SP' ).   "#EC NOTEXT
-      endif.
-
-      append l_filter to lt_filter.
-
-    when others.
-      zcx_mockup_loader_error=>raise( msg = |Unsupported type { dy_type->absolute_name } of I_WHERE| code = 'UT' ).   "#EC NOTEXT
-    endcase.
-
-  catch cx_sy_move_cast_error.
-    zcx_mockup_loader_error=>raise( msg = |CX_SY_MOVE_CAST_ERROR @BUILD_FILTER()| code = 'CE' ).   "#EC NOTEXT
-  endtry.
-
-  r_filter = lt_filter.
-
-endmethod.
 
 
 method class_constructor.
@@ -292,36 +156,6 @@ method class_set_source.
     g_mockup_src_type = i_type.
     g_mockup_src_path = i_path.
   endif.
-endmethod.
-
-
-method DOES_LINE_FIT_FILTER.
-  data l_filter         type ty_filter.
-  field-symbols <field> type any.
-  field-symbols <range> type any table.
-  field-symbols <cond>  type string.
-
-  r_yesno = abap_true.
-
-  loop at i_filter into l_filter.
-    assign component l_filter-name of structure i_line to <field>.
-    check <field> is assigned. " Just skip irrelevant ranges
-
-    if l_filter-type = 'R'.               " Range
-      assign l_filter-range->* to <range>.
-    else.                                 " String
-      assign l_filter-range->* to <cond>.
-    endif.
-
-    if <range> is assigned and not <field> in <range>
-    or <cond>  is assigned and not <field> = <cond>. " cx_sy_conversion_error does not catch that :(
-      r_yesno = abap_false.
-      exit.
-    endif.
-
-    unassign: <field>, <range>, <cond>.
-  endloop.
-
 endmethod.
 
 
@@ -533,16 +367,12 @@ endmethod.
 method parse_data.
   data:
         lx_dp          type ref to zcx_data_parser_error,
-        lt_filter      type tt_filter,
+        lt_filter      type zcl_mockup_loader_utils=>tt_filter,
         lo_type_descr  type ref to cl_abap_typedescr,
         lo_table_descr type ref to cl_abap_tabledescr,
-        lo_struc_descr type ref to cl_abap_structdescr.
-  data:
-        ld_record   type ref to data,
-        ld_temp_tab type ref to data.
+        lo_struc_descr type ref to cl_abap_structdescr,
+        ld_temp_tab    type ref to data.
   field-symbols:
-        <record>        type any,
-        <container_tab> type any table,
         <temp_tab>      type standard table.
 
   clear e_container.
@@ -553,7 +383,6 @@ method parse_data.
     when 'T'. " Table
       lo_table_descr ?= lo_type_descr.
       lo_struc_descr ?= lo_table_descr->get_table_line_type( ).
-      assign e_container to <container_tab>.
     when 'S'. " Structure
       lo_struc_descr ?= lo_type_descr.
     when others. " Not a table or structure ?
@@ -563,15 +392,13 @@ method parse_data.
   lo_table_descr ?= cl_abap_tabledescr=>create(
     p_line_type  = lo_struc_descr
     p_table_kind = cl_abap_tabledescr=>tablekind_std ).
-  create data ld_record type handle lo_struc_descr.
-  assign ld_record->* to <record>.
   create data ld_temp_tab type handle lo_table_descr.
   assign ld_temp_tab->* to <temp_tab>.
 
   try.
     data lo_data_parser type ref to zcl_data_parser.
     lo_data_parser = zcl_data_parser=>create(
-      i_pattern       = <record>
+      i_pattern       = e_container
       i_amount_format = g_amt_format
       i_date_format   = g_date_format ).
 
@@ -587,22 +414,15 @@ method parse_data.
   endtry.
 
   " Build filter hash if supplied
+  data lv_fit type abap_bool.
   if i_where is not initial.
-    lt_filter = me->build_filter( i_where ).
-
-    loop at <temp_tab> assigning <record>.
-
-      if does_line_fit_filter( i_line = <record> i_filter = lt_filter ) = abap_true.
-        if lo_type_descr->kind = 'S'. " Structure
-          e_container = <record>.
-          exit. " Only first line goes to structure and then exits
-        else. " Table
-          insert <record> into table <container_tab>.
-        endif.
-      endif.
-
-    endloop.
-
+    lt_filter = zcl_mockup_loader_utils=>build_filter( i_where ).
+    zcl_mockup_loader_utils=>filter_table(
+      exporting
+        i_filter    = lt_filter
+        i_tab       = <temp_tab>
+      importing
+        e_container = e_container ).
   else. " Copy all
     if lo_type_descr->kind = 'S'. " Structure
       read table <temp_tab> into e_container index 1.
@@ -610,7 +430,6 @@ method parse_data.
       e_container = <temp_tab>.
     endif.
   endif.
-
 
 endmethod.
 
