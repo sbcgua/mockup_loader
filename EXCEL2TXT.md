@@ -1,43 +1,26 @@
 # Excel to TXT conversion script #
 
-We have a lot of data prepared in Excel files. Many files, many sheets in each. It is boring and time consuming to copy them all to text (although Ctrl+C in Excel actually copies TAB delimited text which greatly simplifies the matter for small cases).
+You may have a lot of data prepared in Excel files. Many files, many sheets in each. Although Ctrl+C in Excel actually copies TAB-delimited text which greatly simplifies the matter for minor cases, it is boring and time consuming to copy all the test cases to text. Here are special tools to simplify this workflow.
 
-So we created a VB script which does this work automatically. 
+- [mockup compiler](https://github.com/sbcgua/mockup_compiler) - ABAP implementation, requires [abap2xlsx](https://github.com/ivanfemia/abap2xlsx) installed.
+- [mockup compiler JS](https://github.com/sbcgua/mockup-compiler-js) - java script implemenation, requires nodejs environment at the developer's machine.
 
-## How to use works ##
+Both tools do more or less the same: reads directory of `xlsx` files, compilers them into tab-delimited texts and zips. ABAP version of compiler also automatically uploads it to MIME storage (tr. `SMW0`). Both tools can watch the changes in the directory and re-compile the data on-the-fly. See the repos for more details.
 
-1. Excel files should be in one directory, same as the script. Formats supported: `.xlsx`, `.xls`, `.xlsm`, `.ods`
+JS version cannot upload to SAP, however there are workarounds:
+- either use [abap_w3mi_poller](https://github.com/sbcgua/abap_w3mi_poller) which watches specified files (zipped result in this case) and upload to MIME storage
+- or use `zmockup_loader_swsrc` tool (part of the mockup loader) to _temporarily_ switch source of unit test to a file target for the _current session_. This is my **preferable** way in fact as it ensures that only working version is uploaded to the system and _gives possibility for different people to work on different parts of unit test (!)_. 
+
+## Requirement to source ##
+
+1. Excel files should be in one directory, same as the script. Formats supported: `.xlsx`. Should theoretically work with `.xls`, `.xlsm`, `.ods` but needs to be tested and fixed in file filtering code, TODO...
 2. Each Excel file should have a sheet named `_contents`, it should contain a list of other sheet names which are relevant to be converted. In the second column there should be a mark 'X' to save the sheet to text. (See [example/Example.ods](example/Example.ods)) 
 3. Each sheet should contain data, staring in A1 cell. 
     * The first row must contain field names (capitalized).
-    * The first column is used to identify the end of length of the table - so it must be continuous
-    * Columns with `'_'` at the beginning are ignored - can be used for meta data or to define table size in case real first data field may contain empty values (See example).
-4. The script reads the current directory and finds all Excel files. 
-5. It identifies if any of those are opened currently (though might not work correctly if you run several Excel instances)
-6. Then it gives you the choice to process opened files only or all of them. 
-7. Each file is processed according to points 1-3 and each sheet is saved as `.txt` file (in UTF16 encoding) to `uncompressed/EXCELFILENAME/` directory, where `EXCELFILENAME` is the name of the Excel file.
-8. After everything is finished the "uncompressed" directory is compressed to a zip file and placed to the same directory where script is.
+    * Columns after the first empty columns are ignored
+    * Rows after the first empty row are ignored
+    * Columns with `'_'` at the beginning are ignored - can be used for meta data (See example).
+4. The program reads the current directory and finds all Excel files. 
+5. Each file is processed and converted into tab-delimited `.txt` file (in UTF-8 encoding). The resulting path inside ZIP file is `<EXCEL_FILENAME>/<sheet_name>.txt`. Excel file name is uppercased.
 
-## Command line parameters ##
-
-The script also supports command line parameters and can be executed with `cscript.exe` (preferable - then execution log is output to console). We use `.bat` files like this for example: 
-
-```
-@cscript excel2txt.vbs -o -z c:\sap\mockup.zip
-@pause
-```
-
-Command line parameters:
-
-- `-h`  - help screen
-- `-o`  - silently process just opened files
-- `-a`  - silently process all files
-- `-z`  - use this path to zip file instead of default one
-- `-i`  - copy (include) following path into uncompressed directory and consequently to zip
-- `-nz` - skip archiving, just generate text files to 'uncompressed' dir
-- `-bd` - change build directory - where uncompressed folder is created
-- `-color` - output in color (requires [ANSICON](https://github.com/adoxa/ansicon))  
-
-## Known issues ##
-
-- on slower machines archiving does not succeed sometimes. Zip file is created but with empty or partial content. This happens because archiving is implemented via `Shell.Application.CopyHere` call which is asyncronous - the script cannot see when it finishes. Try to increase `gcZipWaitTime` constant at the beginning of the script or use `-nz` to skip achiving and zip data manually.
+For more details see documentation of the chosen tool.

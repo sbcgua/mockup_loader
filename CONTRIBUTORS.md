@@ -2,15 +2,15 @@
 
 * **Alexander Tsybulsky**
   * Concept and design
-  * Code review and fine tuning
+  * Main developer
 
 * **Svetlana Shlapak**
-  * Main developer
+  * Developer
   
 * **Bohdan Petruschak**
-  * Testing and Intensive using
-  * Improvement ideas
-  * VBS script to save Excel's to txt files
+  * Testing and improvement ideas to the original code version
+
+See also repository contributors
 
 **WANT TO CONTRIBUTE?**
 

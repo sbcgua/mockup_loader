@@ -8,6 +8,23 @@ Legend
 + : added
 - : removed
 
+v2.0.0, 2018-08-??
+------------------
++ support LF line break
++ UX: ZMOCKUP_LOADER_SWSRC can upload files with a button, but requires installed abap_w3mi_poller (https://github.com/sbcgua/abap_w3mi_poller.git)
+! mockup_loader split into several classes: ZCL_MOCKUP_LOADER itself, ZCL_MOCKUP_LOADER_STORE - store functionality, ZCL_MOCKUP_LOADER_UTILS - filtering utils
+! parsing logic is separated into independent package - abap_data_parser - which is now a prerequisite. Sorry for that. This is for good :)
+! exception is now also global - ZCX_MOCKUP_LOADER_ERROR
+! ZCL_MOCKUP_LOADER is not singleton anymore and now instantiated with CREATE method - no need as the store functionality moved (ZCL_MOCKUP_LOADER_STORE remains singleton)
+! VBA script removed. Instead meet mockup compiler ! Either in native ABAP implementation (https://github.com/sbcgua/mockup_compiler) or in JS (https://github.com/sbcgua/mockup-compiler-js). The ABAP implementation requires abap2xlsx package installed (https://github.com/ivanfemia/abap2xlsx)
+
+?? TODO meet new feature ...
+
+v1.1.0, 2018-08-12
+------------------
++ support double quotes
++ better date parsing, see I_DATE_FORMAT in reference
+
 v1.0.0, 2017-04-08
 ------------------
 This is more a technical release. It uses stable code of v0.2.1 but the whole repo is migrated from SAPLink to abapGit which is more convenient and modern exchange solution.

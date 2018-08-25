@@ -12,12 +12,13 @@
     <item>/package.json</item>
     <item>/example/*</item>
     <item>/test/*</item>
-    <item>/vbscript/*</item>
     <item>/CONTRIBUTORS.md</item>
     <item>/EXCEL2TXT.md</item>
     <item>/REFERENCE.md</item>
     <item>/changelog.txt</item>
     <item>/illustration.png</item>
+    <item>/switch.png</item>
+    <item>/compiler.png</item>
    </IGNORE>
   </DATA>
  </asx:values>

@@ -1,27 +1,33 @@
-# Mockup Loader for ABAP unit testing #
+# Mockup Loader for ABAP unit testing
 
-*Version: 1.0.0*    
+*Version: 2.0.0-beta*    
 *[History of changes](/changelog.txt)*    
-*See also project [Wiki](../../wiki)*
 
-## Contents ##
+## Major changes in version 2
+
+- `zcl_mockup_loader` split into several classes to separate loading, store and utils
+- parsing logic is separated into [abap_data_parse](https://github.com/sbcgua/abap_data_parser) which is now a prerequisite. Sorry for this. We believe this is for good.
+- `zcl_mockup_loader` is not a singleton anymore. Must be instantiated with `create` method. `zcl_mockup_loader_store` remained the singleton.
+- VBA zip compiler depreciated, see below 'Conversion to Excel' section
+- TODO new upcoming feature ... ;)
+
+## Contents
 
 <!-- start toc -->
 
 - [Synopsis](#synopsis)
 - [Installation](#installation)
+- [Load source redirection](#load-source-redirection)
+- [Conversion from Excel](#conversion-from-excel)
 - [Reference](#reference)
-- [Examples and HOWTOs](#examples-and-howtos)
-- [Other features](#other-features)
-- [Excel to TXT conversion script](#excel-to-txt-conversion-script)
+- [Examples](#examples)
 - [Contributors](#contributors)
 - [Publications](#publications)
-- [Plans](#plans)
 - [License](#license)
 
 <!-- end toc -->
 
-## Synopsis ##
+## Synopsis
 
 The tool is created to simplify data preparation/loading for SAP ABAP unit tests. In one of our projects we had to prepare much tables data for unit tests. For example, a set of content from `BKPF`, `BSEG`, `BSET` tables (FI document). The output of the methods under test is also often a table or a complex structure. 
 
@@ -46,13 +52,12 @@ call method o_ml->load_data " Load test data (table) from mockup
 
 ...
 
-call method o_test_object->some_processing " Call to the code being tested
+" Call to the code being tested
+call method o_test_object->some_processing
   exporting i_bkpf   = ls_bkpf
-            it_bseg  = lt_bseg
-  importing e_result = l_result. 
+            it_bseg  = lt_bseg.
 
 assert_equals(...).
-
 ```
 
 The first part of the code takes TAB delimited text file `bkpf.txt` in TEST1 directory of ZIP file uploaded as binary object via SMW0 transaction...
@@ -67,13 +72,15 @@ BUKRS BELNR GJAHR BUZEI BSCHL KOART ...
 
 ### Store/Retrieve ###
 
-Later another objective was identified: some code is quite difficult to test when it has a *select* in the middle. Of course, good code design would assume isolation of DB operations from business logic code, but it is not always possible. So we needed to create a way to substitute *selects* in code to a simple call, which would take the prepared test data instead if test environment was identified. We came up with the solution we called "Store". 
+**Disclaimer**: *Some people reckon that this is a 'code smell' to add test-related code to the production code. I sincerely agree in general. If you designed your code from the beginning so that it uses accessor interfaces or something similar - smart you are ! :) Still 'store' functionality can be useful for some older code to be tested without much refactoring.*
+
+Later another objective was identified: some code is quite difficult to test when it has a *db select* in the middle. Of course, good code design would assume isolation of DB operations from business logic code, but it is not always possible (or was not done in proper time). So we needed to create a way to substitute *selects* in code to a simple call, which would take the prepared test data instead if test environment was identified. We came up with the solution we called `store`. 
    
 
 ```abap
-" Test class (o_ml is mockup_loader instance)
+" Test class (o_mls is mockup_loader_STORE instance)
 ...
-call method o_ml->store " Store some data with 'BKPF' label
+call method o_mls->store " Store some data with 'BKPF' label
   exporting i_name = 'BKPF'
             i_data = ls_bkpf. " One line structure
 ...
@@ -84,7 +91,7 @@ if some_test_env_indicator = abap_false. " Production environment
   " Do DB selects here 
 
 else.                                    " Test environment
-  call method zcl_mockup_loader=>retrieve
+  call method zcl_mockup_loader_store=>retrieve
     exporting i_name  = 'BKPF'
     importing e_data  = ls_fi_doc_header
     exceptions others = 4.
@@ -101,7 +108,7 @@ In case of multiple test cases it can also be convenient to load a number of tab
 ``` abap
 " Test class
 ...
-call method o_ml->store " Store some data with 'BKPF' label
+call method o_mls->store " Store some data with 'BKPF' label
   exporting i_name   = 'BKPF'
             i_tabkey = 'BELNR'  " Key field for the stored table
             i_data   = lt_bkpf. " Table with MANY different documents
@@ -113,7 +120,7 @@ if some_test_env_indicator = abap_false. " Production environment
   " Do DB selects here 
 
 else.                                    " Test environment
-  call method zcl_mockup_loader=>retrieve
+  call method zcl_mockup_loader_store=>retrieve
     exporting i_name  = 'BKPF'
               i_sift  = l_document_number " Filter key from real local variable
     importing e_data  = ls_fi_doc_header  " Still a flat structure here
@@ -126,92 +133,62 @@ endif.
 
 ```  
 
-As the final result we can perform completely dynamic unit tests in our projects, covering most of code, including *DB select* related code **without** actually accessing the database. Of course, it is not only the mockup loader which ensures that. This requires accurate design of the project code, separating DB selection and processing code. But the mockup loader and "store" functionality makes it more convenient.  
+As the final result we can perform completely dynamic unit tests, covering most of code, including *DB select* related code **without** actually accessing the database. Of course, it is not only the mockup loader which ensures that. This requires accurate design of the project code, separating DB selection and processing code. But the mockup loader and "store" functionality makes it more convenient.  
 
-![](illustration.png)   
+![data flow](illustration.png)
 
-### Design approach ###
+Some design facts about `store`:
 
-Here are some facts about package content and invocation approach:
+- The store class `ZCL_MOCKUP_LOADER_STORE` is designed as a singleton class. So it is initiated once in a test class and the exists in one instance only.
+- `RETRIEVE` method, which takes data from the "Store" is **static**. It is assumed to be called from "production" code instead of *DB selects*. It acquires the instance inside and throws **non-class** based exception on error. This is made to avoid the necessity to handle test-related exceptions, irrelevant to the main code, and also to be able to catch the exception as `SY-SUBRC` value. `SY-SUBRC` can be checked later as if it would be the result of a regular DB select. So the interference with the main code is minimal. 
 
-- The main class is called `ZCL_MOCKUP_LOADER`. It is designed as a singleton class assuming it loads ZIPped content once when the test class initialized. Consequently, the "Store" exists in one  instance as well.
-- Most methods of the class may throw local exception based on cx_static_check, which in particular specifies some error details available via `get_text()` call (also an error code, which is more for own unit testing purpose). Those methods are assumed to be executed from unit test classes, so there should be no problem to handle exceptions properly there. 
-- `RETRIEVE()` method, however, which takes data from the "Store" is **static**. It is assumed to be called from "production" code instead of *DB selects*. It does all singleton magic inside, and throws **non-class** based exception. This is made to avoid the necessity to handle exceptions, irrelevant to the main code, and also to be able to catch the exception as `SY-SUBRC` value. `SY-SUBRC` can be checked later as if it would be the result of a regular DB select. So the interference with the main code is minimal. 
-- Zipped text files must be in **Unicode** encoding (UTF16).
+## Installation
 
+The most convenient way to install the package is to use [abapGit](https://github.com/larshp/abapGit) - it is easily installed itself and then a couple of click to clone the repo into the system. There is also an option for offline installation - download the repo as zip file and import it with abapGit. Unit test execution is always recommended after-installation.
 
-## Installation ##
+Dependencies (to install before mockup loader):
+- [abap_data_parse](https://github.com/sbcgua/abap_data_parser) - tab-delimited text parser (was a part of *mockup loader* but now a separate reusable tool)
+- [abap_w3mi_poller](https://github.com/sbcgua/abap_w3mi_poller) - *optional* - enables 'Upload to MIME' button in `ZMOCKUP_LOADER_SWSRC`. The mockup loader **can**  be compiled without this package (the call is dynamic).
 
-### abapGit ###
+## Load source redirection
 
-The most convenient way to install the package is to use [abapGit](https://github.com/larshp/abapGit) - it is easily installed itself and then a couple of click to clone the repo into the system. There is also an option for offline installation - download the repo as zip file and import it with abapGit.  
-Unit test execution is a recommended after-step (see manual step 3.3).
+Zipped mockups slug is supposed to be uploaded as MIME object via SMW0. However, during data or test creation, it is more convenient (faster) to read local file. Also not to upload 'draft' test data to the system.
 
-### Manual installation ###
+You pass `i_type` and `i_path` parameters to the `create` method to define the 'normal' mockup source. To temporarily switch to another source you can use the transaction `ZMOCKUP_LOADER_SWSRC`. It will initialize SET/GET parameters  `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH(MIME)` which will **override** defaults for the current session only.
 
-1. Create a package with SE21/SE80 (`ZMOCKUP_LOADER` would be a good name :)
-2. Create the class with SE24 - `ZCL_MOCKUP_LOADER`. 
-	1. Switch to "Source code based" mode and copy `/src/zcl_mockup_loader.clas.abap` content there. 
-	2. Add code from `/src/zcl_mockup_loader.clas.locals_imp.abap` to local definitions and implementations (`Goto` menu) 
-	3. Activate.
-3. Optionally upload unit tests. 
-    1. Create a **test class** for the `ZCL_MOCKUP_LOADER`. Copy the content of `/src/zcl_mockup_loader.clas.testclasses.abap` there and activate.
-    2. Create a binary data object via SMW0 transaction in the package `ZMOCKUP_LOADER`. Call it `ZMOCKUP_LOADER_UNIT_TEST` and upload the `/src/zmockup_loader_unit_test.w3mi.data.zip`. 
-        * This potentially may require setting up MIME type in Settings->Maintain MIME types menu (the setting is quite obvious, e.g. just specify TYPE=ZIP, EXTENTION=\*.zip).
-    3. Run the unit test for the `ZCL_MOCKUP_LOADER` class (Menu->Class->Run->Unit tests or Ctrl+Shift+F10). Should pass ;)
-4. Create SET/GET parameters `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH` with SM30 and maintenance view `TPARA`.
-5. Create the program ZMOCKUP_LOADER_SWITCH_SOURCE 
-    1. ... Copy the content of `/src/zmockup_loader_switch_source.prog.abap` and activate.
-    2. Create transaction `ZMOCKUP_LOADER_SWSRC` with SE93 and set it to run the program. 
+![switch source](switch.png)
 
-### SAPLink ###
+N.B. Type change in the selection screen immediately changes the parameters in session memory, no run is required. `Get SU3` reads param values from user master (useful when you work on the same project for some time). `Upload to MIME` uploads the file to MIME storage (requires [abap_w3mi_poller](https://github.com/sbcgua/abap_w3mi_poller) to be installed).
 
-SAPLink support has been abandoned since v1.0.0. The last version supporting it was [v0.2.1](https://github.com/sbcgua/mockup_loader/releases/tag/v0.2.1) - this is a stable version so can be used if you prefer SAPLink installation.
+## Conversion from Excel
 
-## Reference ##
+You may have a lot of data prepared in Excel files. Many files, many sheets in each. Although Ctrl+C in Excel actually copies TAB-delimited text, which greatly simplifies the matter for minor cases, it is boring and time consuming to copy all the test cases to text. Here are special tools to simplify this workflow. Briefly: they take directory of excel files with mockup data and convert them into format compatible with mockup loader.
 
-Complete reference of class method can be found in [REFERENCE.md](REFERENCE.md). 
+- [mockup compiler](https://github.com/sbcgua/mockup_compiler) - ABAP implementation, requires [abap2xlsx](https://github.com/ivanfemia/abap2xlsx) installed.
+- [mockup compiler JS](https://github.com/sbcgua/mockup-compiler-js) - java script implemenation, requires nodejs environment at the developer's machine.
 
-## Examples and HOWTOs ##
+See [EXCEL2TXT.md](EXCEL2TXT.md) for more info.
 
-Have a look at the Howto section in the project [Wiki](../../wiki).
+![compile zip slug](compiler.png)
 
-A complete example can be found in [/src/zmockup_loader_example.prog.abap](/src/zmockup_loader_example.prog.abap).
+## Reference
 
-## Other features ##
+Complete reference of classes and methods can be found in [REFERENCE.md](REFERENCE.md). 
 
-### Load source redirection ###
+## Examples
 
-Final test mockup is supposed to be uploaded as MIME object via SMW0. During data or test creation, however, it is more convenient (faster) to read local file. 
+- Have a look at the howto section in the project [Wiki](../../wiki).
+- A simple example can be found in [/src/zmockup_loader_example.prog.abap](/src/zmockup_loader_example.prog.abap).
 
-Supposedly, you call static `CLASS_SET_SOURCE` method in `CLASS_SETUP` **of testing class** to define the 'normal' type/path to mockup archive. To temporarily switch to another source you can call transaction `ZMOCKUP_LOADER_SWSRC` (or program `ZMOCKUP_LOADER_SWITCH_SOURCE`). It will initialize SET/GET parameters  `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH` which will overload defaults for current session. User changes in the selection screen immediately change the parameters in session memory, no run is required.
+## Contributors
 
-## Excel to TXT conversion script ##
+Major contributors are described in [CONTRIBUTORS.md](/CONTRIBUTORS.md). You are welcomed to suggest ideas and code improvements ! :)
 
-We have a lot of data prepared in Excel files. Many files, many sheets in each. It is boring and time consuming to copy them all to text (although Ctrl+C in Excel actually copies TAB delimited text which greatly simplifies the matter for small cases).
-
-So we created a VB script which does this work automatically. Please read [EXCEL2TXT.md](EXCEL2TXT.md) for more info.
-
-## Contributors ##
-
-Contributors are described in [CONTRIBUTORS.md](/CONTRIBUTORS.md). You are welcomed to suggest ideas and code improvements ! :)
-
-Main development team members are:
-
-- Alexander Tsybulsky
-- Svetlana Shlapak
-- Bohdan Petrushchak
-
-## Publications ##
+## Publications
 
 - [Unit testing mockup loader for ABAP @SCN](http://scn.sap.com/community/abap/blog/2015/11/12/unit-testing-mockup-loader-for-abap)
 - [How to do convenient multicase unit tests with zmockup_loader @SCN](http://scn.sap.com/community/abap/blog/2016/03/20/how-to-do-convenient-multicase-test-with-zmockuploader)
 
-## Plans ##
-
-- Text parser is useful itself for other tasks - maybe worth splitting the class into 2 tools
-- Maybe implement direct editing of the text data in SAP. In ALV or, better, with inline Excel. To have a consistent solution and avoid external VBS script  
-
-## License ##
+## License
 
 The code is licensed under MIT License. Please see [LICENSE](/LICENSE) for details.
