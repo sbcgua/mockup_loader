@@ -133,6 +133,10 @@ class lcl_test_mockup_loader definition for testing
         e_dummy_tab    type tt_dummy
         e_dummy_string type string.
 
+    methods create_default
+      returning value(ro) type ref to zcl_mockup_loader
+      raising zcx_mockup_loader_error.
+
 endclass.       "lcl_test_mockup_loader
 
 * Friends
@@ -149,22 +153,28 @@ class lcl_test_mockup_loader implementation.
 **********************************************************************
   method class_setup.
     data l_type_tmp type char4.
-
     get parameter id 'ZMOCKUP_LOADER_STYPE' field l_type_tmp.
     if l_type_tmp is not initial.
-      cl_abap_unit_assert=>fail( quit = 2 "cancel-class
-            msg  = 'Load source is redirected, please reset with ZMOCKUP_LOADER_SWITCH_SOURCE before running the test' ). "#EC NOTEXT
+      cl_abap_unit_assert=>fail(
+        quit = 2 "cancel-class
+        msg  = 'Load source is redirected, please reset with ZMOCKUP_LOADER_SWITCH_SOURCE before running the test' ). "#EC NOTEXT
     endif.
-
-    zcl_mockup_loader=>class_set_source( i_type = 'MIME' i_path = 'ZMOCKUP_LOADER_UNIT_TEST' ).
-    zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4110' ). " fmt = default, enc = utf-8
   endmethod.       "class_setup
+
+  method create_default.
+    ro = zcl_mockup_loader=>create(
+      i_type       = 'MIME'
+      i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
+      i_amt_format = ''     " default
+      i_encoding   = '4110' " utf8
+     ).
+  endmethod.  " create_default.
 
   method setup.
     data lo_ex type ref to zcx_mockup_loader_error.
 
     try.
-      o = zcl_mockup_loader=>get_instance( ).
+      o = create_default( ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
@@ -310,23 +320,23 @@ class lcl_test_mockup_loader implementation.
           l_path     type char40,
           l_path_tmp type char40.
 
+    " "DANGEROUS" TEST AS MODIFIES SET/GET PARAMS
     get parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_tmp. " Preserve
 
     l_type = 'FILE'.
     l_path = 'ZMOCKUP_LOADER_WRONG_OBJECT'.
     set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
     set parameter id 'ZMOCKUP_LOADER_SPATH' field l_path.
-    o->free_instance( ).
 
     try.
-      o = zcl_mockup_loader=>get_instance( ).
+      o = create_default( ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
 
+    " Fallback before assert
     clear l_type.
     set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
     set parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_tmp.
-    o->free_instance( ).
 
     assert_excode 'RE'.
 
@@ -337,17 +347,15 @@ class lcl_test_mockup_loader implementation.
     l_path = 'ZMOCKUP_LOADER_WRONG_OBJECT'.
     set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
     set parameter id 'ZMOCKUP_LOADER_SMIME' field l_path.
-    o->free_instance( ).
 
     try.
-      o = zcl_mockup_loader=>get_instance( ).
+      o = create_default( ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
 
     clear l_type.
     set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
     set parameter id 'ZMOCKUP_LOADER_SMIME' field l_path_tmp.
-    o->free_instance( ).
 
     assert_excode 'RE'.
 
@@ -365,13 +373,13 @@ class lcl_test_mockup_loader implementation.
     get_dummy_data( importing e_dummy_tab   = dummy_tab_exp ).
 
     try.
-      zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4103' ). " UTF16
+      o->set_params( i_amt_format = '' i_encoding = '4103' ). " UTF16
       o->load_data(
         exporting i_obj       = 'testdir/testfile_complete_utf16'
         importing e_container = dummy_tab_act ).
-      zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4110' ). " Back to SETUP defaults
+*      o->class_set_params( i_amt_format = '' i_encoding = '4110' ). " Back to SETUP defaults
     catch zcx_mockup_loader_error into lo_ex.
-      zcl_mockup_loader=>class_set_params( i_amt_format = '' i_encoding = '4110' ). " Back to SETUP defaults
+*      o->class_set_params( i_amt_format = '' i_encoding = '4110' ). " Back to SETUP defaults
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 

@@ -39,23 +39,6 @@ class ZCL_MOCKUP_LOADER definition
 
 public section.
 
-  class-methods CLASS_CONSTRUCTOR .
-  class-methods CLASS_SET_SOURCE
-    importing
-      !I_PATH type STRING
-      !I_TYPE type CHAR4 .
-  type-pools ABAP .
-  class-methods CLASS_SET_PARAMS
-    importing
-      !I_AMT_FORMAT type CHAR2 optional
-      !I_ENCODING type ABAP_ENCODING optional
-      !I_DATE_FORMAT type CHAR4 optional .
-  class-methods GET_INSTANCE
-    returning
-      value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
-    raising
-      ZCX_MOCKUP_LOADER_ERROR .
-  class-methods FREE_INSTANCE .
   methods LOAD_RAW
     importing
       !I_OBJ type STRING
@@ -64,6 +47,7 @@ public section.
       !E_CONTENT type XSTRING
     raising
       ZCX_MOCKUP_LOADER_ERROR .
+  type-pools ABAP .
   methods LOAD_AND_STORE
     importing
       !I_OBJ type STRING
@@ -82,18 +66,34 @@ public section.
       !E_CONTAINER type ANY
     raising
       ZCX_MOCKUP_LOADER_ERROR .
+  class-methods CREATE
+    importing
+      !I_PATH type STRING
+      !I_TYPE type CHAR4
+      !I_AMT_FORMAT type CHAR2 optional
+      !I_ENCODING type ABAP_ENCODING optional
+      !I_DATE_FORMAT type CHAR4 optional
+    returning
+      value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
+    raising
+      ZCX_MOCKUP_LOADER_ERROR .
+  methods SET_PARAMS
+    importing
+      !I_AMT_FORMAT type CHAR2 optional
+      !I_ENCODING type ABAP_ENCODING optional
+      !I_DATE_FORMAT type CHAR4 optional .
 protected section.
 private section.
 
-  class-data GO_INSTANCE type ref to ZCL_MOCKUP_LOADER .
   data O_ZIP type ref to CL_ABAP_ZIP .
-  class-data G_MOCKUP_SRC_PATH type STRING .
-  class-data G_MOCKUP_SRC_TYPE type CHAR4 .
-  class-data G_AMT_FORMAT type CHAR2 .
-  class-data G_ENCODING type ABAP_ENCODING .
-  class-data G_DATE_FORMAT type CHAR4 .
+  data MV_AMT_FORMAT type CHAR2 .
+  data MV_ENCODING type ABAP_ENCODING .
+  data MV_DATE_FORMAT type CHAR4 .
 
   methods INITIALIZE
+    importing
+      !I_PATH type STRING
+      !I_TYPE type CHAR4
     raising
       ZCX_MOCKUP_LOADER_ERROR .
   methods PARSE_DATA
@@ -119,71 +119,14 @@ ENDCLASS.
 CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
 
-method class_constructor.
-  class_set_source( i_type = 'MIME' i_path = '' ). " Defaults
-  class_set_params( i_amt_format = '' i_encoding = '4103' ). " Defaults, UTF16
-endmethod.
+method CREATE.
 
+  create object ro_instance.
 
-method CLASS_SET_PARAMS.
-  if i_amt_format is initial or g_amt_format+1(1) is initial. " Empty param or decimal separator
-    g_amt_format = ' ,'. " Defaults
-  else.
-    g_amt_format = i_amt_format.
-  endif.
-
-  if i_encoding is initial.
-    g_encoding = '4103'. " UTF16
-  else.
-    g_encoding = i_encoding.
-  endif.
-
-  if i_date_format is initial
-    or not i_date_format+3(1) co ' ./-'
-    or not ( i_date_format+0(3) = 'DMY'
-      or i_date_format+0(3)     = 'MDY'
-      or i_date_format+0(3)     = 'YMD' ).
-    g_date_format = 'DMY.'.
-  else.
-    g_date_format = i_date_format.
-  endif.
-
-endmethod.
-
-
-method class_set_source.
-  if i_type = 'MIME' or i_type = 'FILE'. "TODO some more sophisticated error handling
-    g_mockup_src_type = i_type.
-    g_mockup_src_path = i_path.
-  endif.
-endmethod.
-
-
-method free_instance.
-  if go_instance is not initial.
-    free go_instance.
-  endif.
-endmethod.
-
-
-method get_instance.
-
-  if go_instance is initial.
-    create object go_instance.
-    go_instance->initialize( ).
-  endif.
-
-  ro_instance = go_instance.
-
-endmethod.
-
-
-method INITIALIZE.
-  data: l_key       type wwwdatatab,
-        l_xstring   type xstring,
-        l_size      type int4,
-        lt_w3mime   type table of w3mime,
-        ls_w3mime   type w3mime.
+  ro_instance->set_params(
+    i_amt_format  = i_amt_format
+    i_encoding    = i_encoding
+    i_date_format = i_date_format ).
 
   data:
         l_src_type  type char4,
@@ -191,8 +134,8 @@ method INITIALIZE.
         l_type_tmp  type char4,
         l_path_tmp  type char128.
 
-  l_src_type = g_mockup_src_type.
-  l_src_path = g_mockup_src_path.
+  l_src_type = i_type.
+  l_src_path = i_path.
 
   " Get re-direction settings from session memory
   get parameter id 'ZMOCKUP_LOADER_STYPE' field l_type_tmp.
@@ -208,11 +151,25 @@ method INITIALIZE.
     endif.
   endif.
 
+  ro_instance->initialize(
+    i_type = l_src_type
+    i_path = l_src_path ).
+
+endmethod.
+
+
+method INITIALIZE.
+  data: l_key       type wwwdatatab,
+        l_xstring   type xstring,
+        l_size      type int4,
+        lt_w3mime   type table of w3mime,
+        ls_w3mime   type w3mime.
+
   " Load data
-  case l_src_type.
+  case i_type.
   when 'MIME'. " Load from SMW0
     l_key-relid = 'MI'.
-    l_key-objid = l_src_path.
+    l_key-objid = i_path.
 
     call function 'WWWDATA_IMPORT'
       exporting
@@ -232,7 +189,7 @@ method INITIALIZE.
   when 'FILE'. " Load from frontend
     call function 'GUI_UPLOAD'
     exporting
-      filename   = l_src_path
+      filename   = i_path
       filetype   = 'BIN'
     importing
       filelength = l_size
@@ -242,7 +199,7 @@ method INITIALIZE.
       others = 1.
 
     if sy-subrc is not initial.
-      zcx_mockup_loader_error=>raise( msg = |Cannot upload file: { l_src_path }| code = 'RE' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = |Cannot upload file: { i_path }| code = 'RE' ). "#EC NOTEXT
     endif.
 
   when others.
@@ -399,8 +356,8 @@ method parse_data.
     data lo_data_parser type ref to zcl_data_parser.
     lo_data_parser = zcl_data_parser=>create(
       i_pattern       = e_container
-      i_amount_format = g_amt_format
-      i_date_format   = g_date_format ).
+      i_amount_format = mv_amt_format
+      i_date_format   = mv_date_format ).
 
     lo_data_parser->parse(
       exporting
@@ -449,7 +406,7 @@ method read_zip.
   endif.
 
   " Remove unicide signatures
-  case g_encoding.
+  case mv_encoding.
     when '4110'. " UTF-8
       shift l_xstring left deleting leading  cl_abap_char_utilities=>byte_order_mark_utf8 in byte mode.
     when '4103'. " UTF-16LE
@@ -457,11 +414,38 @@ method read_zip.
   endcase.
 
   try.
-    lo_conv = cl_abap_conv_in_ce=>create( encoding = g_encoding ).
+    lo_conv = cl_abap_conv_in_ce=>create( encoding = mv_encoding ).
     lo_conv->convert( exporting input = l_xstring importing data = e_rawdata ).
   catch cx_root into l_ex.
     zcx_mockup_loader_error=>raise( msg = 'Codepage conversion error' code = 'CP' ). "#EC NOTEXT
   endtry.
+
+endmethod.
+
+
+method SET_PARAMS.
+
+  if i_amt_format is initial or i_amt_format+1(1) is initial. " Empty param or decimal separator
+    me->mv_amt_format = ' ,'. " Defaults
+  else.
+    me->mv_amt_format = i_amt_format.
+  endif.
+
+  if i_encoding is initial.
+    me->mv_encoding = '4103'. " UTF16
+  else.
+    me->mv_encoding = i_encoding.
+  endif.
+
+  if i_date_format is initial
+    or not i_date_format+3(1) co ' ./-'
+    or not ( i_date_format+0(3) = 'DMY'
+      or i_date_format+0(3)     = 'MDY'
+      or i_date_format+0(3)     = 'YMD' ).
+    me->mv_date_format = 'DMY.'. " DD.MM.YYYY
+  else.
+    me->mv_date_format = i_date_format.
+  endif.
 
 endmethod.
 ENDCLASS.
