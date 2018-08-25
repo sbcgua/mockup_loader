@@ -139,20 +139,12 @@ class lcl_test definition for testing duration short
     data o    type ref to lcl_main_logic.    " Class being tested
     data o_ml type ref to zcl_mockup_loader. " Mockup loader
 
-    class-methods: class_setup.
     methods: setup.
     methods: get_price for testing.
 
 endclass.   "lcl_test
 
 class lcl_test implementation.
-  method class_setup.
-*    " Set mockup source -> workstation file
-*    zcl_mockup_loader=>class_set_source( i_type = 'FILE' i_path = 'c:\sap\example.zip' ).
-    zcl_mockup_loader=>class_set_source( i_type = 'MIME' i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
-    zcl_mockup_loader=>class_set_params( i_amt_format = ' ,' ).
-  endmethod.
-
   method setup. " Initialize instances
     data lo_context type ref to lcl_context.
     data lo_ex      type ref to cx_static_check.
@@ -163,7 +155,10 @@ class lcl_test implementation.
     create object o.
 
     try.
-      o_ml = zcl_mockup_loader=>get_instance( ).
+      o_ml = zcl_mockup_loader=>create(
+        i_type       = 'MIME'
+        i_path       = 'ZMOCKUP_LOADER_EXAMPLE'
+        i_amt_format = ' ,' ).
     catch cx_static_check into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
