@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_W3MI" serializer_version="v2.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <NAME>ZMOCKUP_LOADER_EXAMPLE</NAME>
+   <TEXT>Mockup slug for ZMOCKUP_LOADER_EXAMPLE prog</TEXT>
+   <PARAMS>
+    <WWWPARAMS>
+     <RELID>MI</RELID>
+     <OBJID>ZMOCKUP_LOADER_EXAMPLE</OBJID>
+     <NAME>fileextension</NAME>
+     <VALUE>.zip</VALUE>
+    </WWWPARAMS>
+    <WWWPARAMS>
+     <RELID>MI</RELID>
+     <OBJID>ZMOCKUP_LOADER_EXAMPLE</OBJID>
+     <NAME>filename</NAME>
+     <VALUE>example.zip</VALUE>
+    </WWWPARAMS>
+    <WWWPARAMS>
+     <RELID>MI</RELID>
+     <OBJID>ZMOCKUP_LOADER_EXAMPLE</OBJID>
+     <NAME>mimetype</NAME>
+     <VALUE>ZIP</VALUE>
+    </WWWPARAMS>
+   </PARAMS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

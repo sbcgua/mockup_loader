@@ -252,7 +252,7 @@ method FILTER_TABLE.
   dy_table ?= cl_abap_typedescr=>describe_by_data( i_tab ).
   dy_struc ?= dy_table->get_table_line_type( ).
   if dy_struc->absolute_name <> dy_stru2->absolute_name.
-    zcx_mockup_loader_error=>raise( msg = 'Src and dst line types are not similar' code = 'LT' ).
+    zcx_mockup_loader_error=>raise( msg = 'Src and dst line types are not similar' code = 'LT' ). "#EC NOTEXT
   endif.
 
   " create line container

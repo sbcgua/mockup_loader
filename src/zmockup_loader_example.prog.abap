@@ -101,8 +101,13 @@ class lcl_main_logic implementation.
         and   connid = i_connid
         and   fldate = i_date.
     else.                                  " Test env
-      zcl_mockup_loader=>retrieve( exporting i_name = 'SFLIGHT'  i_sift = i_connid
-                                   importing e_data = ls_flight  exceptions others = 4 ).
+      zcl_mockup_loader_store=>retrieve(
+        exporting
+          i_name = 'SFLIGHT'
+          i_sift = i_connid
+        importing
+          e_data = ls_flight
+        exceptions others = 4 ).
     endif.
 
     if sy-subrc is not initial. " Selection error ?
@@ -118,7 +123,7 @@ endclass.  " lcl_main_logic
 * TEST CLASS
 **********************************************************************
 class lcl_test definition for testing duration short
-  inheriting from cl_aunit_assert  risk level harmless.
+  risk level harmless.
 
   public section.
     types:
@@ -141,8 +146,10 @@ class lcl_test definition for testing duration short
 endclass.   "lcl_test
 
 class lcl_test implementation.
-  method class_setup. " Set mockup source -> workstation file
-    zcl_mockup_loader=>class_set_source( i_type = 'FILE' i_path = 'c:\sap\example.zip' ).
+  method class_setup.
+*    " Set mockup source -> workstation file
+*    zcl_mockup_loader=>class_set_source( i_type = 'FILE' i_path = 'c:\sap\example.zip' ).
+    zcl_mockup_loader=>class_set_source( i_type = 'MIME' i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
     zcl_mockup_loader=>class_set_params( i_amt_format = ' ,' ).
   endmethod.
 
@@ -158,7 +165,7 @@ class lcl_test implementation.
     try.
       o_ml = zcl_mockup_loader=>get_instance( ).
     catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
   endmethod.
@@ -171,35 +178,46 @@ class lcl_test implementation.
 
     try.
       " Load test cases index for local usage
-      o_ml->load_data( exporting i_obj       = 'EXAMPLE/testcases'
-                       importing e_container = lt_testcases ).
+      o_ml->load_data(
+        exporting i_obj       = 'EXAMPLE/testcases'
+        importing e_container = lt_testcases ).
 
       " Load and store flights table
-      o_ml->load_and_store( i_obj    = 'EXAMPLE/sflight'
-                            i_name   = 'SFLIGHT'
-                            i_strict = abap_false
-                            i_tabkey = 'CONNID'
-                            i_type   = 'FLIGHTTAB' ).
+      o_ml->load_and_store(
+        i_obj    = 'EXAMPLE/sflight'
+        i_name   = 'SFLIGHT'
+        i_strict = abap_false
+        i_tabkey = 'CONNID'
+        i_type   = 'FLIGHTTAB' ).
 
     catch cx_static_check into lo_ex.
-      fail( lo_ex->get_text( ) ).
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
     loop at lt_testcases into ls_case. " Loop through test catalog and run tests
-      o->get_price( exporting i_connid = ls_case-connid
-                              i_date   = '20150101'
-                    receiving r_price  = l_result
-                    exceptions others = 4 ).
+      o->get_price(
+        exporting
+          i_connid = ls_case-connid
+          i_date   = '20150101'
+        receiving
+          r_price  = l_result
+        exceptions others = 4 ).
 
       if ls_case-type = '+'. " Positive test
-        assert_subrc(  act = sy-subrc  exp = 0
-                       msg = |[{ ls_case-testid }] { ls_case-msg }| ).
-        assert_equals( act = l_result  exp = ls_case-result
-                       msg = |[{ ls_case-testid }] { ls_case-msg }| ).
+        cl_abap_unit_assert=>assert_subrc(
+          act = sy-subrc
+          exp = 0
+          msg = |[{ ls_case-testid }] { ls_case-msg }| ).
+        cl_abap_unit_assert=>assert_equals(
+          act = l_result
+          exp = ls_case-result
+          msg = |[{ ls_case-testid }] { ls_case-msg }| ).
 
       else. "'-'             " Negative test
-        assert_subrc(  act = sy-subrc  exp = 4
-                       msg = |[{ ls_case-testid }] { ls_case-msg }| ).
+        cl_abap_unit_assert=>assert_subrc(
+          act = sy-subrc
+          exp = 4
+          msg = |[{ ls_case-testid }] { ls_case-msg }| ).
       endif.
 
     endloop.

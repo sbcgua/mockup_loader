@@ -277,13 +277,13 @@ endform.                    "get_su3_value
 *&---------------------------------------------------------------------*
 form upload_mime.
   if p_file is initial.
-    message 'Upload only work in FILE mode' type 'E' display like 'S'.
+    message 'Upload only work in FILE mode' type 'E' display like 'S'. "#EC NOTEXT
   endif.
   if p_mpath is initial.
-    message 'Please enter MIME name' type 'E' display like 'S'.
+    message 'Please enter MIME name' type 'E' display like 'S'. "#EC NOTEXT
   endif.
   if p_fpath is initial.
-    message 'Please enter file path' type 'E' display like 'S'.
+    message 'Please enter file path' type 'E' display like 'S'. "#EC NOTEXT
   endif.
 
   data:
@@ -293,7 +293,7 @@ form upload_mime.
   try.
     create object lo_obj type ('ZCL_W3MIME_UTILS').
   catch cx_sy_create_error into lx.
-    message 'Install ZW3MIMEPOLL for this feature to work. https://github.com/sbcgua/abap_w3mi_poller' type 'E' display like 'S'.
+    message 'Install ZW3MIMEPOLL for this feature to work. https://github.com/sbcgua/abap_w3mi_poller' type 'E' display like 'S'. "#EC NOTEXT
     return.
   endtry.
 
@@ -308,6 +308,6 @@ form upload_mime.
     return.
   endtry.
 
-  message 'Upload successful' type 'S'.
+  message 'Upload successful' type 'S'. "#EC NOTEXT
 
 endform.                    "upload_mime
