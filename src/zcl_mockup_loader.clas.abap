@@ -53,8 +53,9 @@ public section.
       !I_OBJ type STRING
       !I_STRICT type ABAP_BOOL default ABAP_TRUE
       !I_NAME type CHAR40
-      !I_TYPE type CSEQUENCE
+      !I_TYPE type CSEQUENCE optional
       !I_TABKEY type ABAP_COMPNAME optional
+      !I_TYPE_DESC type ref to CL_ABAP_TYPEDESCR optional
     raising
       ZCX_MOCKUP_LOADER_ERROR .
   methods LOAD_DATA
@@ -247,16 +248,24 @@ method load_and_store.
 
   field-symbols <data> type data.
 
-  " Create container to load zip data to
-  cl_abap_typedescr=>describe_by_name(
-    exporting  p_name      = i_type
-    receiving  p_descr_ref = lo_type
-    exceptions others      = 4 ).
+  if boolc( i_type is supplied ) = boolc( i_type_desc is supplied ).
+    zcx_mockup_loader_error=>raise( msg = 'Supply one of i_type or i_type_desc' code = 'TD' ). "#EC NOTEXT
+  endif.
+
+  if i_type is supplied.
+    cl_abap_typedescr=>describe_by_name(
+      exporting  p_name      = i_type
+      receiving  p_descr_ref = lo_type
+      exceptions others      = 4 ).
+  else.
+    lo_type = i_type_desc.
+  endif.
 
   if sy-subrc is not initial.
     zcx_mockup_loader_error=>raise( msg = |Type { i_type } not found|  code = 'WT' ). "#EC NOTEXT
   endif.
 
+  " Create container to load zip data to
   lo_dtype ?= lo_type.
   create data lr_data type handle lo_dtype.
   assign lr_data->* to <data>.
