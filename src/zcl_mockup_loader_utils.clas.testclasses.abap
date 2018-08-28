@@ -104,6 +104,8 @@ class lcl_test_mockup_utils definition for testing
     methods filter_table_neg for testing.
     methods does_line_fit_filter for testing.
 
+    methods build_filter_with_value for testing.
+
 endclass.       "lcl_test_mockup_loader
 
 **********************************************************************
@@ -171,19 +173,22 @@ class lcl_test_mockup_utils implementation.
           r_other   like line of l_where-tother.
 
     get_dummy_data( importing e_dummy_tab = dummy_tab_src ).
+    append initial line to l_where_err1-tnumber.
+    append initial line to l_where_err2-tnumber.
+    append initial line to dummy_tab_exp.
 
     " Negative tests --------------------------------------------------------------------
 
     " Component is not a range table
     try.
-      l_filter = zcl_mockup_loader_utils=>build_filter( l_where_err1 ).
+      l_filter = zcl_mockup_loader_utils=>build_filter( i_where = l_where_err1 ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'WS'.
 
     " Component is not a table
     try.
-      l_filter = zcl_mockup_loader_utils=>build_filter( l_where_err2 ).
+      l_filter = zcl_mockup_loader_utils=>build_filter( i_where = l_where_err2 ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'WS'.
@@ -192,7 +197,7 @@ class lcl_test_mockup_utils implementation.
     l_tywhere-name = 'TNUMBER'.
     get reference of l_where into l_tywhere-range.
     try.
-      l_filter = zcl_mockup_loader_utils=>build_filter( l_tywhere ).
+      l_filter = zcl_mockup_loader_utils=>build_filter( i_where = l_tywhere ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'CE'.
@@ -201,7 +206,7 @@ class lcl_test_mockup_utils implementation.
     l_tywhere-name = 'TNUMBER'.
     get reference of dummy_tab_exp into l_tywhere-range.
     try.
-      l_filter = zcl_mockup_loader_utils=>build_filter( l_tywhere ).
+      l_filter = zcl_mockup_loader_utils=>build_filter( i_where = l_tywhere ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'RT'.
@@ -211,7 +216,7 @@ class lcl_test_mockup_utils implementation.
     get reference of dummy_tab_exp into l_tywhere-range.
     append l_tywhere to lt_tywhere.
     try.
-      l_filter = zcl_mockup_loader_utils=>build_filter( lt_tywhere ).
+      l_filter = zcl_mockup_loader_utils=>build_filter( i_where = lt_tywhere ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     clear lt_tywhere.
@@ -219,21 +224,21 @@ class lcl_test_mockup_utils implementation.
 
     " Wrong type of table
     try.
-      l_filter = zcl_mockup_loader_utils=>build_filter( dummy_tab_exp ).
+      l_filter = zcl_mockup_loader_utils=>build_filter( i_where = dummy_tab_exp ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'WT'.
 
     " Parameter is an unsupported type
     try.
-      l_filter = zcl_mockup_loader_utils=>build_filter( lo_ex ).
+      l_filter = zcl_mockup_loader_utils=>build_filter( i_where = lo_ex ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'UT'.
 
     " parameter is incorrect string pattern
     try.
-      l_filter = zcl_mockup_loader_utils=>build_filter( 'TNUMBER??' ).
+      l_filter = zcl_mockup_loader_utils=>build_filter( i_where = 'TNUMBER??' ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'SP'.
@@ -248,7 +253,7 @@ class lcl_test_mockup_utils implementation.
     add_range other  'I' 'GE' 'A'.
 
     try.
-      l_filter = zcl_mockup_loader_utils=>build_filter( l_where ).
+      l_filter = zcl_mockup_loader_utils=>build_filter( i_where = l_where ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
@@ -268,7 +273,7 @@ class lcl_test_mockup_utils implementation.
     append l_tywhere to lt_tywhere.
 
     try .
-      l_filter = zcl_mockup_loader_utils=>build_filter( lt_tywhere ).
+      l_filter = zcl_mockup_loader_utils=>build_filter( i_where = lt_tywhere ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
@@ -282,7 +287,7 @@ class lcl_test_mockup_utils implementation.
     delete dummy_tab_exp where tnumber <> '2015'.
 
     try .
-      l_filter = zcl_mockup_loader_utils=>build_filter( 'TNUMBER = 2015' ).
+      l_filter = zcl_mockup_loader_utils=>build_filter( i_where = 'TNUMBER = 2015' ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
@@ -293,7 +298,7 @@ class lcl_test_mockup_utils implementation.
 
     " Same but with lower case name
     try .
-      l_filter = zcl_mockup_loader_utils=>build_filter( 'TnumBER = 2015' ).
+      l_filter = zcl_mockup_loader_utils=>build_filter( i_where = 'TnumBER = 2015' ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
@@ -309,7 +314,7 @@ class lcl_test_mockup_utils implementation.
     get reference of l_where-tnumber into l_tywhere-range.
 
     try .
-      l_filter = zcl_mockup_loader_utils=>build_filter( l_tywhere ).
+      l_filter = zcl_mockup_loader_utils=>build_filter( i_where = l_tywhere ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
@@ -349,7 +354,7 @@ class lcl_test_mockup_utils implementation.
     append initial line to lt_filter assigning <f>.
     <f>-name = 'TNUMBER'.
     <f>-type = 'S'.
-    get reference of l_str into <f>-range.
+    get reference of l_str into <f>-valref.
 
     try .
       zcl_mockup_loader_utils=>filter_table(
@@ -486,7 +491,7 @@ class lcl_test_mockup_utils implementation.
     append initial line to lt_filter assigning <f>.
     <f>-name = 'TNUMBER'.
     <f>-type = 'S'.
-    get reference of l_str into <f>-range.
+    get reference of l_str into <f>-valref.
     l_str = '2015'.
 
     ls_line-tnumber = 2015.
@@ -505,12 +510,12 @@ class lcl_test_mockup_utils implementation.
     append initial line to lt_filter assigning <f>.
     <f>-name = 'TNUMBER'.
     <f>-type = 'R'.
-    get reference of l_where-tnumber into <f>-range.
+    get reference of l_where-tnumber into <f>-valref.
 
     append initial line to lt_filter assigning <f>.
     <f>-name = 'TDATE'.
     <f>-type = 'R'.
-    get reference of l_where-tdate into <f>-range.
+    get reference of l_where-tdate into <f>-valref.
 
     ls_line-tnumber = 2015.
     ls_line-tdate   = '20160101'.
@@ -533,5 +538,53 @@ class lcl_test_mockup_utils implementation.
     cl_abap_unit_assert=>assert_false( lv_fit ).
 
   endmethod.  " does_line_fit_filter.
+
+  method build_filter_with_value.
+
+    data:
+          l_val         type string,
+          lt_filter     type zcl_mockup_loader_utils=>tt_filter,
+          ls_filter     like line of lt_filter,
+          lo_ex         type ref to zcx_mockup_loader_error.
+
+    clear lo_ex.
+    try . " i_where not string
+      lt_filter = zcl_mockup_loader_utils=>build_filter(
+          i_where        = 123
+          i_single_value = '234' ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'PN'.
+
+    clear lo_ex.
+    try . " i_value - elementary type
+      lt_filter = zcl_mockup_loader_utils=>build_filter(
+          i_where        = '123'
+          i_single_value = lt_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'ET'.
+
+    clear lo_ex.
+    try . " positive test
+      l_val = 'dummy'.
+      lt_filter = zcl_mockup_loader_utils=>build_filter(
+          i_where        = 'fld'
+          i_single_value = l_val ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( ).
+    endtry.
+
+    cl_abap_unit_assert=>assert_equals( act = lines( lt_filter ) exp = 1 ).
+    read table lt_filter into ls_filter index 1.
+    cl_abap_unit_assert=>assert_equals( act = ls_filter-name exp = 'FLD' ).
+    cl_abap_unit_assert=>assert_equals( act = ls_filter-type exp = 'V' ).
+    cl_abap_unit_assert=>assert_bound( act = ls_filter-valref ).
+    l_val = 'something else'.
+    field-symbols <val> type string.
+    assign ls_filter-valref->* to <val>.
+    cl_abap_unit_assert=>assert_equals( act = <val> exp = 'dummy' ).
+
+  endmethod.  " build_filter_with_value.
 
 endclass.

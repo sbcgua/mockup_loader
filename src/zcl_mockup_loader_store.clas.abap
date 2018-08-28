@@ -201,9 +201,11 @@ method _retrieve.
     if l_store-tabkey is initial.
       zcx_mockup_loader_error=>raise( msg = 'Tabkey field not found' code = 'FM' ). "#EC NOTEXT
     endif.
-    lt_filter = zcl_mockup_loader_utils=>build_filter( |{ l_store-tabkey }={ i_sift }| ).
+    lt_filter = zcl_mockup_loader_utils=>build_filter(
+      i_where        = l_store-tabkey
+      i_single_value = i_sift ).
   elseif i_where is not initial.
-    lt_filter = zcl_mockup_loader_utils=>build_filter( i_where ).
+    lt_filter = zcl_mockup_loader_utils=>build_filter( i_where = i_where ).
   endif.
 
   " Ensure types are the same

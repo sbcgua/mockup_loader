@@ -7,9 +7,9 @@ public section.
 
   types:
     begin of ty_filter,
-      name  type string,
-      range type ref to data,
-      type  type char1,
+      name   type string,
+      valref type ref to data,
+      type   type char1,
     end of ty_filter .
   types:
     tt_filter type standard table of ty_filter with key name .
@@ -37,6 +37,7 @@ public section.
   class-methods BUILD_FILTER
     importing
       !I_WHERE type ANY
+      !I_SINGLE_VALUE type ANY optional
     returning
       value(R_FILTER) type TT_FILTER
     raising
@@ -51,6 +52,22 @@ public section.
 protected section.
 private section.
 
+  class-methods CONV_NC_STRUC_TO_FILTER
+    importing
+      !ID_STRUC type ref to CL_ABAP_STRUCTDESCR
+      !I_WHERE type ANY
+    returning
+      value(RT_FILTER) type TT_FILTER
+    raising
+      ZCX_MOCKUP_LOADER_ERROR .
+  class-methods CONV_SINGLE_VAL_TO_FILTER
+    importing
+      !I_WHERE type CSEQUENCE
+      !I_VALUE type ANY
+    returning
+      value(R_FILTER) type TY_FILTER
+    raising
+      ZCX_MOCKUP_LOADER_ERROR .
   class-methods CONV_STRING_TO_FILTER
     importing
       !I_WHERE type CLIKE
@@ -81,61 +98,59 @@ method BUILD_FILTER.
   data l_filter      type ty_filter.
   data l_where       type ty_where.
   data lt_filter     type tt_filter.
-  data lt_components type cl_abap_structdescr=>component_table.
-  data l_component   like line of lt_components.
 
   field-symbols <tab>  type any table.
 
+  if i_where is initial.
+    return.
+  endif.
+
   dy_type = cl_abap_typedescr=>describe_by_data( i_where ).
+
+  if i_single_value is supplied and not boolc( dy_type->type_kind ca 'Cg' ) = abap_true. " Char or string
+    zcx_mockup_loader_error=>raise(
+      msg  = 'I_WHERE must be a parameter name for supplied I_SINGLE_VALUE'
+      code = 'PN' ). "#EC NOTEXT
+  endif.
 
   try.
     case dy_type->type_kind.
-    when cl_abap_typedescr=>typekind_table. " Table -> expect tt_where
-      dy_table ?= dy_type.
-      dy_struc ?= dy_table->get_table_line_type( ).
-      if not dy_struc->absolute_name cs g_ty_where_abs_name.
-        zcx_mockup_loader_error=>raise( msg = |I_WHERE table must be of TT_WHERE type| code = 'WT' ).   "#EC NOTEXT
-      endif.
+      when cl_abap_typedescr=>typekind_table. " Table -> expect tt_where
+        dy_table ?= dy_type.
+        dy_struc ?= dy_table->get_table_line_type( ).
+        if dy_struc->absolute_name <> g_ty_where_abs_name.
+          zcx_mockup_loader_error=>raise( msg = |I_WHERE table must be of TT_WHERE type| code = 'WT' ).   "#EC NOTEXT
+        endif.
 
-      assign i_where to <tab>.
-      loop at <tab> into l_where.
-        l_filter = conv_where_to_filter( l_where ).
-        append l_filter to lt_filter.
-      endloop.
-
-    when cl_abap_typedescr=>typekind_struct2. " structure can be ty_where or "named components"
-      dy_struc      ?= dy_type.
-
-      if dy_struc->absolute_name = g_ty_where_abs_name. " ty_where
-        l_filter = conv_where_to_filter( i_where ).
-        append l_filter to lt_filter.
-
-      else.                      " structure with named components per range
-        lt_components  = dy_struc->get_components( ).
-        loop at lt_components into l_component.
-          if l_component-type->kind <> cl_abap_typedescr=>kind_table.
-            zcx_mockup_loader_error=>raise( msg = |I_WHERE must be a structure of ranges or TY_WHERE| code = 'WS' ).   "#EC NOTEXT
-          endif.
-
-          dy_table ?= l_component-type.
-          if dy_table->key ne g_range_key. " Not range-like structure ?
-            zcx_mockup_loader_error=>raise( msg = |I_WHERE must be a structure of ranges or TY_WHERE| code = 'WS' ).   "#EC NOTEXT
-          endif.
-
-          l_filter-name = l_component-name.
-          l_filter-type = 'R'. " Range
-          assign component l_component-name of structure i_where to <tab>.
-          get reference of <tab> into l_filter-range.
+        assign i_where to <tab>.
+        loop at <tab> into l_where.
+          l_filter = conv_where_to_filter( l_where ).
           append l_filter to lt_filter.
         endloop.
-      endif.
 
-    when cl_abap_typedescr=>typekind_char or cl_abap_typedescr=>typekind_string.
-      l_filter = conv_string_to_filter( i_where ).
-      append l_filter to lt_filter.
+      when cl_abap_typedescr=>typekind_struct2. " structure can be ty_where or "named components"
+        dy_struc ?= dy_type.
 
-    when others.
-      zcx_mockup_loader_error=>raise( msg = |Unsupported type { dy_type->absolute_name } of I_WHERE| code = 'UT' ).   "#EC NOTEXT
+        if dy_struc->absolute_name = g_ty_where_abs_name. " ty_where
+          l_filter = conv_where_to_filter( i_where ).
+          append l_filter to lt_filter.
+
+        else.                      " structure with named components per range
+          lt_filter = conv_nc_struc_to_filter(
+            i_where  = i_where
+            id_struc = dy_struc ).
+        endif.
+
+      when cl_abap_typedescr=>typekind_char or cl_abap_typedescr=>typekind_string.
+        if i_single_value is supplied.
+          l_filter = conv_single_val_to_filter( i_where = i_where i_value = i_single_value ).
+        else.
+          l_filter = conv_string_to_filter( i_where ).
+        endif.
+        append l_filter to lt_filter.
+
+      when others.
+        zcx_mockup_loader_error=>raise( msg = |Unsupported type { dy_type->absolute_name } of I_WHERE| code = 'UT' ).   "#EC NOTEXT
     endcase.
 
   catch cx_sy_move_cast_error.
@@ -161,21 +176,68 @@ method class_constructor.
 endmethod.
 
 
+method CONV_NC_STRUC_TO_FILTER.
+  data dy_table      type ref to cl_abap_tabledescr.
+  data l_filter      type ty_filter.
+  data lt_components type cl_abap_structdescr=>component_table.
+  data l_component   like line of lt_components.
+
+  field-symbols <tab>  type any table.
+
+  lt_components  = id_struc->get_components( ).
+  loop at lt_components into l_component.
+    if l_component-type->kind <> cl_abap_typedescr=>kind_table.
+      zcx_mockup_loader_error=>raise( msg = |I_WHERE must be a structure of ranges or TY_WHERE| code = 'WS' ).   "#EC NOTEXT
+    endif.
+
+    dy_table ?= l_component-type.
+    if dy_table->key ne g_range_key. " Not range-like structure ?
+      zcx_mockup_loader_error=>raise( msg = |I_WHERE must be a structure of ranges or TY_WHERE| code = 'WS' ).   "#EC NOTEXT
+    endif.
+
+    l_filter-name = l_component-name.
+    l_filter-type = 'R'. " Range
+    assign component l_component-name of structure i_where to <tab>.
+    get reference of <tab> into l_filter-valref.
+    append l_filter to rt_filter.
+  endloop.
+endmethod.
+
+
+method conv_single_val_to_filter.
+  data dy_data type ref to cl_abap_datadescr.
+  dy_data ?= cl_abap_typedescr=>describe_by_data( i_value ).
+
+  if dy_data->kind <> cl_abap_typedescr=>kind_elem.
+    zcx_mockup_loader_error=>raise( msg  = 'I_VALUE must be of elementary type' code = 'ET' ). "#EC NOTEXT
+  endif.
+
+  field-symbols <value> type any.
+  create data r_filter-valref type handle dy_data.
+  assign r_filter-valref->* to <value>.
+
+  r_filter-type = 'V'. " Any value
+  r_filter-name = to_upper( i_where ).
+  <value>       = i_value.
+
+endmethod.
+
+
 method CONV_STRING_TO_FILTER.
-  field-symbols <cond> type string.
+  field-symbols <value> type string.
 
   r_filter-type = 'S'. " String
-  create data r_filter-range type string.
-  assign r_filter-range->* to <cond>.
+  create data r_filter-valref type string.
+  assign r_filter-valref->* to <value>.
 
-  split i_where at '=' into r_filter-name <cond>.
+  split i_where at '=' into r_filter-name <value>.
   shift r_filter-name right deleting trailing space.
   shift r_filter-name left  deleting leading space.
-  shift <cond>        right deleting trailing space.
-  shift <cond>        left  deleting leading space.
+  shift <value>       right deleting trailing space.
+  shift <value>       left  deleting leading space.
   translate r_filter-name to upper case.
 
-  if r_filter-name is initial or <cond> is initial.
+  if r_filter-name is initial or <value> is initial.
     zcx_mockup_loader_error=>raise( msg = |Incorrect I_WHERE string pattern| code = 'SP' ).   "#EC NOTEXT
   endif.
 
@@ -185,10 +247,10 @@ endmethod.
 method conv_where_to_filter.
   data dy_table      type ref to cl_abap_tabledescr.
 
-  r_filter-name  = i_where-name.
-  r_filter-range = i_where-range.
-  r_filter-type  = 'R'. " Range
-  dy_table ?= cl_abap_typedescr=>describe_by_data_ref( r_filter-range ). " Assume table, cast_error otherwise
+  r_filter-name   = i_where-name.
+  r_filter-valref = i_where-range.
+  r_filter-type   = 'R'. " Range
+  dy_table ?= cl_abap_typedescr=>describe_by_data_ref( r_filter-valref ). " Assume table, cast_error otherwise
   if dy_table->key ne g_range_key. " Not range ?
     zcx_mockup_loader_error=>raise( msg = |I_WHERE-RANGE must be a range table| code = 'RT' ).   "#EC NOTEXT
   endif.
@@ -199,7 +261,7 @@ method DOES_LINE_FIT_FILTER.
   data l_filter         type ty_filter.
   field-symbols <field> type any.
   field-symbols <range> type any table.
-  field-symbols <cond>  type string.
+  field-symbols <value> type any.
 
   r_yesno = abap_true.
 
@@ -208,18 +270,22 @@ method DOES_LINE_FIT_FILTER.
     check <field> is assigned. " Just skip irrelevant ranges
 
     if l_filter-type = 'R'.               " Range
-      assign l_filter-range->* to <range>.
-    else.                                 " String
-      assign l_filter-range->* to <cond>.
+      assign l_filter-valref->* to <range>.
+      if not <field> in <range>.
+        r_yesno = abap_false.
+      endif.
+    else.                                 " String and value
+      assign l_filter-valref->* to <value>.
+      if not <field> = <value>. " cx_sy_conversion_error does not catch that :(
+        r_yesno = abap_false.
+      endif.
     endif.
 
-    if <range> is assigned and not <field> in <range>
-    or <cond>  is assigned and not <field> = <cond>. " cx_sy_conversion_error does not catch that :(
-      r_yesno = abap_false.
-      exit.
+    if r_yesno = abap_false.
+      return.
     endif.
 
-    unassign: <field>, <range>, <cond>.
+    unassign: <field>, <range>, <value>.
   endloop.
 
 endmethod.
@@ -240,7 +306,7 @@ method FILTER_TABLE.
 
   data lt_filter like i_filter.
   if i_where is supplied.
-    lt_filter = build_filter( i_where ).
+    lt_filter = build_filter( i_where = i_where ).
   else. " i_filter is supplied
     lt_filter = i_filter.
   endif.
