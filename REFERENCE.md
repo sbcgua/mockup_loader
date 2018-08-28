@@ -354,7 +354,7 @@ or
 
 ```abap
 data lt_filter type zcl_mockup_loader_utils=>tt_filter.
-lt_filter = zcl_mockup_loader_utils=>build_filter( 'BELNR = 0000000010' ).
+lt_filter = zcl_mockup_loader_utils=>build_filter( i_where = 'BELNR = 0000000010' ).
 zcl_mockup_loader_utils=>filter_table(
   exporting
     i_filter    = lt_filter
@@ -363,5 +363,14 @@ zcl_mockup_loader_utils=>filter_table(
     e_container = lt_filtered_data ).
 ```
 
-`e_container` can also be a structure - the first matching record is retrieved.
+or
+```abap
+...
+" if value is single and you need type-check
+lt_filter = zcl_mockup_loader_utils=>build_filter(
+  i_where        = 'BELNR'
+  i_single_value = '0000000010' ).
+...
+```
 
+`e_container` can also be a structure - the first matching record is retrieved.
