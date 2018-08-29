@@ -24,6 +24,7 @@ public section.
   type-pools ABAP .
   class-data G_TY_WHERE_ABS_NAME type ABAP_ABSTYPENAME read-only .
   class-data G_RANGE_KEY type ABAP_KEYDESCR_TAB read-only .
+  class-data G_TY_FILTER_ABS_NAME type ABAP_ABSTYPENAME read-only .
 
   class-methods FILTER_TABLE
     importing
@@ -52,6 +53,13 @@ public section.
 protected section.
 private section.
 
+  class-methods CONV_TT_WHERE_TO_FILTER
+    importing
+      !I_WHERE type ANY
+    returning
+      value(R_FILTER) type TT_FILTER
+    raising
+      ZCX_MOCKUP_LOADER_ERROR .
   class-methods CONV_NC_STRUC_TO_FILTER
     importing
       !ID_STRUC type ref to CL_ABAP_STRUCTDESCR
@@ -94,12 +102,8 @@ method BUILD_FILTER.
   data dy_type       type ref to cl_abap_typedescr.
   data dy_struc      type ref to cl_abap_structdescr.
   data dy_table      type ref to cl_abap_tabledescr.
-
   data l_filter      type ty_filter.
-  data l_where       type ty_where.
   data lt_filter     type tt_filter.
-
-  field-symbols <tab>  type any table.
 
   if i_where is initial.
     return.
@@ -118,15 +122,18 @@ method BUILD_FILTER.
       when cl_abap_typedescr=>typekind_table. " Table -> expect tt_where
         dy_table ?= dy_type.
         dy_struc ?= dy_table->get_table_line_type( ).
+
+        if dy_struc->absolute_name = g_ty_filter_abs_name.
+          r_filter = i_where.
+          return.
+        endif.
+
         if dy_struc->absolute_name <> g_ty_where_abs_name.
           zcx_mockup_loader_error=>raise( msg = |I_WHERE table must be of TT_WHERE type| code = 'WT' ).   "#EC NOTEXT
         endif.
 
-        assign i_where to <tab>.
-        loop at <tab> into l_where.
-          l_filter = conv_where_to_filter( l_where ).
-          append l_filter to lt_filter.
-        endloop.
+        lt_filter = conv_tt_where_to_filter( i_where ).
+
 
       when cl_abap_typedescr=>typekind_struct2. " structure can be ty_where or "named components"
         dy_struc ?= dy_type.
@@ -134,7 +141,6 @@ method BUILD_FILTER.
         if dy_struc->absolute_name = g_ty_where_abs_name. " ty_where
           l_filter = conv_where_to_filter( i_where ).
           append l_filter to lt_filter.
-
         else.                      " structure with named components per range
           lt_filter = conv_nc_struc_to_filter(
             i_where  = i_where
@@ -143,7 +149,9 @@ method BUILD_FILTER.
 
       when cl_abap_typedescr=>typekind_char or cl_abap_typedescr=>typekind_string.
         if i_single_value is supplied.
-          l_filter = conv_single_val_to_filter( i_where = i_where i_value = i_single_value ).
+          l_filter = conv_single_val_to_filter(
+            i_where = i_where
+            i_value = i_single_value ).
         else.
           l_filter = conv_string_to_filter( i_where ).
         endif.
@@ -163,12 +171,16 @@ endmethod.
 
 
 method class_constructor.
-  data l_dummy type ty_where.
+  data l_dummy_where  type ty_where.
+  data l_dummy_filter type ty_filter.
   data dy_tab  type ref to cl_abap_tabledescr.
   data dy_type type ref to cl_abap_typedescr.
 
-  dy_type = cl_abap_typedescr=>describe_by_data( l_dummy ).
+  dy_type = cl_abap_typedescr=>describe_by_data( l_dummy_where ).
   g_ty_where_abs_name = dy_type->absolute_name.
+
+  dy_type = cl_abap_typedescr=>describe_by_data( l_dummy_filter ).
+  g_ty_filter_abs_name = dy_type->absolute_name.
 
   dy_tab ?= cl_abap_typedescr=>describe_by_name( 'SVER_TABLE_TYPE_VERI_RANGE' ).
   g_range_key = dy_tab->key.
@@ -240,6 +252,20 @@ method CONV_STRING_TO_FILTER.
   if r_filter-name is initial or <value> is initial.
     zcx_mockup_loader_error=>raise( msg = |Incorrect I_WHERE string pattern| code = 'SP' ).   "#EC NOTEXT
   endif.
+
+endmethod.
+
+
+method CONV_TT_WHERE_TO_FILTER.
+  data l_filter         type ty_filter.
+  field-symbols <tab>   type any table.
+  field-symbols <where> type ty_where.
+
+  assign i_where to <tab>.
+  loop at <tab> assigning <where>.
+    l_filter = conv_where_to_filter( <where> ).
+    append l_filter to r_filter.
+  endloop.
 
 endmethod.
 

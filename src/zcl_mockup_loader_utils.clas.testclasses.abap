@@ -105,6 +105,7 @@ class lcl_test_mockup_utils definition for testing
     methods does_line_fit_filter for testing.
 
     methods build_filter_with_value for testing.
+    methods build_filter for testing.
 
 endclass.       "lcl_test_mockup_loader
 
@@ -586,5 +587,30 @@ class lcl_test_mockup_utils implementation.
     cl_abap_unit_assert=>assert_equals( act = <val> exp = 'dummy' ).
 
   endmethod.  " build_filter_with_value.
+
+  method build_filter.
+
+    data:
+          lt_filter     type zcl_mockup_loader_utils=>tt_filter,
+          lt_filter_act type zcl_mockup_loader_utils=>tt_filter,
+          ls_filter     like line of lt_filter,
+          lo_ex         type ref to zcx_mockup_loader_error.
+
+    ls_filter-name = 'AAA'.
+    ls_filter-type = 'V'.
+    append ls_filter to lt_filter.
+
+    clear lo_ex.
+    try . " tt_filter pass through
+      lt_filter_act = zcl_mockup_loader_utils=>build_filter( i_where = lt_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( ).
+    endtry.
+
+    cl_abap_unit_assert=>assert_equals( act = lt_filter_act exp = lt_filter ).
+
+
+
+  endmethod.  " build_filter.
 
 endclass.
