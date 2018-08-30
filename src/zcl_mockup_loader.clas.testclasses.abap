@@ -124,6 +124,7 @@ class lcl_test_mockup_loader definition for testing
     methods parse_data               for testing.
     methods load_and_store           for testing.
     methods load_raw                 for testing.
+    methods load_data_to_ref         for testing.
 
     methods get_dummy_data
       importing
@@ -670,5 +671,29 @@ class lcl_test_mockup_loader implementation.
     assert_excode 'NC'.
 
   endmethod. "load_raw
+
+  method load_data_to_ref.
+    data:
+      dummy_tab_act  type tt_dummy,
+      dummy_tab_exp  type tt_dummy,
+      lo_ex          type ref to zcx_mockup_loader_error.
+
+    data lr_data type ref to data.
+    create data lr_data type tt_dummy.
+    field-symbols <act> type tt_dummy.
+
+    get_dummy_data( importing e_dummy_tab = dummy_tab_exp ).
+
+    try.
+      o->load_data(
+        exporting i_obj       = 'testdir/testfile_complete'
+        importing e_container = lr_data ).
+      assign lr_data->* to <act>.
+      cl_abap_unit_assert=>assert_equals( act = <act> exp = dummy_tab_exp ).
+
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
+    endtry.
+  endmethod.  " load_data_to_ref.
 
 endclass.       "lcl_test_mockup_loader

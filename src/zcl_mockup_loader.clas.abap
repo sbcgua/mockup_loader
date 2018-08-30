@@ -70,7 +70,7 @@ public section.
   class-methods CREATE
     importing
       !I_PATH type STRING
-      !I_TYPE type CHAR4
+      !I_TYPE type CHAR4 default 'MIME'
       !I_AMT_FORMAT type CHAR2 optional
       !I_ENCODING type ABAP_ENCODING optional
       !I_DATE_FORMAT type CHAR4 optional
@@ -268,7 +268,6 @@ method load_and_store.
   " Create container to load zip data to
   lo_dtype ?= lo_type.
   create data lr_data type handle lo_dtype.
-  assign lr_data->* to <data>.
 
   " Load from zip and store
   me->load_data(
@@ -276,7 +275,7 @@ method load_and_store.
       i_obj       = i_obj
       i_strict    = i_strict
     importing
-      e_container = <data> ).
+      e_container = lr_data ).
 
   zcl_mockup_loader_store=>get_instance( )->_store(
     i_name     = i_name
@@ -338,12 +337,20 @@ method parse_data.
         lo_struc_descr type ref to cl_abap_structdescr,
         ld_temp_tab    type ref to data.
   field-symbols:
+        <container>     type any,
         <temp_tab>      type standard table.
 
-  clear e_container.
+  " Handle data reference container (use exporting value ???)
+  lo_type_descr = cl_abap_typedescr=>describe_by_data( e_container ).
+  if lo_type_descr->type_kind = cl_abap_typedescr=>typekind_dref.
+    lo_type_descr = cl_abap_typedescr=>describe_by_data_ref( e_container ).
+    assign e_container->* to <container>.
+  else.
+    assign e_container to <container>.
+  endif.
+  clear <container>.
 
   " Identify container type and create temp container
-  lo_type_descr = cl_abap_typedescr=>describe_by_data( e_container ).
   case lo_type_descr->kind.
     when 'T'. " Table
       lo_table_descr ?= lo_type_descr.
@@ -363,14 +370,14 @@ method parse_data.
   try.
     data lo_data_parser type ref to zcl_data_parser.
     lo_data_parser = zcl_data_parser=>create(
-      i_pattern       = e_container
+      i_pattern       = <container>
       i_amount_format = mv_amt_format
       i_date_format   = mv_date_format ).
 
     lo_data_parser->parse(
       exporting
-        i_data = i_rawdata
-        i_strict = i_strict
+        i_data     = i_rawdata
+        i_strict   = i_strict
         i_has_head = abap_true " assume head always, maybe change later
       importing
         e_container = <temp_tab> ).
@@ -379,19 +386,18 @@ method parse_data.
   endtry.
 
   " Build filter hash if supplied
-  data lv_fit type abap_bool.
   if i_where is not initial.
     zcl_mockup_loader_utils=>filter_table(
       exporting
         i_where     = i_where
         i_tab       = <temp_tab>
       importing
-        e_container = e_container ).
+        e_container = <container> ).
   else. " Copy all
     if lo_type_descr->kind = 'S'. " Structure
-      read table <temp_tab> into e_container index 1.
+      read table <temp_tab> into <container> index 1.
     else. " Table
-      e_container = <temp_tab>.
+      <container> = <temp_tab>.
     endif.
   endif.
 
