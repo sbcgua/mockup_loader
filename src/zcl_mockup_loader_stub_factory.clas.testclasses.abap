@@ -50,16 +50,16 @@ class lcl_mockup_stub_factory_test implementation.
       lo_dc->connect_method(
         i_sift_param      = 'I_CONNID'
         i_mock_tab_key    = 'CONNID'
-        i_method          = 'TAB_RETURN'
+        i_method_name     = 'TAB_RETURN'
         i_mock_name       = 'EXAMPLE/sflight' ).
 
       lo_dc->connect_method(
-        i_method       = 'TAB_EXPORT'
+        i_method_name  = 'TAB_EXPORT'
         i_mock_name    = 'EXAMPLE/sflight'
         i_output_param = 'ETAB' ).
 
       lo_dc->connect_method(
-        i_method       = 'TAB_CHANGE'
+        i_method_name  = 'TAB_CHANGE'
         i_mock_name    = 'EXAMPLE/sflight'
         i_output_param = 'CTAB' ).
 
@@ -160,10 +160,10 @@ class lcl_mockup_stub_factory_test implementation.
         io_ml_instance = lo_ml
         i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY' ).
       lo_dc->connect_method(
-        i_method          = 'TAB_RETURN'
+        i_method_name     = 'TAB_RETURN'
         i_mock_name       = 'EXAMPLE/sflight' ).
       lo_dc->connect_method(
-        i_method          = 'TAB_RETURN'
+        i_method_name     = 'TAB_RETURN'
         i_mock_name       = 'EXAMPLE/sflight' ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
@@ -176,10 +176,6 @@ class lcl_mockup_stub_factory_test implementation.
     data ls_conf     type zcl_mockup_loader_stub_base=>ty_mock_config.
     data ls_conf_act type zcl_mockup_loader_stub_base=>ty_mock_config.
     data lo_ex type ref to zcx_mockup_loader_error.
-*    data ld_type type ref to cl_abap_typedescr.
-*    data lt_act type abap_parmbind_tab.
-*    data lt_exp type abap_parmbind_tab.
-*    data par like line of lt_exp.
 
     ld_if ?= cl_abap_typedescr=>describe_by_name( 'ZIF_MOCKUP_LOADER_STUB_DUMMY' ).
 

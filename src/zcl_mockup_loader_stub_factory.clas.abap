@@ -16,7 +16,7 @@ public section.
       ZCX_MOCKUP_LOADER_ERROR .
   methods CONNECT_METHOD
     importing
-      !I_METHOD type ABAP_METHNAME
+      !I_METHOD_NAME type ABAP_METHNAME
       !I_MOCK_NAME type STRING
       !I_LOAD_STRICT type ABAP_BOOL default ABAP_FALSE
       !I_SIFT_PARAM type ABAP_PARMNAME optional
@@ -157,7 +157,7 @@ endmethod.
 
 method connect_method.
   data ls_config like line of mt_config.
-  ls_config-method_name  = to_upper( i_method ).
+  ls_config-method_name  = to_upper( i_method_name ).
   ls_config-mock_name    = i_mock_name.
   ls_config-load_strict  = i_load_strict.
   ls_config-sift_param   = to_upper( i_sift_param ).
