@@ -32,15 +32,6 @@ public section.
   class-methods USE_DOUBLE
     importing
       !USE type ABAP_BOOL .
-protected section.
-private section.
-
-  data MV_INTERFACE_NAME type SEOCLSNAME .
-  data MT_CONFIG type ZCL_MOCKUP_LOADER_STUB_BASE=>TT_MOCK_CONFIG .
-  data MO_ML type ref to ZCL_MOCKUP_LOADER .
-  data MD_IF_DESC type ref to CL_ABAP_OBJECTDESCR .
-  class-data G_USE_DOUBLE type ABAP_BOOL value ABAP_FALSE ##NO_TEXT.
-
   class-methods GENERATE_PARAMS
     importing
       !ID_IF_DESC type ref to CL_ABAP_OBJECTDESCR
@@ -55,6 +46,15 @@ private section.
       value(R_CONFIG) type ZCL_MOCKUP_LOADER_STUB_BASE=>TY_MOCK_CONFIG
     raising
       ZCX_MOCKUP_LOADER_ERROR .
+protected section.
+private section.
+
+  data MV_INTERFACE_NAME type SEOCLSNAME .
+  data MT_CONFIG type ZCL_MOCKUP_LOADER_STUB_BASE=>TT_MOCK_CONFIG .
+  data MO_ML type ref to ZCL_MOCKUP_LOADER .
+  data MD_IF_DESC type ref to CL_ABAP_OBJECTDESCR .
+  class-data G_USE_DOUBLE type ABAP_BOOL value ABAP_FALSE ##NO_TEXT.
+
   methods GENERATE_STUB_DOUBLE
     returning
       value(R_STUB) type ref to OBJECT .

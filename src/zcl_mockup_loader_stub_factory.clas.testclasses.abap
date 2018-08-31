@@ -12,7 +12,7 @@ class lcl_mockup_stub_factory_test definition final
     methods build_config for testing.
 endclass.
 
-class zcl_mockup_loader_stub_factory definition local friends lcl_mockup_stub_factory_test.
+*class zcl_mockup_loader_stub_factory definition local friends lcl_mockup_stub_factory_test.
 
 define assert_excode.
   cl_abap_unit_assert=>assert_not_initial( act = lo_ex ).
@@ -147,24 +147,21 @@ class lcl_mockup_stub_factory_test implementation.
     data lo_ex type ref to zcx_mockup_loader_error.
 
     try.
-      lo_ml  = zcl_mockup_loader=>create(
-        i_type = 'MIME'
-        i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
-      lo_dc  = zcl_mockup_loader_stub_factory=>create(
-        io_ml_instance = lo_ml
-        i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY' ).
-
-      lo_dc->connect_method(
-        i_method          = 'TAB_RETURN'
-        i_mock_name       = 'EXAMPLE/sflight' ).
-
-      cl_abap_unit_assert=>assert_equals( act = lines( lo_dc->mt_config ) exp = 1 ).
 
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( ).
     endtry.
 
     try.
+      lo_ml  = zcl_mockup_loader=>create(
+        i_type = 'MIME'
+        i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
+      lo_dc  = zcl_mockup_loader_stub_factory=>create(
+        io_ml_instance = lo_ml
+        i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY' ).
+      lo_dc->connect_method(
+        i_method          = 'TAB_RETURN'
+        i_mock_name       = 'EXAMPLE/sflight' ).
       lo_dc->connect_method(
         i_method          = 'TAB_RETURN'
         i_mock_name       = 'EXAMPLE/sflight' ).
