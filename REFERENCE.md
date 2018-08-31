@@ -68,7 +68,7 @@ exporting
 - **I_STRICT** - suggests if the structure of the file must strictly correspond to the structure of target container. The call **always** validates that all fields in the text file are present in target structure. `I_STRICT` = 'True' **additionally** means that the number of fields is the same as in the target structure.
     - One exception is `MANDT` field. It may be skipped in a text file even for strict validation. So a text file with all structure fields but MANDT is still considered as strictly equal.
 - **I_WHERE** - optional condition to filter the sourse table. See "Using filtering" section below for details.   
-- **E_CONTAINER** - container for the data. Can be table or structure. In the latter case just the first data line of the file is parsed, no error is thrown if there are more lines in case like that.   
+- **E_CONTAINER** - container for the data. Can be a table or a structure. In the latter case just the first data line of the file is parsed, no error is thrown if there are more lines in case like that. Can also be **data ref** to a table or a structure. In this case data ref **must be** created and passed to the method, it cannot infere data type for proper convertion without it.
 
 The method assumes that field names are specified in the first line of the text file and are **capitalized**. The order is not important and can be mixed. `MANDT` field, if present, is ignored (no value transferred).
 
@@ -126,12 +126,12 @@ endtry.
     importing e_container = lt_bseg.
 ```
 
-3) A structure of `ZCL_MOCKUP_LOADER=>TY_WHERE` or a table of `TT_WHERE`, where each line contain a filter (applied simultaneously in case of table => AND). `NAME` component should contain target table field name (ignored if missing in target table). `RANGE` is a reference to a range table. (we assume it should be convenient and well-readable in 7.40+ environments).
+3) A structure of `ZCL_MOCKUP_LOADER_UTILS=>TY_WHERE` or a table of `TT_WHERE`, where each line contain a filter (applied simultaneously in case of table => AND). `NAME` component should contain target table field name (ignored if missing in target table). `RANGE` is a reference to a range table. (we assume it should be convenient and well-readable in 7.40+ environments).
  
 ```abap
   data:
-      where_tab type zcl_mockup_loader=>tt_where,
-      l_where   type zcl_mockup_loader=>ty_where,
+      where_tab type zcl_mockup_loader_utils=>tt_where,
+      l_where   type zcl_mockup_loader_utils=>ty_where,
       belnr_rng type range of belnr_d,
       r_belnr   like line of rt_belnr,
 
@@ -155,6 +155,21 @@ endtry.
               i_where     = where_tab
     importing e_container = lt_bseg.
 
+```
+
+4) A table `ZCL_MOCKUP_LOADER_UTILS=>TT_FILTER`. You probably should not contract the table yourselves but rather build it with `ZCL_MOCKUP_LOADER_UTILS=>BUILD_FILTER` which understands all the options above. Can be handy to reuse the pre-built filter several times. In addition `BUILD_FILTER` can accept `I_SINGLE_VALUE` param as an alternative to string-like pattern which is also more type-safe. In this case `I_WHERE` is the name of field to filter.
+
+```abap
+  data lt_filt = zcl_mockup_loader_utils=>tt_filter.
+  lt_filt = zcl_mockup_loader_utils=>build_filter(
+    i_where        = 'BELNR'
+    i_single_value = '0010000012' ).
+  o_ml->load_data(
+    exporting 
+      i_obj       = 'TEST1/BSEG'
+      i_where     = lt_filt
+    importing
+      e_container = lt_bseg ).
 ```
 
 #### "Best practice" suggestions
@@ -374,3 +389,92 @@ lt_filter = zcl_mockup_loader_utils=>build_filter(
 ```
 
 `e_container` can also be a structure - the first matching record is retrieved.
+
+## ZCL_MOCKUP_LOADER_STUB_FACTORY
+
+Since 2.0.0 mockup loader supports generating of interface stubs. As a more proper alternative for STORE feature above. :tada:
+
+```abap
+  data lo_factory type ref to zcl_mockup_loader_stub_factory.
+  data lo_ml      type ref to zcl_mockup_loader.
+  data lt_res     type flighttab.
+  
+  lo_ml = zcl_mockup_loader=>create(
+    i_type = 'MIME'
+    i_path = 'ZMOCKUP_LOADER_EXAMPLE' ). " <YOUR MOCKUP>
+
+  " <YOUR INTERFACE TO STUB>
+  data li_ifstub  type ref to ZIF_MOCKUP_LOADER_STUB_DUMMY. 
+  lo_factory = zcl_mockup_loader_stub_factory=>create(
+    io_ml_instance   = lo_ml
+    i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY' ).
+
+  " Connect one or MANY methods to respective mockups 
+  " ... with or without filtering
+  lo_factory->connect_method(
+    i_method          = 'TAB_RETURN'  " <METHOD TO STUB>
+    i_sift_param      = 'I_CONNID'    " <FILTERING PARAM>
+    i_mock_tab_key    = 'CONNID'      " <MOCK HEADER FIELD>
+    i_mock_name       = 'EXAMPLE/sflight' ). " <MOCK PATH>
+
+  li_ifstub ?= lo_dc->generate_stub( ).
+  lt_res = li_ifstub->tab_return( i_connid = '1000' ).
+  " lt_res contains the mock data ...
+  " li_ifstub can be passed to object-under-test
+```
+
+Stubing was implemented in 2 ways. Initially it was implemented to utilize popular *test double framework*. However, it is not available on systems below 7.4 so *'native'* stubbing was also implemented via dynamic `generate subroutine pool`. Both options are available and can be switched by `USE_DOUBLE` class method. Default is *'native'*. We will see which method is more used in future.
+
+**Warning**: The fact that the class uses test double classes `zcl_mockup_loader_stub_double` might not compile properly on older systems (although tested and works on 7.31). **This should theoretically be ok** ... as double related classes are referred dynamically from the factory class. So the library should stay working without it. If anyone knows how to overcome the compilation issues - pull requests are welcomed !
+
+
+### CREATE (static)
+
+```abap
+  importing
+    i_interface_name type seoclsname
+    io_ml_instance   type ref to zcl_mockup_loader
+  returning
+    r_instance type ref to zcl_mockup_loader_stub_factory
+```
+- **i_interface_name** - global interface name to stub
+- **io_ml_instance** - instance of initiated mockup loader
+- **returning value** is the instance of stub factory
+
+### CONNECT_METHOD
+
+```abap
+  importing
+    i_method_name  type abap_methname
+    i_mock_name    type string
+    i_load_strict  type abap_bool default abap_false
+    i_sift_param   type abap_parmname optional
+    i_mock_tab_key type abap_compname optional
+    i_output_param type abap_parmname optional
+  returning
+    r_instance type ref to zcl_mockup_loader_stub_factory
+```
+Activates stub for the given method, connects it to the specified mockup path, optionally with a filter. `i_sift_param` and `i_mock_tab_key` must be both empty or both specified.
+
+- **i_method_name**  - interface method to stub
+- **i_mock_name**    - mock path (in-zip) to load data from
+- **i_load_strict**  - if the mockdata should be loaded strictly (see `load_data` method for more info)
+- **i_sift_param**   - importing parameter of the interface to take filter value from
+- **i_mock_tab_key** - key field in the mock data to use for the filter
+- **i_output_param** - parameter of the interface to save data to. Exporting, changing and returning are supported. If empty - the returning parameter is assumed and searched in the method definition. Parameter must be a table or a structure (as all load targets)
+- **returning value** is the instance of stub factory, for chaining
+
+
+### GENERATE_STUB
+
+```abap
+  returning
+    r_stub type ref to object
+```
+Generate the stub based on connected methods. Not stubbed methods are generated as empty and return nothing. Returns the initiated instance of the stub that implements the intended interface and can be passed further to the code-under-test.
+
+### USE_DOUBLE (static)
+```abap
+  importing
+    use type abap_bool
+```

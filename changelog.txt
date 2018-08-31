@@ -8,7 +8,15 @@ Legend
 + : added
 - : removed
 
-v2.0.0, 2018-08-??
+v2.0.0-beta2, 2018-08-31
+------------------
++ BUILD_FILTER: accepts tt_filter and passes it through, allows specifying single value via i_single_value
++ LOAD_DATA accepts data references as container (exporting value is reused, dref must be created)
++ new 'stub' feature: connects global interface and mockup loader via test double framework or generate subroutine pll on developer's choise. Wow !
+
+?? TODO meet new feature ...
+
+v2.0.0-beta, 2018-08-28
 ------------------
 + support LF line break
 + UX: ZMOCKUP_LOADER_SWSRC can upload files with a button, but requires installed abap_w3mi_poller (https://github.com/sbcgua/abap_w3mi_poller.git)
@@ -17,8 +25,6 @@ v2.0.0, 2018-08-??
 ! exception is now also global - ZCX_MOCKUP_LOADER_ERROR
 ! ZCL_MOCKUP_LOADER is not singleton anymore and now instantiated with CREATE method - no need as the store functionality moved (ZCL_MOCKUP_LOADER_STORE remains singleton)
 ! VBA script removed. Instead meet mockup compiler ! Either in native ABAP implementation (https://github.com/sbcgua/mockup_compiler) or in JS (https://github.com/sbcgua/mockup-compiler-js). The ABAP implementation requires abap2xlsx package installed (https://github.com/ivanfemia/abap2xlsx)
-
-?? TODO meet new feature ...
 
 v1.1.0, 2018-08-12
 ------------------
