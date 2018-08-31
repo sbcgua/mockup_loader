@@ -210,11 +210,12 @@ Optionally, **I_EXT** - file extension - can be specified explicitly. Defaulted 
 
 ```abap
 importing
-  I_OBJ    type STRING
-  I_STRICT type ABAP_BOOL default ABAP_TRUE
-  I_NAME   type CHAR40
-  I_TYPE   type CSEQUENCE
-  I_TABKEY type ABAP_COMPNAME optional
+  I_OBJ       type STRING
+  I_STRICT    type ABAP_BOOL default ABAP_TRUE
+  I_NAME      type CHAR40
+  I_TYPE      type CSEQUENCE
+  I_TYPE_DESC type ref to CL_ABAP_TYPEDESCR OPTIONAL
+  I_TABKEY    type ABAP_COMPNAME optional
 ```
 
 The method is the combination of `LOAD_DATA` and `STORE` (see `ZCL_MOCKUP_LOADER_STORE` below) - created to avoid intermediary variables to hold the data in between.
@@ -227,6 +228,8 @@ See `LOAD_DATA` for description of **I_OBJ** and **I_STRICT**. See `STORE` to cl
 -  type pools types (e.g. `'ABAP_COMPDESCR'` from ABAP type pool)
 -  locally defined types (e.g. `'TY_BSET_EXTRACT'` defined locally in program)
 -  class **public** types (e.g. `'ZCL_SOME_CLASS=>TY_SOME_TYPE'`)
+
+Alternatively **I_TYPE_DESC** can be used instead to pass `CL_ABAP_TYPEDESCR` instance.
 
 **Example:**
 
