@@ -41,10 +41,12 @@ ENDCLASS.
 
 CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
 
+
 method constructor.
   mt_config = it_config.
   mo_ml     = io_ml.
 endmethod.
+
 
 method get_mock_data.
   " find config

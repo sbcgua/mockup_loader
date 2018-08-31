@@ -10,11 +10,11 @@ public section.
 
 protected section.
 private section.
-endclass.
+ENDCLASS.
 
 
 
-class zcl_mockup_loader_stub_double implementation.
+CLASS ZCL_MOCKUP_LOADER_STUB_DOUBLE IMPLEMENTATION.
 
 
   method if_abap_testdouble_answer~answer.
@@ -59,5 +59,4 @@ class zcl_mockup_loader_stub_double implementation.
   endcase.
 
 endmethod.
-
-endclass.
+ENDCLASS.
