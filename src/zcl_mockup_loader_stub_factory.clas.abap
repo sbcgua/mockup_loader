@@ -243,7 +243,7 @@ endmethod.
 
 method generate_stub_double.
   data li_connector type ref to if_abap_testdouble_answer.
-  create object li_connector type zcl_mockup_loader_stub_double
+  create object li_connector type ('ZCL_MOCKUP_LOADER_STUB_DOUBLE')
     exporting
       it_config = mt_config
       io_ml     = mo_ml.
