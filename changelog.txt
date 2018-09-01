@@ -12,7 +12,7 @@ v2.0.0-beta2, 2018-08-31
 ------------------
 + BUILD_FILTER: accepts tt_filter and passes it through, allows specifying single value via i_single_value
 + LOAD_DATA accepts data references as container (exporting value is reused, dref must be created)
-+ new 'stub' feature: connects global interface and mockup loader via test double framework or generate subroutine pll on developer's choise. Wow !
++ new 'stub' feature: connects global interface and mockup loader via dynamically generated interface implementation. Wow !
 
 ?? TODO meet new feature ...
 

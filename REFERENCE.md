@@ -408,9 +408,10 @@ Since 2.0.0 mockup loader supports generating of interface stubs. As a more prop
 
   " <YOUR INTERFACE TO STUB>
   data li_ifstub  type ref to ZIF_MOCKUP_LOADER_STUB_DUMMY. 
-  lo_factory = zcl_mockup_loader_stub_factory=>create(
-    io_ml_instance   = lo_ml
-    i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY' ).
+  create object lo_factory
+    exporting
+      io_ml_instance   = lo_ml
+      i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
 
   " Connect one or MANY methods to respective mockups 
   " ... with or without filtering
@@ -426,23 +427,19 @@ Since 2.0.0 mockup loader supports generating of interface stubs. As a more prop
   " li_ifstub can be passed to object-under-test
 ```
 
-Stubing was implemented in 2 ways. Initially it was implemented to utilize popular *test double framework*. However, it is not available on systems below 7.4 so *'native'* stubbing was also implemented via dynamic `generate subroutine pool`. Both options are available and can be switched by `USE_DOUBLE` class method. Default is *'native'*. We will see which method is more used in future.
+Stubing was implemented in 2 ways. Initially it was implemented to utilize popular *test double framework*. However, it is not available on systems below 7.4 so *'native'* stubbing was also implemented via dynamic `generate subroutine pool` and became the default approach.
 
-**Warning**: The fact that the class uses test double classes `zcl_mockup_loader_stub_double` might not compile properly on older systems (although tested and works on 7.31). **This should theoretically be ok** ... as double related classes are referred dynamically from the factory class. So the library should stay working without it. If anyone knows how to overcome the compilation issues - pull requests are welcomed !
+The test double related code was saved but moved to a separate package [mockup_loader_stub_double](https://github.com/sbcgua/mockup_loader_stub_double). It is a lightweight 'addon' that just redefines a couple of factory methods but works in similar way. Feel free to use it if you prefer test double framework. See the [repo](https://github.com/sbcgua/mockup_loader_stub_double) for details.
 
-
-### CREATE (static)
+### CONSTRUCTOR
 
 ```abap
   importing
     i_interface_name type seoclsname
     io_ml_instance   type ref to zcl_mockup_loader
-  returning
-    r_instance type ref to zcl_mockup_loader_stub_factory
 ```
 - **i_interface_name** - global interface name to stub
 - **io_ml_instance** - instance of initiated mockup loader
-- **returning value** is the instance of stub factory
 
 ### CONNECT_METHOD
 
@@ -467,7 +464,6 @@ Activates stub for the given method, connects it to the specified mockup path, o
 - **i_output_param** - parameter of the interface to save data to. Exporting, changing and returning are supported. If empty - the returning parameter is assumed and searched in the method definition. Parameter must be a table or a structure (as all load targets)
 - **returning value** is the instance of stub factory, for chaining
 
-
 ### GENERATE_STUB
 
 ```abap
@@ -475,9 +471,3 @@ Activates stub for the given method, connects it to the specified mockup path, o
     r_stub type ref to object
 ```
 Generate the stub based on connected methods. Not stubbed methods are generated as empty and return nothing. Returns the initiated instance of the stub that implements the intended interface and can be passed further to the code-under-test.
-
-### USE_DOUBLE (static)
-```abap
-  importing
-    use type abap_bool
-```

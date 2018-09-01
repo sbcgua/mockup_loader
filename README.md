@@ -97,9 +97,10 @@ It creates an instance object which implements the given interface where one or 
 
   " <YOUR INTERFACE TO STUB>
   data li_ifstub  type ref to ZIF_MOCKUP_LOADER_STUB_DUMMY. 
-  lo_factory = zcl_mockup_loader_stub_factory=>create(
-    io_ml_instance   = lo_ml
-    i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY' ).
+  create object lo_factory
+    exporting
+      io_ml_instance   = lo_ml
+      i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
 
   " Connect one or MANY methods to respective mockups 
   lo_factory->connect_method(
@@ -135,7 +136,6 @@ This will result in the data set where key field `CONNID` will be equal to `I_CO
 
 Some code is quite difficult to test when it has a *db select* in the middle. Of course, good code design would assume isolation of DB operations from business logic code, but it is not always possible (or was not done in proper time). So we needed to create a way to substitute *selects* in code to a simple call, which would take the prepared test data instead if test environment was identified. We came up with the solution we called `store`. 
    
-
 ```abap
 " Test class (o_mls is mockup_loader_STORE instance)
 ...
