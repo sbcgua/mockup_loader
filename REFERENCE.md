@@ -400,18 +400,15 @@ Since 2.0.0 mockup loader supports generating of interface stubs. As a more prop
 ```abap
   data lo_factory type ref to zcl_mockup_loader_stub_factory.
   data lo_ml      type ref to zcl_mockup_loader.
-  data lt_res     type flighttab.
   
   lo_ml = zcl_mockup_loader=>create(
     i_type = 'MIME'
     i_path = 'ZMOCKUP_LOADER_EXAMPLE' ). " <YOUR MOCKUP>
 
-  " <YOUR INTERFACE TO STUB>
-  data li_ifstub  type ref to ZIF_MOCKUP_LOADER_STUB_DUMMY. 
   create object lo_factory
     exporting
       io_ml_instance   = lo_ml
-      i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+      i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'. " <YOUR INTERFACE TO STUB>
 
   " Connect one or MANY methods to respective mockups 
   " ... with or without filtering
@@ -421,10 +418,14 @@ Since 2.0.0 mockup loader supports generating of interface stubs. As a more prop
     i_mock_tab_key    = 'CONNID'      " <MOCK HEADER FIELD>
     i_mock_name       = 'EXAMPLE/sflight' ). " <MOCK PATH>
 
+  data li_ifstub type ref to ZIF_MOCKUP_LOADER_STUB_DUMMY. 
   li_ifstub ?= lo_dc->generate_stub( ).
+
+  " Pass the stub to code-under-test, the effect is:
+  ...
+  data lt_res     type flighttab.
   lt_res = li_ifstub->tab_return( i_connid = '1000' ).
   " lt_res contains the mock data ...
-  " li_ifstub can be passed to object-under-test
 ```
 
 Stubing was implemented in 2 ways. Initially it was implemented to utilize popular *test double framework*. However, it is not available on systems below 7.4 so *'native'* stubbing was also implemented via dynamic `generate subroutine pool` and became the default approach.
