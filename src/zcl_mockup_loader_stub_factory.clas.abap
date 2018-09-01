@@ -1,17 +1,12 @@
 class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
-  public
-  final
-  create private
-  for testing .
+  public .
 
 public section.
 
-  class-methods CREATE
+  methods CONSTRUCTOR
     importing
       !I_INTERFACE_NAME type SEOCLSNAME
       !IO_ML_INSTANCE type ref to ZCL_MOCKUP_LOADER
-    returning
-      value(R_INSTANCE) type ref to ZCL_MOCKUP_LOADER_STUB_FACTORY
     raising
       ZCX_MOCKUP_LOADER_ERROR .
   methods CONNECT_METHOD
@@ -29,9 +24,6 @@ public section.
   methods GENERATE_STUB
     returning
       value(R_STUB) type ref to OBJECT .
-  class-methods USE_DOUBLE
-    importing
-      !USE type ABAP_BOOL .
   class-methods GENERATE_PARAMS
     importing
       !ID_IF_DESC type ref to CL_ABAP_OBJECTDESCR
@@ -47,20 +39,12 @@ public section.
     raising
       ZCX_MOCKUP_LOADER_ERROR .
 protected section.
-private section.
 
   data MV_INTERFACE_NAME type SEOCLSNAME .
   data MT_CONFIG type ZCL_MOCKUP_LOADER_STUB_BASE=>TT_MOCK_CONFIG .
   data MO_ML type ref to ZCL_MOCKUP_LOADER .
   data MD_IF_DESC type ref to CL_ABAP_OBJECTDESCR .
-  class-data G_USE_DOUBLE type ABAP_BOOL value ABAP_FALSE ##NO_TEXT.
-
-  methods GENERATE_STUB_DOUBLE
-    returning
-      value(R_STUB) type ref to OBJECT .
-  methods GENERATE_STUB_POOL
-    returning
-      value(R_STUB) type ref to OBJECT .
+private section.
 ENDCLASS.
 
 
@@ -181,22 +165,18 @@ method connect_method.
 endmethod.
 
 
-method create.
-  create object r_instance.
-  r_instance->mo_ml             = io_ml_instance.
-  r_instance->mv_interface_name = i_interface_name.
-
+method constructor.
   data ld_desc type ref to cl_abap_typedescr.
   ld_desc = cl_abap_typedescr=>describe_by_name( i_interface_name ).
-
   if ld_desc->kind <> cl_abap_typedescr=>kind_intf.
     zcx_mockup_loader_error=>raise(
       msg  = |{ i_interface_name } is not interface|
       code = 'IF' ). "#EC NOTEXT
   endif.
 
-  r_instance->md_if_desc ?= ld_desc.
-
+  me->md_if_desc       ?= ld_desc.
+  me->mo_ml             = io_ml_instance.
+  me->mv_interface_name = i_interface_name.
 endmethod.
 
 
@@ -233,53 +213,6 @@ endmethod.
 
 
 method generate_stub.
-  if g_use_double = abap_true.
-    r_stub = generate_stub_double( ).
-  else.
-    r_stub = generate_stub_pool( ).
-  endif.
-endmethod.
-
-
-method generate_stub_double.
-  data li_connector type ref to if_abap_testdouble_answer.
-  create object li_connector type ('ZCL_MOCKUP_LOADER_STUB_DOUBLE')
-    exporting
-      it_config = mt_config
-      io_ml     = mo_ml.
-
-  call method ('CL_ABAP_TESTDOUBLE')=>('CREATE')
-    exporting
-      object_name = mv_interface_name
-    receiving
-      double = r_stub.
-
-  field-symbols <conf> like line of mt_config.
-  loop at mt_config assigning <conf>.
-    data lt_dummy_params type abap_parmbind_tab.
-    data lv_invoke_name  type abap_methname.
-    lt_dummy_params = generate_params( id_if_desc = md_if_desc i_method = <conf>-method_name ).
-    lv_invoke_name  = mv_interface_name && '~' && <conf>-method_name.
-
-    data lo_conf type ref to object.
-
-    call method ('CL_ABAP_TESTDOUBLE')=>('CONFIGURE_CALL')
-      exporting
-        double = r_stub
-      receiving
-        configuration = lo_conf.
-
-    call method lo_conf->('IF_ABAP_TESTDOUBLE_CONFIG~IGNORE_ALL_PARAMETERS').
-    call method lo_conf->('IF_ABAP_TESTDOUBLE_CONFIG~SET_ANSWER')
-      exporting
-        answer = li_connector.
-
-    call method r_stub->(lv_invoke_name) parameter-table lt_dummy_params.
-  endloop.
-endmethod.
-
-
-method generate_stub_pool.
 
   define _src.
     append &1 to lt_src.
@@ -334,10 +267,5 @@ method generate_stub_pool.
       it_config = mt_config
       io_ml     = mo_ml.
 
-endmethod.
-
-
-method use_double.
-  g_use_double = use.
 endmethod.
 ENDCLASS.
