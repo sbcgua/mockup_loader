@@ -419,7 +419,7 @@ Since 2.0.0 mockup loader supports generating of interface stubs. As a more prop
     i_mock_name       = 'EXAMPLE/sflight' ). " <MOCK PATH>
 
   data li_ifstub type ref to ZIF_MOCKUP_LOADER_STUB_DUMMY. 
-  li_ifstub ?= lo_dc->generate_stub( ).
+  li_ifstub ?= lo_factory->generate_stub( ).
 
   " Pass the stub to code-under-test, the effect is:
   ...

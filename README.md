@@ -105,7 +105,7 @@ It creates an instance object which implements the given interface where one or 
     i_mock_name       = 'EXAMPLE/sflight' ). " <MOCK PATH>
 
   data li_ifstub type ref to ZIF_MOCKUP_LOADER_STUB_DUMMY. 
-  li_ifstub ?= lo_dc->generate_stub( ).
+  li_ifstub ?= lo_factory->generate_stub( ).
 
   " Pass the stub to code-under-test, the effect is:
   ...
@@ -211,7 +211,7 @@ Some design facts about the `store`:
 The most convenient way to install the package is to use [abapGit](https://github.com/larshp/abapGit) - it is easily installed itself and then a couple of click to clone the repo into the system. There is also an option for offline installation - download the repo as zip file and import it with abapGit. Unit test execution is always recommended after-installation.
 
 Dependencies (to install before mockup loader):
-- [abap_data_parser](https://github.com/sbcgua/abap_data_parser) - tab-delimited text parser (was a part of *mockup loader* but now a separate reusable tool). Mandatory prerequisite.
+- [text2tab](https://github.com/sbcgua/abap_data_parser) - tab-delimited text parser (was a part of *mockup loader* but now a separate reusable tool). Mandatory prerequisite.
 - [abap_w3mi_poller](https://github.com/sbcgua/abap_w3mi_poller) - *optional* - enables 'Upload to MIME' button in `ZMOCKUP_LOADER_SWSRC`. The mockup loader **can be compiled without this** package (the call is dynamic).
 
 ## Load source redirection
