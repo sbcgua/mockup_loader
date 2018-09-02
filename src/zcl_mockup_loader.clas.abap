@@ -331,7 +331,7 @@ endmethod.
 
 method parse_data.
   data:
-        lx_dp          type ref to zcx_data_parser_error,
+        lx_dp          type ref to zcx_text2tab_error,
         lo_type_descr  type ref to cl_abap_typedescr,
         lo_table_descr type ref to cl_abap_tabledescr,
         lo_struc_descr type ref to cl_abap_structdescr,
@@ -368,20 +368,20 @@ method parse_data.
   assign ld_temp_tab->* to <temp_tab>.
 
   try.
-    data lo_data_parser type ref to zcl_data_parser.
-    lo_data_parser = zcl_data_parser=>create(
+    data lo_parser type ref to zcl_text2tab_parser.
+    lo_parser = zcl_text2tab_parser=>create(
       i_pattern       = <container>
       i_amount_format = mv_amt_format
       i_date_format   = mv_date_format ).
 
-    lo_data_parser->parse(
+    lo_parser->parse(
       exporting
         i_data     = i_rawdata
         i_strict   = i_strict
         i_has_head = abap_true " assume head always, maybe change later
       importing
         e_container = <temp_tab> ).
-  catch zcx_data_parser_error into lx_dp.
+  catch zcx_text2tab_error into lx_dp.
     zcx_mockup_loader_error=>raise( msg = lx_dp->get_text( ) code = 'XE' ).
   endtry.
 

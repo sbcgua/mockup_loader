@@ -228,34 +228,34 @@ method generate_stub.
   field-symbols <method> like line of md_if_desc->methods.
   field-symbols <conf> like line of mt_config.
 
-  _src 'program.'.
-  _src 'class lcl_mockup_loader_stub definition final'.
-  _src '  inheriting from zcl_mockup_loader_stub_base.'.
-  _src '  public section.'.
-  ln = |    interfaces { mv_interface_name }.|. _src ln.
-  _src 'endclass.'.
+  _src 'program.'.                                        "#EC NOTEXT
+  _src 'class lcl_mockup_loader_stub definition final'.   "#EC NOTEXT
+  _src '  inheriting from zcl_mockup_loader_stub_base.'.  "#EC NOTEXT
+  _src '  public section.'.                               "#EC NOTEXT
+  ln = |    interfaces { mv_interface_name }.|. _src ln.  "#EC NOTEXT
+  _src 'endclass.'.                                       "#EC NOTEXT
 
-  _src 'class lcl_mockup_loader_stub implementation.'.
+  _src 'class lcl_mockup_loader_stub implementation.'.    "#EC NOTEXT
 
   loop at md_if_desc->methods assigning <method>.
     read table mt_config assigning <conf> with key method_name = <method>-name.
     if sy-subrc is initial.
       ln = |  method { mv_interface_name }~{ <method>-name }.|. _src ln.
-      _src '    data lr_data type ref to data.'.
-      _src '    lr_data = get_mock_data('.
+      _src '    data lr_data type ref to data.'.          "#EC NOTEXT
+      _src '    lr_data = get_mock_data('.                "#EC NOTEXT
       if <conf>-sift_param is not initial.
         ln = |      i_sift_value  = { <conf>-sift_param }|. _src ln.
       endif.
       ln = |      i_method_name = '{ <method>-name }' ).|. _src ln.
-      _src '    field-symbols <container> type any.'.
-      _src '    assign lr_data->* to <container>.'.
+      _src '    field-symbols <container> type any.'.     "#EC NOTEXT
+      _src '    assign lr_data->* to <container>.'.       "#EC NOTEXT
       ln = |    { <conf>-output_param } = <container>.|. _src ln.
-      _src '  endmethod.'.
+      _src '  endmethod.'.                                "#EC NOTEXT
     else.
       ln = |  method { mv_interface_name }~{ <method>-name }.|. _src ln.
-      _src '  endmethod.'.
+      _src '  endmethod.'.                                "#EC NOTEXT
     endif.
-  endloop.
+  endloop.                                                "#EC NOTEXT
 
   _src 'endclass.'.
 
