@@ -61,12 +61,12 @@ class lcl_test_mockup_store definition for testing
       begin of ty_dummy,
         mandt    type mandt,
         tdate    type datum,
-        tchar    type veri_c08,
-        traw     type veri_x1,
+        tchar    type char08,
+        traw     type thraw1,
         tstring  type string,
         talpha   type veri_alpha,
-        tdecimal type veri_cur13,
-        tnumber  type veri_n04,
+        tdecimal type dmbtr,
+        tnumber  type numc04,
         tinteger type i,
       end of ty_dummy,
       tt_dummy type table of ty_dummy with default key.
@@ -219,8 +219,8 @@ class lcl_test_mockup_store implementation.
   method retrieve_types.
     data:
           lo_ex        type ref to zcx_mockup_loader_error,
-          lt_src       type scarr_tab,
-          lt_dst_tab   type scarr_tab,
+          lt_src       type standard table of scarr,
+          lt_dst_tab   type standard table of scarr,
           lt_dst_tt    type table of scarr,
           lt_dst_ts    type sorted table of scarr with unique key carrid,
           l_dst_struc  type scarr,

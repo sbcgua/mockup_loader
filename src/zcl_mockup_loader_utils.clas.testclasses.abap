@@ -71,12 +71,12 @@ class lcl_test_mockup_utils definition for testing
       begin of ty_dummy,
         mandt    type mandt,
         tdate    type datum,
-        tchar    type veri_c08,
-        traw     type veri_x1,
+        tchar    type char08,
+        traw     type thraw1,
         tstring  type string,
         talpha   type veri_alpha,
-        tdecimal type veri_cur13,
-        tnumber  type veri_n04,
+        tdecimal type dmbtr,
+        tnumber  type numc04,
         tinteger type i,
       end of ty_dummy,
       tt_dummy type table of ty_dummy with default key.
@@ -152,19 +152,19 @@ class lcl_test_mockup_utils implementation.
           l_tywhere      type zcl_mockup_loader_utils=>ty_where,
 
           begin of l_where_err1,
-            tnumber  type range of veri_n04,
+            tnumber  type range of numc04,
             tdate    type range of datum,
             tother   type tt_dummy,
           end of l_where_err1,
 
           begin of l_where_err2,
-            tnumber  type range of veri_n04,
+            tnumber  type range of numc04,
             tdate    type range of datum,
             tother   type c,
           end of l_where_err2,
 
           begin of l_where,
-            tnumber  type range of veri_n04,
+            tnumber  type range of numc04,
             tdate    type range of datum,
             tother   type range of c,
           end of l_where,
@@ -476,7 +476,7 @@ class lcl_test_mockup_utils implementation.
 
     data:
           begin of l_where,
-            tnumber  type range of veri_n04,
+            tnumber  type range of numc04,
             tdate    type range of datum,
           end of l_where,
 
