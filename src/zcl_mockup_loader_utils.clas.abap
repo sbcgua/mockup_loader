@@ -175,6 +175,7 @@ method class_constructor.
   data l_dummy_filter type ty_filter.
   data dy_tab  type ref to cl_abap_tabledescr.
   data dy_type type ref to cl_abap_typedescr.
+  data l_dummy_range type range of char1.
 
   dy_type = cl_abap_typedescr=>describe_by_data( l_dummy_where ).
   g_ty_where_abs_name = dy_type->absolute_name.
@@ -182,7 +183,7 @@ method class_constructor.
   dy_type = cl_abap_typedescr=>describe_by_data( l_dummy_filter ).
   g_ty_filter_abs_name = dy_type->absolute_name.
 
-  dy_tab ?= cl_abap_typedescr=>describe_by_name( 'SVER_TABLE_TYPE_VERI_RANGE' ).
+  dy_tab ?= cl_abap_typedescr=>describe_by_data( l_dummy_range ).
   g_range_key = dy_tab->key.
 
 endmethod.
