@@ -8,7 +8,7 @@ class lcl_mockup_stub_factory_test definition final
     methods connect_method for testing.
     methods build_config for testing.
     methods instantiation for testing.
-    methods proxy_method for testing.
+    methods forward_method for testing.
     methods proxy_forwarding for testing.
 endclass.
 
@@ -332,7 +332,7 @@ class lcl_mockup_stub_factory_test implementation.
 
   endmethod.
 
-  method proxy_method.
+  method forward_method.
 
     data lo type ref to zcl_mockup_loader_stub_factory.
     data lo_ex type ref to zcx_mockup_loader_error.
@@ -346,7 +346,7 @@ class lcl_mockup_stub_factory_test implementation.
         exporting
           io_ml_instance   = lo_ml
           i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
-      lo->proxy_method( 'PROXY_TEST' ).
+      lo->forward_method( 'PROXY_TEST' ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'PA'.
@@ -358,15 +358,15 @@ class lcl_mockup_stub_factory_test implementation.
           io_ml_instance   = lo_ml
           io_proxy_target  = lo_proxy_target
           i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
-      lo->proxy_method( 'PROXY_TEST_XXX' ).
+      lo->forward_method( 'PROXY_TEST_XXX' ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'MF'.
 
     try. " missing method
       clear: lo_ex.
-      lo->proxy_method( 'PROXY_TEST' ).
-      lo->proxy_method( 'PROXY_TEST' ).
+      lo->forward_method( 'PROXY_TEST' ).
+      lo->forward_method( 'PROXY_TEST' ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'MC'.
@@ -388,7 +388,7 @@ class lcl_mockup_stub_factory_test implementation.
           io_ml_instance   = lo_ml
           io_proxy_target  = lo_proxy_target
           i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
-      lo->proxy_method( 'PROXY_TEST' ).
+      lo->forward_method( 'PROXY_TEST' ).
       li_if ?= lo->generate_stub( ).
       l_act = li_if->proxy_test( p1 = 'Hello' p2 = 123 ).
       cl_abap_unit_assert=>assert_equals( act = l_act exp = 'Hello 123' ).

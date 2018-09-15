@@ -8,7 +8,7 @@ public section.
     importing
       !I_INTERFACE_NAME type SEOCLSNAME
       !IO_ML_INSTANCE type ref to ZCL_MOCKUP_LOADER
-      !IO_PROXY_TARGET type ref to OBJECT OPTIONAL
+      !IO_PROXY_TARGET type ref to OBJECT optional
     raising
       ZCX_MOCKUP_LOADER_ERROR .
   methods CONNECT_METHOD
@@ -23,7 +23,7 @@ public section.
       value(R_INSTANCE) type ref to ZCL_MOCKUP_LOADER_STUB_FACTORY
     raising
       ZCX_MOCKUP_LOADER_ERROR .
-  methods PROXY_METHOD
+  methods FORWARD_METHOD
     importing
       !I_METHOD_NAME type ABAP_METHNAME
     returning
@@ -198,6 +198,37 @@ method constructor.
 endmethod.
 
 
+method FORWARD_METHOD.
+  if mo_proxy_target is initial.
+    zcx_mockup_loader_error=>raise(
+      msg  = |Proxy target was not specified during instantiation|
+      code = 'PA' ). "#EC NOTEXT
+  endif.
+
+  data ls_config like line of mt_config.
+  ls_config-method_name = to_upper( i_method_name ).
+  ls_config-as_proxy    = abap_true.
+
+  read table md_if_desc->methods transporting no fields with key name = ls_config-method_name.
+  if sy-subrc is not initial.
+    zcx_mockup_loader_error=>raise(
+      msg  = |Method { ls_config-method_name } not found|
+      code = 'MF' ). "#EC NOTEXT
+  endif.
+
+  read table mt_config with key method_name = ls_config-method_name transporting no fields.
+  if sy-subrc is initial.
+    zcx_mockup_loader_error=>raise(
+      msg  = |Method { ls_config-method_name } is already connected|
+      code = 'MC' ). "#EC NOTEXT
+  endif.
+
+  append ls_config to mt_config.
+
+  r_instance = me.
+endmethod.
+
+
 method generate_stub.
 
   define _src.
@@ -271,35 +302,4 @@ method generate_stub.
       io_ml           = mo_ml.
 
 endmethod.
-
-method proxy_method.
-  if mo_proxy_target is initial.
-    zcx_mockup_loader_error=>raise(
-      msg  = |Proxy target was not specified during instantiation|
-      code = 'PA' ). "#EC NOTEXT
-  endif.
-
-  data ls_config like line of mt_config.
-  ls_config-method_name = to_upper( i_method_name ).
-  ls_config-as_proxy    = abap_true.
-
-  read table md_if_desc->methods transporting no fields with key name = ls_config-method_name.
-  if sy-subrc is not initial.
-    zcx_mockup_loader_error=>raise(
-      msg  = |Method { ls_config-method_name } not found|
-      code = 'MF' ). "#EC NOTEXT
-  endif.
-
-  read table mt_config with key method_name = ls_config-method_name transporting no fields.
-  if sy-subrc is initial.
-    zcx_mockup_loader_error=>raise(
-      msg  = |Method { ls_config-method_name } is already connected|
-      code = 'MC' ). "#EC NOTEXT
-  endif.
-
-  append ls_config to mt_config.
-
-  r_instance = me.
-endmethod.
-
 ENDCLASS.
