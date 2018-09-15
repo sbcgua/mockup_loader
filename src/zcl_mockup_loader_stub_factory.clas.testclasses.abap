@@ -7,9 +7,24 @@ class lcl_mockup_stub_factory_test definition final
     methods main_test_stub for testing.
     methods connect_method for testing.
     methods build_config for testing.
+    methods instantiation for testing.
+    methods proxy_method for testing.
+    methods proxy_forwarding for testing.
 endclass.
 
 *class zcl_mockup_loader_stub_factory definition local friends lcl_mockup_stub_factory_test.
+
+class lcl_test_proxy_target definition.
+  public section.
+  interfaces zif_mockup_loader_stub_dummy
+    final methods proxy_test.
+endclass.
+
+class lcl_test_proxy_target implementation.
+  method zif_mockup_loader_stub_dummy~proxy_test.
+    r_val = |{ p1 } { p2 }|.
+  endmethod.
+endclass.
 
 class lcl_test_base definition final.
   public section.
@@ -280,6 +295,106 @@ class lcl_mockup_stub_factory_test implementation.
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'PT'.
+
+  endmethod.
+
+  method instantiation.
+    data lo type ref to zcl_mockup_loader_stub_factory.
+    data lo_ex type ref to zcx_mockup_loader_error.
+    data lo_ml type ref to zcl_mockup_loader.
+
+    try. " wrong interface
+      lo_ml  = zcl_mockup_loader=>create(
+        i_type = 'MIME'
+        i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
+
+      clear: lo_ex.
+      create object lo
+        exporting
+          io_ml_instance   = lo_ml
+          i_interface_name = 'CHAR1'.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'IF'.
+
+    data lo_proxy_target type ref to lcl_test_proxy_target.
+    try. " wrong proxy target
+      clear: lo_ex.
+      create object lo_proxy_target.
+      create object lo
+        exporting
+          io_ml_instance   = lo_ml
+          io_proxy_target  = lo_ml
+          i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'II'.
+
+  endmethod.
+
+  method proxy_method.
+
+    data lo type ref to zcl_mockup_loader_stub_factory.
+    data lo_ex type ref to zcx_mockup_loader_error.
+    data lo_ml type ref to zcl_mockup_loader.
+    data lo_proxy_target type ref to lcl_test_proxy_target.
+    create object lo_proxy_target.
+
+    try. " no proxy during creation
+      clear: lo_ex.
+      create object lo
+        exporting
+          io_ml_instance   = lo_ml
+          i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+      lo->proxy_method( 'PROXY_TEST' ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'PA'.
+
+    try. " missing method
+      clear: lo_ex.
+      create object lo
+        exporting
+          io_ml_instance   = lo_ml
+          io_proxy_target  = lo_proxy_target
+          i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+      lo->proxy_method( 'PROXY_TEST_XXX' ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'MF'.
+
+    try. " missing method
+      clear: lo_ex.
+      lo->proxy_method( 'PROXY_TEST' ).
+      lo->proxy_method( 'PROXY_TEST' ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'MC'.
+
+  endmethod.
+
+  method proxy_forwarding.
+    data lo type ref to zcl_mockup_loader_stub_factory.
+    data lo_ex type ref to zcx_mockup_loader_error.
+    data lo_ml type ref to zcl_mockup_loader.
+    data lo_proxy_target type ref to lcl_test_proxy_target.
+    data li_if type ref to zif_mockup_loader_stub_dummy.
+    data l_act type string.
+    create object lo_proxy_target.
+
+    try. " missing method
+      create object lo
+        exporting
+          io_ml_instance   = lo_ml
+          io_proxy_target  = lo_proxy_target
+          i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+      lo->proxy_method( 'PROXY_TEST' ).
+      li_if ?= lo->generate_stub( ).
+      l_act = li_if->proxy_test( p1 = 'Hello' p2 = 123 ).
+      cl_abap_unit_assert=>assert_equals( act = l_act exp = 'Hello 123' ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( ).
+    endtry.
 
   endmethod.
 

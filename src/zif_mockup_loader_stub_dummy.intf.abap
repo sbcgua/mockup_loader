@@ -39,4 +39,10 @@ interface zif_mockup_loader_stub_dummy
     changing
       ctab type flighttab.
 
+  methods proxy_test
+    importing
+      !p1 type string
+      !p2 type i optional
+    returning value(r_val) type string .
+
 endinterface.

@@ -15,6 +15,7 @@ public section.
       output_param    type abap_parmname,
       output_pkind    type abap_parmkind,
       output_type     type ref to cl_abap_datadescr,
+      as_proxy        type abap_bool,
     end of ty_mock_config .
   types:
     tt_mock_config type standard table of ty_mock_config with key method_name .
@@ -22,7 +23,8 @@ public section.
   methods constructor
     importing
       !IT_CONFIG type TT_MOCK_CONFIG
-      !IO_ML type ref to ZCL_MOCKUP_LOADER .
+      !IO_ML type ref to ZCL_MOCKUP_LOADER
+      !IO_PROXY_TARGET type ref to OBJECT OPTIONAL .
 protected section.
   methods get_mock_data
     importing
@@ -33,6 +35,7 @@ protected section.
 
   data mt_config type tt_mock_config.
   data mo_ml      type ref to zcl_mockup_loader.
+  data mo_proxy_target type ref to object .
 
 private section.
 ENDCLASS.
@@ -43,8 +46,9 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
 
 
 method constructor.
-  mt_config = it_config.
-  mo_ml     = io_ml.
+  mt_config       = it_config.
+  mo_ml           = io_ml.
+  mo_proxy_target = io_proxy_target.
 endmethod.
 
 

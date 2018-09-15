@@ -8,6 +8,7 @@ public section.
     importing
       !I_INTERFACE_NAME type SEOCLSNAME
       !IO_ML_INSTANCE type ref to ZCL_MOCKUP_LOADER
+      !IO_PROXY_TARGET type ref to OBJECT OPTIONAL
     raising
       ZCX_MOCKUP_LOADER_ERROR .
   methods CONNECT_METHOD
@@ -18,6 +19,13 @@ public section.
       !I_SIFT_PARAM type ABAP_PARMNAME optional
       !I_MOCK_TAB_KEY type ABAP_COMPNAME optional
       !I_OUTPUT_PARAM type ABAP_PARMNAME optional
+    returning
+      value(R_INSTANCE) type ref to ZCL_MOCKUP_LOADER_STUB_FACTORY
+    raising
+      ZCX_MOCKUP_LOADER_ERROR .
+  methods PROXY_METHOD
+    importing
+      !I_METHOD_NAME type ABAP_METHNAME
     returning
       value(R_INSTANCE) type ref to ZCL_MOCKUP_LOADER_STUB_FACTORY
     raising
@@ -39,6 +47,8 @@ protected section.
   data MT_CONFIG type ZCL_MOCKUP_LOADER_STUB_BASE=>TT_MOCK_CONFIG .
   data MO_ML type ref to ZCL_MOCKUP_LOADER .
   data MD_IF_DESC type ref to CL_ABAP_OBJECTDESCR .
+  data MO_PROXY_TARGET type ref to OBJECT .
+
 private section.
 ENDCLASS.
 
@@ -172,6 +182,19 @@ method constructor.
   me->md_if_desc       ?= ld_desc.
   me->mo_ml             = io_ml_instance.
   me->mv_interface_name = i_interface_name.
+  me->mo_proxy_target   = io_proxy_target.
+
+  if io_proxy_target is bound.
+    data ld_obj type ref to cl_abap_objectdescr.
+    ld_obj ?= cl_abap_typedescr=>describe_by_object_ref( io_proxy_target ).
+    read table ld_obj->interfaces transporting no fields with key name = i_interface_name.
+    if sy-subrc is not initial.
+      zcx_mockup_loader_error=>raise(
+        msg  = |io_proxy_target does not implement { i_interface_name } interface|
+        code = 'II' ). "#EC NOTEXT
+    endif.
+  endif.
+
 endmethod.
 
 
@@ -201,23 +224,39 @@ method generate_stub.
   _src 'class lcl_mockup_loader_stub implementation.'.    "#EC NOTEXT
 
   loop at md_if_desc->methods assigning <method>.
+    unassign <conf>.
     read table mt_config assigning <conf> with key method_name = <method>-name.
-    if sy-subrc is initial.
-      ln = |  method { mv_interface_name }~{ <method>-name }.|. _src ln.
-      _src '    data lr_data type ref to data.'.          "#EC NOTEXT
-      _src '    lr_data = get_mock_data('.                "#EC NOTEXT
-      if <conf>-sift_param is not initial.
-        ln = |      i_sift_value  = { <conf>-sift_param }|. _src ln.
+    ln = |  method { mv_interface_name }~{ <method>-name }.|. _src ln.
+    if <conf> is assigned.
+      if <conf>-as_proxy = abap_true.
+        field-symbols <param> like line of <method>-parameters.
+        data l_param_kind type char1.
+
+        _src '    data lt_params type abap_parmbind_tab.'. "#EC NOTEXT
+        _src '    data ls_param like line of lt_params.'.  "#EC NOTEXT
+        loop at <method>-parameters assigning <param>.
+          l_param_kind = <param>-parm_kind.
+          translate l_param_kind using 'IEEICCRR'. " Inporting -> exporting, etc
+          ln = |    ls_param-name = '{ <param>-name }'.|. _src ln.
+          ln = |    ls_param-kind = '{ l_param_kind }'.|. _src ln.
+          ln = |    get reference of { <param>-name } into ls_param-value.|. _src ln.
+          _src '    insert ls_param into table lt_params.'.  "#EC NOTEXT
+        endloop.
+        ln = |    call method mo_proxy_target->('{ mv_interface_name }~{ <method>-name }') parameter-table lt_params.|. _src ln. "#EC NOTEXT
+
+      else.
+        _src '    data lr_data type ref to data.'.          "#EC NOTEXT
+        _src '    lr_data = get_mock_data('.                "#EC NOTEXT
+        if <conf>-sift_param is not initial.
+          ln = |      i_sift_value  = { <conf>-sift_param }|. _src ln.
+        endif.
+        ln = |      i_method_name = '{ <method>-name }' ).|. _src ln.
+        _src '    field-symbols <container> type any.'.     "#EC NOTEXT
+        _src '    assign lr_data->* to <container>.'.       "#EC NOTEXT
+        ln = |    { <conf>-output_param } = <container>.|. _src ln.
       endif.
-      ln = |      i_method_name = '{ <method>-name }' ).|. _src ln.
-      _src '    field-symbols <container> type any.'.     "#EC NOTEXT
-      _src '    assign lr_data->* to <container>.'.       "#EC NOTEXT
-      ln = |    { <conf>-output_param } = <container>.|. _src ln.
-      _src '  endmethod.'.                                "#EC NOTEXT
-    else.
-      ln = |  method { mv_interface_name }~{ <method>-name }.|. _src ln.
-      _src '  endmethod.'.                                "#EC NOTEXT
     endif.
+    _src '  endmethod.'.                                  "#EC NOTEXT
   endloop.                                                "#EC NOTEXT
 
   _src 'endclass.'.
@@ -227,8 +266,40 @@ method generate_stub.
 
   create object r_stub type (l_class_name)
     exporting
-      it_config = mt_config
-      io_ml     = mo_ml.
+      it_config       = mt_config
+      io_proxy_target = mo_proxy_target
+      io_ml           = mo_ml.
 
 endmethod.
+
+method proxy_method.
+  if mo_proxy_target is initial.
+    zcx_mockup_loader_error=>raise(
+      msg  = |Proxy target was not specified during instantiation|
+      code = 'PA' ). "#EC NOTEXT
+  endif.
+
+  data ls_config like line of mt_config.
+  ls_config-method_name = to_upper( i_method_name ).
+  ls_config-as_proxy    = abap_true.
+
+  read table md_if_desc->methods transporting no fields with key name = ls_config-method_name.
+  if sy-subrc is not initial.
+    zcx_mockup_loader_error=>raise(
+      msg  = |Method { ls_config-method_name } not found|
+      code = 'MF' ). "#EC NOTEXT
+  endif.
+
+  read table mt_config with key method_name = ls_config-method_name transporting no fields.
+  if sy-subrc is initial.
+    zcx_mockup_loader_error=>raise(
+      msg  = |Method { ls_config-method_name } is already connected|
+      code = 'MC' ). "#EC NOTEXT
+  endif.
+
+  append ls_config to mt_config.
+
+  r_instance = me.
+endmethod.
+
 ENDCLASS.
