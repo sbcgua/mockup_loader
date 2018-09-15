@@ -441,6 +441,7 @@ The test double related code was saved but moved to a separate package [mockup_l
 ```
 - **i_interface_name** - global interface name to stub
 - **io_ml_instance** - instance of initiated mockup loader
+- **io_proxy_target** - instance of initiated object, implementing the same interface for proxy calls, see `proxy_method` below
 
 ### CONNECT_METHOD
 
@@ -464,6 +465,35 @@ Activates stub for the given method, connects it to the specified mockup path, o
 - **i_mock_tab_key** - key field in the mock data to use for the filter
 - **i_output_param** - parameter of the interface to save data to. Exporting, changing and returning are supported. If empty - the returning parameter is assumed and searched in the method definition. Parameter must be a table or a structure (as all load targets)
 - **returning value** is the instance of stub factory, for chaining
+
+### FORWARD_METHOD
+
+```abap
+  importing
+    i_method_name  type abap_methname
+  returning
+    r_instance type ref to zcl_mockup_loader_stub_factory
+```
+Activates stub for the given method, but does not connect to a mock. Instead forward the call to `io_proxy_target`, specified during instantiation. For example if some of accessor methods must be connected to mocks and some others were implemented elsewhere in-code.
+
+- **i_method_name**  - interface method to forward
+
+```abap
+* pseudo code
+class lcl_custom_accessor.
+  interfaces ZIF_MY_ACCESSOR final methods get_X.
+  method get_X.
+    r_value = 'This is X'.
+  endmethod.
+endclass.
+...
+create lo_factory ... io_proxy_target = new lcl_custom_accessor( ).
+lo_factory->connect_method( " Connect to mock
+    i_method    = 'GET_Y'
+    i_mock_name = 'EXAMPLE/sflight' ).
+lo_factory->forward_method( " Pass through, call lcl_custom_accessor->get_x
+    i_method    = 'GET_X' ).
+```
 
 ### GENERATE_STUB
 

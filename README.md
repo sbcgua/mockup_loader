@@ -1,7 +1,6 @@
 # Mockup Loader for ABAP unit testing
 
-*Version: 2.0.0-beta2*    
-*[History of changes](/changelog.txt)*    
+*Version: 2.0.0-beta3 ([history of changes](/changelog.txt))*
 
 ## Major changes in version 2
 
@@ -128,6 +127,8 @@ It creates an instance object which implements the given interface where one or 
 This will result in the data set where key field `CONNID` will be equal to `I_CONNID` parameter actually passed to interface call.
 
 `Returning`, `exporting` and `chainging` parameters are supported. For more information see [REFERENCE.md](REFERENCE.md).
+
+In addition, forwarding calls to another object (implementing same interface) is supported. For example if some of accessor methods must be connected to mocks and some others were implemented manually in a supprting test (or real production) class. See [REFERENCE.md](REFERENCE.md).
 
 ### Store/Retrieve
 
