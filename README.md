@@ -253,6 +253,8 @@ Major contributors are described in [CONTRIBUTORS.md](/CONTRIBUTORS.md). You are
 
 - [Unit testing mockup loader for ABAP @SCN](http://scn.sap.com/community/abap/blog/2015/11/12/unit-testing-mockup-loader-for-abap)
 - [How to do convenient multicase unit tests with zmockup_loader @SCN](http://scn.sap.com/community/abap/blog/2016/03/20/how-to-do-convenient-multicase-test-with-zmockuploader)
+- [zmockup_loader and unit tests with interface stubbing](https://blogs.sap.com/?p=712675)
+- [zmockup_loader: unit test data preparation flow](https://blogs.sap.com/?p=714903)
 
 ## License
 

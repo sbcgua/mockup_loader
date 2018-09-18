@@ -1,0 +1,23 @@
+@startuml
+
+title Accessor pattern
+
+interface ZIF_DATA_ACCESSOR {
+  + {abstract} select_some_data()
+}
+
+class ZCL_SOME_DATA_CONSUMER
+note right: class-under-test
+
+package production-env {
+    class ZCL_DB_ACCESSOR
+}
+package testing-env {
+    class ZCL_MOCK_ACCESSOR
+}
+
+ZIF_DATA_ACCESSOR <|-down- ZCL_DB_ACCESSOR: implements
+ZIF_DATA_ACCESSOR <|-down- ZCL_MOCK_ACCESSOR: implements
+ZIF_DATA_ACCESSOR <-down- ZCL_SOME_DATA_CONSUMER: call
+
+@enduml
