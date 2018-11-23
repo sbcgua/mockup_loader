@@ -38,6 +38,9 @@ class ZCL_MOCKUP_LOADER definition
   create private .
 
 public section.
+  type-pools ABAP .
+
+  constants VERSION type STRING value 'v2.0.0'. "#EC NOTEXT
 
   methods LOAD_RAW
     importing
@@ -47,7 +50,6 @@ public section.
       !E_CONTENT type XSTRING
     raising
       ZCX_MOCKUP_LOADER_ERROR .
-  type-pools ABAP .
   methods LOAD_AND_STORE
     importing
       !I_OBJ type STRING
@@ -113,11 +115,26 @@ private section.
       !E_RAWDATA type STRING
     raising
       ZCX_MOCKUP_LOADER_ERROR .
+  methods CONSTRUCTOR
+    raising
+      ZCX_MOCKUP_LOADER_ERROR .
 ENDCLASS.
 
 
 
 CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
+
+
+method CONSTRUCTOR.
+
+  data lv_required_text2tab_ver type string value 'v2.1.1'.
+  if zcl_text2tab_parser=>check_version_fits( lv_required_text2tab_ver ) = abap_false.
+    zcx_mockup_loader_error=>raise(
+      msg  = |text2tab version ({ zcl_text2tab_parser=>version }) is lower than required ({ lv_required_text2tab_ver })|
+      code = 'VL' ). "#EC NOTEXT
+  endif.
+
+endmethod.
 
 
 method CREATE.
