@@ -36,7 +36,6 @@ protected section.
   data mt_config type tt_mock_config.
   data mo_ml      type ref to zcl_mockup_loader.
   data mo_proxy_target type ref to object .
-
 private section.
 ENDCLASS.
 

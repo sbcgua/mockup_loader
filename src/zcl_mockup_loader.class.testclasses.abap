@@ -111,7 +111,7 @@ class lcl_test_mockup_loader definition for testing
     constants c_crlf like cl_abap_char_utilities=>cr_lf value cl_abap_char_utilities=>cr_lf.
     constants c_lf   like cl_abap_char_utilities=>newline value cl_abap_char_utilities=>newline.
 
-    data o type ref to zcl_mockup_loader.  "class under test
+    data o type ref to zcl_mockup_loader2.  "class under test
 
     class-methods class_setup.
     methods setup.
@@ -135,13 +135,13 @@ class lcl_test_mockup_loader definition for testing
         e_dummy_string type string.
 
     methods create_default
-      returning value(ro) type ref to zcl_mockup_loader
+      returning value(ro) type ref to zcl_mockup_loader2
       raising zcx_mockup_loader_error.
 
 endclass.       "lcl_test_mockup_loader
 
 * Friends
-class zcl_mockup_loader definition local friends lcl_test_mockup_loader.
+class zcl_mockup_loader2 definition local friends lcl_test_mockup_loader.
 
 **********************************************************************
 * Implementation
@@ -163,7 +163,7 @@ class lcl_test_mockup_loader implementation.
   endmethod.       "class_setup
 
   method create_default.
-    ro = zcl_mockup_loader=>create(
+    ro = zcl_mockup_loader2=>create(
       i_type       = 'MIME'
       i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
       i_amt_format = ''     " default
