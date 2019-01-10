@@ -87,6 +87,12 @@
      <LANGU>E</LANGU>
      <DESCRIPT>Set parsing params</DESCRIPT>
     </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_MOCKUP_LOADER</CLSNAME>
+     <CMPNAME>CREATE_FROM_SYS_SETTINGS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Create mockup loader instance from system settings</DESCRIPT>
+    </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>
  </asx:abap>
