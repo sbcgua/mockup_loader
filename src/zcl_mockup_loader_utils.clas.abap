@@ -158,7 +158,9 @@ method BUILD_FILTER.
         append l_filter to lt_filter.
 
       when others.
-        zcx_mockup_loader_error=>raise( msg = |Unsupported type { dy_type->absolute_name } of I_WHERE| code = 'UT' ).   "#EC NOTEXT
+        zcx_mockup_loader_error=>raise(
+          msg  = |Unsupported type { dy_type->absolute_name } of I_WHERE|
+          code = 'UT' ). "#EC NOTEXT
     endcase.
 
   catch cx_sy_move_cast_error.

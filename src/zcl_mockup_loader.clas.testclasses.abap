@@ -29,55 +29,55 @@
 **********************************************************************
 * MACRO
 **********************************************************************
-  define test_parse.
-    clear dummy.
-    read table lo_struc_descr->components into ls_component with key name = '&1'.
-    o->parse_field(
-      exporting
-        is_component = ls_component
-        i_data       = &2
-      importing
-        e_field      = dummy-&1 ).
-  end-of-definition.
+define test_parse.
+  clear dummy.
+  read table lo_struc_descr->components into ls_component with key name = '&1'.
+  o->parse_field(
+    exporting
+      is_component = ls_component
+      i_data       = &2
+    importing
+      e_field      = dummy-&1 ).
+end-of-definition.
 
-  define test_parse_positive.
-    clear lo_ex.
-    try.
-      test_parse &1 &2.
-    catch zcx_mockup_loader_error into lo_ex.
-      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
-    endtry.
-    cl_abap_unit_assert=>assert_equals( act = dummy-&1 exp = &3 msg = 'Parse field positive:' && &2 ).
-  end-of-definition.
+define test_parse_positive.
+  clear lo_ex.
+  try.
+    test_parse &1 &2.
+  catch zcx_mockup_loader_error into lo_ex.
+    cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
+  endtry.
+  cl_abap_unit_assert=>assert_equals( act = dummy-&1 exp = &3 msg = 'Parse field positive:' && &2 ).
+end-of-definition.
 
-  define test_parse_negative.
-    clear lo_ex.
-    try.
-      test_parse &1 &2.
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    cl_abap_unit_assert=>assert_not_initial( act = lo_ex msg = 'Parse field negative:' && &2 ).
-    cl_abap_unit_assert=>assert_equals( exp = &3 act = lo_ex->code ).
-  end-of-definition.
+define test_parse_negative.
+  clear lo_ex.
+  try.
+    test_parse &1 &2.
+  catch zcx_mockup_loader_error into lo_ex.
+  endtry.
+  cl_abap_unit_assert=>assert_not_initial( act = lo_ex msg = 'Parse field negative:' && &2 ).
+  cl_abap_unit_assert=>assert_equals( exp = &3 act = lo_ex->code ).
+end-of-definition.
 
-  define append_dummy.
-    e_dummy_struc-tdate    = &1.
-    e_dummy_struc-tchar    = &2.
-    e_dummy_struc-tstring  = &3.
-    e_dummy_struc-tdecimal = &4.
-    e_dummy_struc-tnumber  = &5.
-    if i_strict = abap_true.
-      e_dummy_struc-traw     = &6.
-      e_dummy_struc-tinteger = &7.
-      e_dummy_struc-talpha   = &8.
-    endif.
-    append e_dummy_struc to e_dummy_tab.
-  end-of-definition.
+define append_dummy.
+  e_dummy_struc-tdate    = &1.
+  e_dummy_struc-tchar    = &2.
+  e_dummy_struc-tstring  = &3.
+  e_dummy_struc-tdecimal = &4.
+  e_dummy_struc-tnumber  = &5.
+  if i_strict = abap_true.
+    e_dummy_struc-traw     = &6.
+    e_dummy_struc-tinteger = &7.
+    e_dummy_struc-talpha   = &8.
+  endif.
+  append e_dummy_struc to e_dummy_tab.
+end-of-definition.
 
-  define assert_excode.
-    cl_abap_unit_assert=>assert_not_initial( act = lo_ex ).
-    cl_abap_unit_assert=>assert_equals( exp = &1 act = lo_ex->code ).
-  end-of-definition.
+define assert_excode.
+  cl_abap_unit_assert=>assert_not_initial( act = lo_ex ).
+  cl_abap_unit_assert=>assert_equals( exp = &1 act = lo_ex->code ).
+end-of-definition.
 
 
 **********************************************************************
@@ -167,8 +167,7 @@ class lcl_test_mockup_loader implementation.
       i_type       = 'MIME'
       i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
       i_amt_format = ''     " default
-      i_encoding   = '4110' " utf8
-     ).
+      i_encoding   = '4110' ). " utf8
   endmethod.  " create_default.
 
   method setup.

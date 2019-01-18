@@ -12,11 +12,9 @@ class lcl_mockup_stub_factory_test definition final
     methods proxy_forwarding for testing.
 endclass.
 
-*class zcl_mockup_loader_stub_factory definition local friends lcl_mockup_stub_factory_test.
-
 class lcl_test_proxy_target definition.
   public section.
-  interfaces zif_mockup_loader_stub_dummy.
+    interfaces zif_mockup_loader_stub_dummy.
 endclass.
 
 class lcl_test_proxy_target implementation.

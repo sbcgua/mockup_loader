@@ -115,10 +115,10 @@ at selection-screen on p_mpath.
 
 at selection-screen.
   case sy-ucomm.
-  when 'FC01'.          "Get SU3 value
-    perform get_su3_value.
-  when 'FC02'.
-    perform upload_mime.
+    when 'FC01'.          "Get SU3 value
+      perform get_su3_value.
+    when 'FC02'.
+      perform upload_mime.
   endcase.
 
 *&---------------------------------------------------------------------*
@@ -293,7 +293,8 @@ form upload_mime.
   try.
     create object lo_obj type ('ZCL_W3MIME_UTILS').
   catch cx_sy_create_error into lx.
-    message 'Install ZW3MIMEPOLL for this feature to work. https://github.com/sbcgua/abap_w3mi_poller' type 'E' display like 'S'. "#EC NOTEXT
+    l_str = 'Install ZW3MIMEPOLL for this feature to work. https://github.com/sbcgua/abap_w3mi_poller'. "#EC NOTEXT
+    message l_str type 'E' display like 'S'.
     return.
   endtry.
 

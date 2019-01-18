@@ -272,7 +272,8 @@ method generate_stub.
           ln = |    get reference of { <param>-name } into ls_param-value.|. _src ln.
           _src '    insert ls_param into table lt_params.'.  "#EC NOTEXT
         endloop.
-        ln = |    call method mo_proxy_target->('{ mv_interface_name }~{ <method>-name }') parameter-table lt_params.|. _src ln. "#EC NOTEXT
+        ln = |    call method mo_proxy_target->('{ mv_interface_name }~{ <method>-name }')|. _src ln. "#EC NOTEXT
+        ln = |      parameter-table lt_params.|. _src ln. "#EC NOTEXT
 
       else.
         _src '    data lr_data type ref to data.'.          "#EC NOTEXT

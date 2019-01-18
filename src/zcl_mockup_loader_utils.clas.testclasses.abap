@@ -30,31 +30,31 @@
 * MACRO
 **********************************************************************
 
-  define append_dummy.
-    e_dummy_struc-tdate    = &1.
-    e_dummy_struc-tchar    = &2.
-    e_dummy_struc-tstring  = &3.
-    e_dummy_struc-tdecimal = &4.
-    e_dummy_struc-tnumber  = &5.
-    if i_strict = abap_true.
-      e_dummy_struc-traw     = &6.
-      e_dummy_struc-tinteger = &7.
-      e_dummy_struc-talpha   = &8.
-    endif.
-    append e_dummy_struc to e_dummy_tab.
-  end-of-definition.
+define append_dummy.
+  e_dummy_struc-tdate    = &1.
+  e_dummy_struc-tchar    = &2.
+  e_dummy_struc-tstring  = &3.
+  e_dummy_struc-tdecimal = &4.
+  e_dummy_struc-tnumber  = &5.
+  if i_strict = abap_true.
+    e_dummy_struc-traw     = &6.
+    e_dummy_struc-tinteger = &7.
+    e_dummy_struc-talpha   = &8.
+  endif.
+  append e_dummy_struc to e_dummy_tab.
+end-of-definition.
 
-  define add_range.
-    r_&1-sign   = &2.
-    r_&1-option = &3.
-    r_&1-low    = &4.
-    append r_&1 to l_where-t&1.
-  end-of-definition.
+define add_range.
+  r_&1-sign   = &2.
+  r_&1-option = &3.
+  r_&1-low    = &4.
+  append r_&1 to l_where-t&1.
+end-of-definition.
 
-  define assert_excode.
-    cl_abap_unit_assert=>assert_not_initial( act = lo_ex ).
-    cl_abap_unit_assert=>assert_equals( exp = &1 act = lo_ex->code ).
-  end-of-definition.
+define assert_excode.
+  cl_abap_unit_assert=>assert_not_initial( act = lo_ex ).
+  cl_abap_unit_assert=>assert_equals( exp = &1 act = lo_ex->code ).
+end-of-definition.
 
 **********************************************************************
 * Test Class definition
