@@ -48,7 +48,6 @@ protected section.
   data MO_ML type ref to ZCL_MOCKUP_LOADER .
   data MD_IF_DESC type ref to CL_ABAP_OBJECTDESCR .
   data MO_PROXY_TARGET type ref to OBJECT .
-
 private section.
 ENDCLASS.
 

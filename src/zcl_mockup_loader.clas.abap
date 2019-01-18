@@ -41,7 +41,6 @@ public section.
   type-pools ABAP .
 
   constants VERSION type STRING value 'v2.0.0'. "#EC NOTEXT
-
   methods LOAD_RAW
     importing
       !I_OBJ type STRING
@@ -76,6 +75,7 @@ public section.
       !I_AMT_FORMAT type CHAR2 optional
       !I_ENCODING type ABAP_ENCODING optional
       !I_DATE_FORMAT type CHAR4 optional
+      !I_BEGIN_COMMENT type CHAR1 optional
     returning
       value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
     raising
@@ -84,7 +84,16 @@ public section.
     importing
       !I_AMT_FORMAT type CHAR2 optional
       !I_ENCODING type ABAP_ENCODING optional
-      !I_DATE_FORMAT type CHAR4 optional .
+      !I_DATE_FORMAT type CHAR4 optional
+      !I_BEGIN_COMMENT type CHAR1 optional .
+  class-methods CREATE_FROM_SYS_SETTINGS
+    importing
+      !I_PATH type STRING
+      !I_TYPE type CHAR4 default 'MIME'
+    returning
+      value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
+    raising
+      ZCX_MOCKUP_LOADER_ERROR .
 protected section.
 private section.
 
@@ -92,6 +101,7 @@ private section.
   data MV_AMT_FORMAT type CHAR2 .
   data MV_ENCODING type ABAP_ENCODING .
   data MV_DATE_FORMAT type CHAR4 .
+  data mv_begin_comment type char1.
 
   methods INITIALIZE
     importing
@@ -144,7 +154,8 @@ method CREATE.
   ro_instance->set_params(
     i_amt_format  = i_amt_format
     i_encoding    = i_encoding
-    i_date_format = i_date_format ).
+    i_date_format = i_date_format
+    i_begin_comment = i_begin_comment ).
 
   data:
         l_src_type  type char4,
@@ -174,6 +185,40 @@ method CREATE.
     i_path = l_src_path ).
 
 endmethod.
+
+
+  method create_from_sys_settings.
+    types: begin of lt_settings,
+             amt_format  type char2,
+             codepage    type abap_encoding,
+             date_format type char4,
+             comment     type char1,
+           end of lt_settings.
+    types: begin of lt_var,
+             name type rvari_vnam,
+             low  type rvari_val_255,
+           end of lt_var.
+    data: l_variable type lt_var,
+          l_settings type lt_settings.
+
+    " read system settings (amt_format, encoding, date_format, begin_comment)
+    " from table tvarvc
+    select name low from tvarvc into l_variable
+      where name in ('ZMOCKUP_LOADER_AMT_FORMAT','ZMOCKUP_LOADER_CODEPAGE',
+        'ZMOCKUP_LOADER_DATE_FORMAT','ZMOCKUP_LOADER_COMMENT').
+
+      transfer_setting amt_format 'ZMOCKUP_LOADER_AMT_FORMAT'.
+      transfer_setting codepage 'ZMOCKUP_LOADER_CODEPAGE'.
+      transfer_setting date_format 'ZMOCKUP_LOADER_DATE_FORMAT'.
+      transfer_setting comment 'ZMOCKUP_LOADER_COMMENT'.
+
+    endselect.
+
+    ro_instance = create( i_path = i_path i_type = i_type i_amt_format = l_settings-amt_format
+      i_encoding = l_settings-codepage i_date_format = l_settings-date_format
+      i_begin_comment = l_settings-comment ).
+
+  endmethod.
 
 
 method INITIALIZE.
@@ -389,7 +434,8 @@ method parse_data.
     lo_parser = zcl_text2tab_parser=>create(
       i_pattern       = <container>
       i_amount_format = mv_amt_format
-      i_date_format   = mv_date_format ).
+      i_date_format   = mv_date_format
+      i_begin_comment = mv_begin_comment ).
 
     lo_parser->parse(
       exporting
@@ -476,6 +522,8 @@ method SET_PARAMS.
   else.
     me->mv_date_format = i_date_format.
   endif.
+
+  me->mv_begin_comment = i_begin_comment.
 
 endmethod.
 ENDCLASS.
