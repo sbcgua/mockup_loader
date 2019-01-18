@@ -41,6 +41,29 @@ public section.
   type-pools ABAP .
 
   constants VERSION type STRING value 'v2.0.0'. "#EC NOTEXT
+
+  class-methods CREATE
+    importing
+      !I_PATH type STRING
+      !I_TYPE type CHAR4 default 'MIME'
+      !I_AMT_FORMAT type CHAR2 optional
+      !I_ENCODING type ABAP_ENCODING optional
+      !I_DATE_FORMAT type CHAR4 optional
+      !I_BEGIN_COMMENT type CHAR1 optional
+    returning
+      value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
+    raising
+      ZCX_MOCKUP_LOADER_ERROR .
+  class-methods CREATE_FROM_SYS_SETTINGS
+    importing
+      !I_PATH type STRING
+      !I_TYPE type CHAR4 default 'MIME'
+    returning
+      value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
+    raising
+      ZCX_MOCKUP_LOADER_ERROR .
+
+
   methods LOAD_RAW
     importing
       !I_OBJ type STRING
@@ -68,32 +91,12 @@ public section.
       !E_CONTAINER type ANY
     raising
       ZCX_MOCKUP_LOADER_ERROR .
-  class-methods CREATE
-    importing
-      !I_PATH type STRING
-      !I_TYPE type CHAR4 default 'MIME'
-      !I_AMT_FORMAT type CHAR2 optional
-      !I_ENCODING type ABAP_ENCODING optional
-      !I_DATE_FORMAT type CHAR4 optional
-      !I_BEGIN_COMMENT type CHAR1 optional
-    returning
-      value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
-    raising
-      ZCX_MOCKUP_LOADER_ERROR .
   methods SET_PARAMS
     importing
       !I_AMT_FORMAT type CHAR2 optional
       !I_ENCODING type ABAP_ENCODING optional
       !I_DATE_FORMAT type CHAR4 optional
       !I_BEGIN_COMMENT type CHAR1 optional .
-  class-methods CREATE_FROM_SYS_SETTINGS
-    importing
-      !I_PATH type STRING
-      !I_TYPE type CHAR4 default 'MIME'
-    returning
-      value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
-    raising
-      ZCX_MOCKUP_LOADER_ERROR .
 protected section.
 private section.
 
@@ -204,8 +207,7 @@ endmethod.
     " read system settings (amt_format, encoding, date_format, begin_comment)
     " from table tvarvc
     select name low from tvarvc into l_variable
-      where name in (
-        'ZMOCKUP_LOADER_AMT_FORMAT',
+      where name in ('ZMOCKUP_LOADER_AMT_FORMAT',
         'ZMOCKUP_LOADER_CODEPAGE',
         'ZMOCKUP_LOADER_DATE_FORMAT',
         'ZMOCKUP_LOADER_COMMENT' ).
