@@ -9,7 +9,6 @@
 - `zcl_mockup_loader` is not a singleton anymore. Must be instantiated with `create` method. `zcl_mockup_loader_store` remained the singleton.
 - VBA zip compiler depreciated, see below 'Conversion to Excel' section.
 - Interface stubbing :tada:. See 'Data delivery' section.
-- TODO new upcoming feature ... ;)
 
 ## Contents
 
@@ -75,7 +74,7 @@ BUKRS BELNR GJAHR BUZEI BSCHL KOART ...
 
 ... and puts it (with proper ALPHA exits and etc) to an internal table with `BSEG` line type.  
 
-On-the-fly data filtering is supported. For more information see [REFERENCE.md](REFERENCE.md).
+On-the-fly data filtering is supported. For more information see [REFERENCE.md](docs/REFERENCE.md).
 
 ## Data delivery
 
@@ -126,9 +125,9 @@ It creates an instance object which implements the given interface where one or 
 ```
 This will result in the data set where key field `CONNID` will be equal to `I_CONNID` parameter actually passed to interface call.
 
-`Returning`, `exporting` and `chainging` parameters are supported. For more information see [REFERENCE.md](REFERENCE.md).
+`Returning`, `exporting` and `chainging` parameters are supported. For more information see [REFERENCE.md](docs/REFERENCE.md).
 
-In addition, forwarding calls to another object (implementing same interface) is supported. For example if some of accessor methods must be connected to mocks and some others were implemented manually in a supprting test (or real production) class. See [REFERENCE.md](REFERENCE.md).
+In addition, forwarding calls to another object (implementing same interface) is supported. For example if some of accessor methods must be connected to mocks and some others were implemented manually in a supprting test (or real production) class. See [REFERENCE.md](docs/REFERENCE.md).
 
 ### Store/Retrieve
 
@@ -198,9 +197,9 @@ endif.
 
 As the final result we can perform completely dynamic unit tests, covering most of code, including *DB select* related code **without** actually accessing the database. Of course, it is not only the mockup loader which ensures that. This requires accurate design of the project code, separating DB selection and processing code. The mockup loader and "store" functionality makes it more convenient.
 
-The `zcl_mockup_loader` has a *shortcut* method `load_and_store` to load data to the store directly without technical variables. For more information see [REFERENCE.md](REFERENCE.md).
+The `zcl_mockup_loader` has a *shortcut* method `load_and_store` to load data to the store directly without technical variables. For more information see [REFERENCE.md](docs/REFERENCE.md).
 
-![data flow](illustration.png)
+![data flow](docs/illustration.png)
 
 Some design facts about the `store`:
 
@@ -221,7 +220,7 @@ Zipped mockups slug is supposed to be uploaded as a MIME object via SMW0. Howeve
 
 `i_type` and `i_path` are the parameters to the `create` method to define the 'normal' mockup source. To **temporarily** switch to another source you can use the transaction `ZMOCKUP_LOADER_SWSRC`. It will initialize SET/GET parameters  `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH(MIME)` which will **override** defaults for the current session only.
 
-![switch source](switch.png)
+![switch source](docs/switch.png)
 
 N.B. Type change in the selection screen immediately changes the parameters in session memory, no run is required ('enter' should be pressed though after manual text fields change to trigger `on screen`). `Get SU3` reads param values from user master (useful when you work on the same project for some time). `Upload to MIME` uploads the file to MIME storage (requires [abap_w3mi_poller](https://github.com/sbcgua/abap_w3mi_poller) to be installed).
 
@@ -232,13 +231,13 @@ You may have a lot of data prepared in Excel files. Many files, many sheets in e
 - [mockup compiler](https://github.com/sbcgua/mockup_compiler) - ABAP implementation, requires [abap2xlsx](https://github.com/ivanfemia/abap2xlsx) installed.
 - [mockup compiler JS](https://github.com/sbcgua/mockup-compiler-js) - java script implemenation, requires nodejs environment at the developer's machine.
 
-See [EXCEL2TXT.md](EXCEL2TXT.md) for more info.
+See [EXCEL2TXT.md](docs/EXCEL2TXT.md) for more info.
 
-![compile zip slug](compiler.png)
+![compile zip slug](docs/compiler.png)
 
 ## Reference
 
-Complete reference of classes and methods can be found in [REFERENCE.md](REFERENCE.md). 
+Complete reference of classes and methods can be found in [REFERENCE.md](docs/REFERENCE.md). 
 
 ## Examples
 

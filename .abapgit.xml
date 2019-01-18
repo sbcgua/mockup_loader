@@ -12,14 +12,9 @@
     <item>/package.json</item>
     <item>/example/*</item>
     <item>/test/*</item>
+    <item>/docs/*</item>
     <item>/CONTRIBUTORS.md</item>
-    <item>/EXCEL2TXT.md</item>
-    <item>/REFERENCE.md</item>
     <item>/changelog.txt</item>
-    <item>/illustration.png</item>
-    <item>/switch.png</item>
-    <item>/compiler.png</item>
-    <item>/mockup stub.uml</item>
    </IGNORE>
   </DATA>
  </asx:values>

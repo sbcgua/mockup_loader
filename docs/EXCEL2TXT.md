@@ -14,7 +14,7 @@ JS version cannot upload to SAP, however there are workarounds:
 ## Requirement to source ##
 
 1. Excel files should be in one directory, same as the script. Formats supported: `.xlsx`. Should theoretically work with `.xls`, `.xlsm`, `.ods` but needs to be tested and fixed in file filtering code, TODO...
-2. Each Excel file should have a sheet named `_contents`, it should contain a list of other sheet names which are relevant to be converted. In the second column there should be a mark 'X' to save the sheet to text. (See [example/Example.ods](example/Example.ods)) 
+2. Each Excel file should have a sheet named `_contents`, it should contain a list of other sheet names which are relevant to be converted. In the second column there should be a mark 'X' to save the sheet to text. (See [example/Example.ods](../example/Example.ods)) 
 3. Each sheet should contain data, staring in A1 cell. 
     * The first row must contain field names (capitalized).
     * Columns after the first empty columns are ignored
