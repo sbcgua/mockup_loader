@@ -204,18 +204,25 @@ endmethod.
     " read system settings (amt_format, encoding, date_format, begin_comment)
     " from table tvarvc
     select name low from tvarvc into l_variable
-      where name in ('ZMOCKUP_LOADER_AMT_FORMAT','ZMOCKUP_LOADER_CODEPAGE',
-        'ZMOCKUP_LOADER_DATE_FORMAT','ZMOCKUP_LOADER_COMMENT').
+      where name in (
+        'ZMOCKUP_LOADER_AMT_FORMAT',
+        'ZMOCKUP_LOADER_CODEPAGE',
+        'ZMOCKUP_LOADER_DATE_FORMAT',
+        'ZMOCKUP_LOADER_COMMENT' ).
 
-      transfer_setting amt_format 'ZMOCKUP_LOADER_AMT_FORMAT'.
-      transfer_setting codepage 'ZMOCKUP_LOADER_CODEPAGE'.
+      transfer_setting amt_format  'ZMOCKUP_LOADER_AMT_FORMAT'.
+      transfer_setting codepage    'ZMOCKUP_LOADER_CODEPAGE'.
       transfer_setting date_format 'ZMOCKUP_LOADER_DATE_FORMAT'.
-      transfer_setting comment 'ZMOCKUP_LOADER_COMMENT'.
+      transfer_setting comment     'ZMOCKUP_LOADER_COMMENT'.
 
     endselect.
 
-    ro_instance = create( i_path = i_path i_type = i_type i_amt_format = l_settings-amt_format
-      i_encoding = l_settings-codepage i_date_format = l_settings-date_format
+    ro_instance = create(
+      i_path          = i_path
+      i_type          = i_type
+      i_amt_format    = l_settings-amt_format
+      i_encoding      = l_settings-codepage
+      i_date_format   = l_settings-date_format
       i_begin_comment = l_settings-comment ).
 
   endmethod.
