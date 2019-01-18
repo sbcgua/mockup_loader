@@ -129,6 +129,8 @@ This will result in the data set where key field `CONNID` will be equal to `I_CO
 
 In addition, forwarding calls to another object (implementing same interface) is supported. For example if some of accessor methods must be connected to mocks and some others were implemented manually in a supprting test (or real production) class. See [REFERENCE.md](docs/REFERENCE.md).
 
+![accessor pattern](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/sbcgua/mockup_loader/master/docs/mockup-stub.puml)
+
 ### Store/Retrieve
 
 **Disclaimer**: *There is an opinion that adding test-related code to the production code is a 'code smell'. I sincerely agree in general. If the code was designed to use e.g. accessor interfaces from the beginning this is good. Still 'store' functionality can be useful for older pieces of code to be tested without much refactoring.*
