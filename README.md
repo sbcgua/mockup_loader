@@ -246,9 +246,9 @@ Complete reference of classes and methods can be found in [REFERENCE.md](docs/RE
 - Have a look at the howto section in the project [Wiki](../../wiki).
 - A simple example can be found in [/src/zmockup_loader_example.prog.abap](/src/zmockup_loader_example.prog.abap).
 
-## Contributors
+## Contributing
 
-Major contributors are described in [CONTRIBUTORS.md](/CONTRIBUTORS.md). You are welcomed to suggest ideas and code improvements ! :) Let's make ABAP development more convenient.
+You are welcomed to suggest ideas and code improvements ! :) Let's make ABAP development more convenient. Please kindly respect the [code convensions](/CONTRIBUTING.md)
 
 ## Publications
 
