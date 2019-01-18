@@ -63,15 +63,15 @@ endmethod.
 method raise.
   data:
         l_methname  type string,
-        sys_call    type sys_calls,
-        sys_stack   type sys_callst.
+        l_sys_call  type sys_calls,
+        l_sys_stack type sys_callst.
 
   call function 'SYSTEM_CALLSTACK' " Get stack information
     exporting max_level    = 2
-    importing et_callstack = sys_stack.
+    importing et_callstack = l_sys_stack.
 
-  read table sys_stack into sys_call index 2.
-  l_methname = |[{ sys_call-eventname }]|.
+  read table l_sys_stack into l_sys_call index 2.
+  l_methname = |[{ l_sys_call-eventname }]|.
 
   raise exception type zcx_mockup_loader_error
     exporting
