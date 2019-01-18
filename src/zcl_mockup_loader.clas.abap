@@ -40,7 +40,7 @@ class ZCL_MOCKUP_LOADER definition
 public section.
   type-pools ABAP .
 
-  constants VERSION type STRING value 'v2.0.0'. "#EC NOTEXT
+  constants VERSION type STRING value 'v2.0.1'. "#EC NOTEXT
 
   class-methods CREATE
     importing

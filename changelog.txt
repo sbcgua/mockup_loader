@@ -8,10 +8,13 @@ Legend
 + : added
 - : removed
 
+v2.0.1, 2010-01-18
+------------------
++ 'create_from_sys_settings' method, takes default paras from `tvarvc` table (maintained with tr. `stvarv`)
+
 v2.0.0-beta3, 2018-09-15
 ------------------
 + 'proxy' feature for stubber: allows to forward calls through to another object
-?? TODO meet new feature ...
 
 v2.0.0-beta2, 2018-08-31
 ------------------
