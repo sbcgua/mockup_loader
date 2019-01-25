@@ -490,11 +490,11 @@ method read_zip.
     zcx_mockup_loader_error=>raise( msg = |Cannot read { i_name }| code = 'ZF' ). "#EC NOTEXT
   endif.
 
-  " Remove unicide signatures
+  " Remove unicode signatures
   case mv_encoding.
-    when '4110'. " UTF-8
+    when zif_mockup_loader_constants=>encoding_utf8.
       shift l_xstring left deleting leading  cl_abap_char_utilities=>byte_order_mark_utf8 in byte mode.
-    when '4103'. " UTF-16LE
+    when zif_mockup_loader_constants=>encoding_utf16.
       shift l_xstring left deleting leading  cl_abap_char_utilities=>byte_order_mark_little in byte mode.
   endcase.
 
@@ -517,7 +517,7 @@ method SET_PARAMS.
   endif.
 
   if i_encoding is initial.
-    me->mv_encoding = '4103'. " UTF16
+    me->mv_encoding = zif_mockup_loader_constants=>encoding_utf16.
   else.
     me->mv_encoding = i_encoding.
   endif.
