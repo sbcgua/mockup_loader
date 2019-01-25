@@ -34,6 +34,14 @@ call method zcl_mockup_loader=>create
     i_path = 'c:\sap\projectX\unit_tests\mockup.zip'. 
 ```
 
+### CHECK_VERSION_FITS
+
+```abap
+importing
+  I_REQUIRED_VERSION type STRING
+```
+Checks if the mockup loader has at least same version than required
+
 ### SET_PARAMS
 
 ```abap

@@ -1,6 +1,6 @@
 # Mockup Loader for ABAP unit testing
 
-*Version: 2.0.1 ([history of changes](/changelog.txt))*
+*Version: 2.0.2 ([history of changes](/changelog.txt))*
 
 ## Major changes in version 2
 
