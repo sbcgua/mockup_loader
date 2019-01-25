@@ -1,8 +1,9 @@
-INTERFACE zif_mockup_loader_constants
-  PUBLIC .
+interface zif_mockup_loader_constants
+  public .
 
-  " Codepages
-  CONSTANTS encoding_utf8 TYPE abap_encoding VALUE '4110'.
-  CONSTANTS encoding_utf16 TYPE abap_encoding VALUE '4103'.
+    " codepages
+    constants encoding_utf8 type abap_encoding value '4110'.
+    constants encoding_utf16 type abap_encoding value '4103'.
+    constants version type string value 'v2.0.2'. "#ec notext
 
-ENDINTERFACE.
+endinterface.

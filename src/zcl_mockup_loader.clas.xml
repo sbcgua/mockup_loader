@@ -98,12 +98,6 @@
      <LANGU>E</LANGU>
      <DESCRIPT>Set parsing params</DESCRIPT>
     </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_MOCKUP_LOADER</CLSNAME>
-     <CMPNAME>VERSION</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Product version</DESCRIPT>
-    </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>
  </asx:abap>

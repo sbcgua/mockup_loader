@@ -40,8 +40,6 @@ class ZCL_MOCKUP_LOADER definition
 public section.
   type-pools ABAP .
 
-  constants VERSION type STRING value 'v2.0.1'. "#EC NOTEXT
-
   class-methods CREATE
     importing
       !I_PATH type STRING
@@ -62,7 +60,11 @@ public section.
       value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
     raising
       ZCX_MOCKUP_LOADER_ERROR .
-
+  class-methods CHECK_VERSION_FITS
+    importing
+      !I_REQUIRED_VERSION type STRING
+    returning
+      value(R_FITS) type ABAP_BOOL .
 
   methods LOAD_RAW
     importing
@@ -138,12 +140,21 @@ ENDCLASS.
 CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
 
+method CHECK_VERSION_FITS.
+
+  r_fits = zcl_text2tab_utils=>check_version_fits(
+    i_current_version  = zif_mockup_loader_constants=>version
+    i_required_version = i_required_version ).
+
+endmethod.
+
+
 method CONSTRUCTOR.
 
-  data lv_required_text2tab_ver type string value 'v2.1.1'.
+  data lv_required_text2tab_ver type string value 'v2.2.4'.
   if zcl_text2tab_parser=>check_version_fits( lv_required_text2tab_ver ) = abap_false.
     zcx_mockup_loader_error=>raise(
-      msg  = |text2tab version ({ zcl_text2tab_parser=>version }) is lower than required ({ lv_required_text2tab_ver })|
+      msg  = |text2tab version ({ zif_text2tab_constants=>version }) is lower than required ({ lv_required_text2tab_ver })|
       code = 'VL' ). "#EC NOTEXT
   endif.
 

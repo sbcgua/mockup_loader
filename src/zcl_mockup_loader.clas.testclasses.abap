@@ -167,7 +167,7 @@ class lcl_test_mockup_loader implementation.
       i_type       = 'MIME'
       i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
       i_amt_format = ''     " default
-      i_encoding   = '4110' ). " utf8
+      i_encoding   = zif_mockup_loader_constants=>encoding_utf8 ). " utf8
   endmethod.  " create_default.
 
   method setup.
@@ -373,13 +373,11 @@ class lcl_test_mockup_loader implementation.
     get_dummy_data( importing e_dummy_tab   = dummy_tab_exp ).
 
     try.
-      o->set_params( i_amt_format = '' i_encoding = '4103' ). " UTF16
+      o->set_params( i_amt_format = '' i_encoding = zif_mockup_loader_constants=>encoding_utf16 ). " UTF16
       o->load_data(
         exporting i_obj       = 'testdir/testfile_complete_utf16'
         importing e_container = dummy_tab_act ).
-*      o->class_set_params( i_amt_format = '' i_encoding = '4110' ). " Back to SETUP defaults
     catch zcx_mockup_loader_error into lo_ex.
-*      o->class_set_params( i_amt_format = '' i_encoding = '4110' ). " Back to SETUP defaults
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
@@ -634,7 +632,7 @@ class lcl_test_mockup_loader implementation.
     l_str_exp = '<?xml version="1.0"?><mytag>mydata</mytag>'.
 
     try. " .XML
-      lo_conv = cl_abap_conv_in_ce=>create( encoding = '4110' ).
+      lo_conv = cl_abap_conv_in_ce=>create( encoding = zif_mockup_loader_constants=>encoding_utf8 ).
       o->load_raw(
         exporting
           i_obj = 'testdir/test_raw'
