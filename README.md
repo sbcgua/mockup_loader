@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/sbcgua/mockup_loader.svg?branch=master)](https://travis-ci.com/sbcgua/mockup_loader)
+
 # Mockup Loader for ABAP unit testing
 
 *Version: 2.0.2 ([history of changes](/changelog.txt))*
