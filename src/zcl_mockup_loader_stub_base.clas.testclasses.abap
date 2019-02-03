@@ -7,7 +7,9 @@ class lcl_mockup_stub_base_test definition final
     methods get_mock_data for testing.
 endclass.
 
-class lcl_mockup_loader_stub_final definition final inheriting from zcl_mockup_loader_stub_base friends lcl_mockup_stub_base_test.
+class lcl_mockup_loader_stub_final definition final
+  inheriting from zcl_mockup_loader_stub_base
+  friends lcl_mockup_stub_base_test.
 endclass.
 class lcl_mockup_loader_stub_final implementation.
 endclass.

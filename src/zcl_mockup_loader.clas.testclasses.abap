@@ -135,7 +135,7 @@ class lcl_test_mockup_loader definition for testing
         e_dummy_string type string.
 
     methods create_default
-      returning value(ro) type ref to zcl_mockup_loader
+      returning value(r_o) type ref to zcl_mockup_loader
       raising zcx_mockup_loader_error.
 
 endclass.       "lcl_test_mockup_loader
@@ -158,12 +158,13 @@ class lcl_test_mockup_loader implementation.
     if l_type_tmp is not initial.
       cl_abap_unit_assert=>fail(
         quit = 2 "cancel-class
-        msg  = 'Load source is redirected, please reset with ZMOCKUP_LOADER_SWITCH_SOURCE before running the test' ). "#EC NOTEXT
+        msg  = 'Load source is redirected,'
+        && ' please reset with ZMOCKUP_LOADER_SWITCH_SOURCE before running the test' ). "#EC NOTEXT
     endif.
   endmethod.       "class_setup
 
   method create_default.
-    ro = zcl_mockup_loader=>create(
+    r_o = zcl_mockup_loader=>create(
       i_type       = 'MIME'
       i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
       i_amt_format = ''     " default
@@ -514,7 +515,7 @@ class lcl_test_mockup_loader implementation.
           l_str      type string,
           lo_ex      type ref to zcx_mockup_loader_error.
 
-    cl_abap_unit_assert=>assert_not_initial( act = lines( o->o_zip->files ) ).
+    cl_abap_unit_assert=>assert_not_initial( act = lines( o->mo_zip->files ) ).
 
     " Positive ***************************************
     try.

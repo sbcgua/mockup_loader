@@ -19,7 +19,7 @@ endclass.
 
 class lcl_test_proxy_target implementation.
   method zif_mockup_loader_stub_dummy~proxy_test.
-    r_val = |{ p1 } { p2 }|.
+    r_val = |{ i_p1 } { i_p2 }|.
   endmethod.
   method zif_mockup_loader_stub_dummy~tab_return. endmethod.
   method zif_mockup_loader_stub_dummy~tab_export. endmethod.
@@ -62,12 +62,12 @@ class lcl_test_base implementation.
       lo_dc->connect_method(
         i_method_name  = 'TAB_EXPORT'
         i_mock_name    = 'EXAMPLE/sflight'
-        i_output_param = 'ETAB' ).
+        i_output_param = 'E_TAB' ).
 
       lo_dc->connect_method(
         i_method_name  = 'TAB_CHANGE'
         i_mock_name    = 'EXAMPLE/sflight'
-        i_output_param = 'CTAB' ).
+        i_output_param = 'C_TAB' ).
 
       li_if ?= lo_dc->generate_stub( ).
 
@@ -91,11 +91,11 @@ class lcl_test_base implementation.
           e_container = lt_exp ).
 
       clear lt_res.
-      li_if->tab_export( exporting i_connid = '1000' importing etab = lt_res ).
+      li_if->tab_export( exporting i_connid = '1000' importing e_tab = lt_res ).
       cl_abap_unit_assert=>assert_equals( act = lt_res exp = lt_exp ).
 
       clear lt_res.
-      li_if->tab_change( exporting i_connid = '1000' changing ctab = lt_res ).
+      li_if->tab_change( exporting i_connid = '1000' changing c_tab = lt_res ).
       cl_abap_unit_assert=>assert_equals( act = lt_res exp = lt_exp ).
 
     catch zcx_mockup_loader_error into lo_ex.
@@ -168,7 +168,7 @@ class lcl_mockup_stub_factory_test implementation.
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( ).
     endtry.
-    cl_abap_unit_assert=>assert_equals( act = ls_conf_act-output_param exp = 'RTAB' ).
+    cl_abap_unit_assert=>assert_equals( act = ls_conf_act-output_param exp = 'R_TAB' ).
     cl_abap_unit_assert=>assert_equals( act = ls_conf_act-output_pkind exp = 'R' ).
     cl_abap_unit_assert=>assert_bound( act = ls_conf_act-output_type ).
 
@@ -393,7 +393,7 @@ class lcl_mockup_stub_factory_test implementation.
           i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
       lo->forward_method( 'PROXY_TEST' ).
       li_if ?= lo->generate_stub( ).
-      l_act = li_if->proxy_test( p1 = 'Hello' p2 = 123 ).
+      l_act = li_if->proxy_test( i_p1 = 'Hello' i_p2 = 123 ).
       cl_abap_unit_assert=>assert_equals( act = l_act exp = 'Hello 123' ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( ).

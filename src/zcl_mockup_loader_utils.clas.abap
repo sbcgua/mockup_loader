@@ -202,12 +202,16 @@ method CONV_NC_STRUC_TO_FILTER.
   lt_components  = id_struc->get_components( ).
   loop at lt_components into l_component.
     if l_component-type->kind <> cl_abap_typedescr=>kind_table.
-      zcx_mockup_loader_error=>raise( msg = |I_WHERE must be a structure of ranges or TY_WHERE| code = 'WS' ).   "#EC NOTEXT
+      zcx_mockup_loader_error=>raise(
+        msg  = |I_WHERE must be a structure of ranges or TY_WHERE|
+        code = 'WS' ).   "#EC NOTEXT
     endif.
 
     dy_table ?= l_component-type.
     if dy_table->key ne g_range_key. " Not range-like structure ?
-      zcx_mockup_loader_error=>raise( msg = |I_WHERE must be a structure of ranges or TY_WHERE| code = 'WS' ).   "#EC NOTEXT
+      zcx_mockup_loader_error=>raise(
+        msg  = |I_WHERE must be a structure of ranges or TY_WHERE|
+        code = 'WS' ).   "#EC NOTEXT
     endif.
 
     l_filter-name = l_component-name.

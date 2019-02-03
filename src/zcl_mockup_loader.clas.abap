@@ -102,7 +102,7 @@ public section.
 protected section.
 private section.
 
-  data O_ZIP type ref to CL_ABAP_ZIP .
+  data MO_ZIP type ref to CL_ABAP_ZIP .
   data MV_AMT_FORMAT type CHAR2 .
   data MV_ENCODING type ABAP_ENCODING .
   data MV_DATE_FORMAT type CHAR4 .
@@ -154,7 +154,8 @@ method CONSTRUCTOR.
   data lv_required_text2tab_ver type string value 'v2.2.4'.
   if zcl_text2tab_parser=>check_version_fits( lv_required_text2tab_ver ) = abap_false.
     zcx_mockup_loader_error=>raise(
-      msg  = |text2tab version ({ zif_text2tab_constants=>version }) is lower than required ({ lv_required_text2tab_ver })|
+      msg  = |text2tab version ({ zif_text2tab_constants=>version
+        }) is lower than required ({ lv_required_text2tab_ver })|
       code = 'VL' ). "#EC NOTEXT
   endif.
 
@@ -308,15 +309,15 @@ method INITIALIZE.
   endif.
 
   " Extract zip
-  if o_zip is initial.
-    create object o_zip.
+  if mo_zip is initial.
+    create object mo_zip.
   endif.
 
-  o_zip->load(
+  mo_zip->load(
     exporting  zip    = l_xstring
     exceptions others = 4 ).
 
-  if sy-subrc is not initial or lines( o_zip->files ) = 0.
+  if sy-subrc is not initial or lines( mo_zip->files ) = 0.
     zcx_mockup_loader_error=>raise( msg = 'ZIP load failed' code = 'ZE' ).  "#EC NOTEXT
   endif.
 endmethod.
@@ -404,7 +405,7 @@ method load_raw.
     l_filename = i_obj && i_ext.
   endif.
 
-  o_zip->get(
+  mo_zip->get(
     exporting name    = l_filename
     importing content = e_content ).
 
@@ -493,7 +494,7 @@ method read_zip.
         lo_conv   type ref to cl_abap_conv_in_ce,
         l_ex      type ref to cx_root.
 
-  o_zip->get( exporting  name            = i_name
+  mo_zip->get( exporting  name            = i_name
               importing  content         = l_xstring
               exceptions zip_index_error = 1 ).
 

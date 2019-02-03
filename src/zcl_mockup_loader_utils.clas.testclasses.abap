@@ -98,7 +98,7 @@ class lcl_test_mockup_utils definition for testing
       importing
         i_tab        type tt_dummy
         i_filter     type zcl_mockup_loader_utils=>tt_filter
-      returning value(e_tab) type tt_dummy.
+      returning value(r_tab) type tt_dummy.
 
     methods filter_table for testing.
     methods filter_table_neg for testing.
@@ -330,7 +330,7 @@ class lcl_test_mockup_utils implementation.
     data dummy type ty_dummy.
     loop at i_tab into dummy.
       if zcl_mockup_loader_utils=>does_line_fit_filter( i_line = dummy i_filter = i_filter ) = abap_true.
-        append dummy to e_tab.
+        append dummy to r_tab.
       endif.
     endloop.
   endmethod.       " filter_helper
