@@ -32,7 +32,7 @@ endclass.
 class lcl_test_base definition final.
   public section.
     class-methods main_test
-      importing lv_factory_classname type seoclsname.
+      importing iv_factory_classname type seoclsname.
 endclass.
 class lcl_test_base implementation.
   method main_test.
@@ -48,7 +48,7 @@ class lcl_test_base implementation.
         i_type = 'MIME'
         i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
 
-      create object lo_dc type (lv_factory_classname)
+      create object lo_dc type (iv_factory_classname)
         exporting
           io_ml_instance = lo_ml
           i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
