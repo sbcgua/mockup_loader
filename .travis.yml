@@ -5,6 +5,7 @@ notifications:
   email: false
 before_script:
   - npm install -g abaplint
+  - abaplint -v
 script:
   - abaplint src/*
 branches:
