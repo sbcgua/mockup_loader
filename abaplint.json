@@ -76,6 +76,8 @@
     },
     "indentation": {
       "enabled": true,
+      "alignTryCatch": true,
+      "globalClassSkipFirst": true,
       "exclude": [],
       "ignoreExceptions": true
     },

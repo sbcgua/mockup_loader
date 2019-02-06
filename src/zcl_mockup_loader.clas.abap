@@ -202,44 +202,44 @@ method CREATE.
 endmethod.
 
 
-  method create_from_sys_settings.
-    types: begin of lt_settings,
-             amt_format  type char2,
-             codepage    type abap_encoding,
-             date_format type char4,
-             comment     type char1,
-           end of lt_settings.
-    types: begin of lt_var,
-             name type rvari_vnam,
-             low  type rvari_val_255,
-           end of lt_var.
-    data: l_variable type lt_var,
-          l_settings type lt_settings.
+method create_from_sys_settings.
+  types: begin of lt_settings,
+            amt_format  type char2,
+            codepage    type abap_encoding,
+            date_format type char4,
+            comment     type char1,
+          end of lt_settings.
+  types: begin of lt_var,
+            name type rvari_vnam,
+            low  type rvari_val_255,
+          end of lt_var.
+  data: l_variable type lt_var,
+        l_settings type lt_settings.
 
-    " read system settings (amt_format, encoding, date_format, begin_comment)
-    " from table tvarvc
-    select name low from tvarvc into l_variable
-      where name in ('ZMOCKUP_LOADER_AMT_FORMAT',
-        'ZMOCKUP_LOADER_CODEPAGE',
-        'ZMOCKUP_LOADER_DATE_FORMAT',
-        'ZMOCKUP_LOADER_COMMENT' ).
+  " read system settings (amt_format, encoding, date_format, begin_comment)
+  " from table tvarvc
+  select name low from tvarvc into l_variable
+    where name in ('ZMOCKUP_LOADER_AMT_FORMAT',
+      'ZMOCKUP_LOADER_CODEPAGE',
+      'ZMOCKUP_LOADER_DATE_FORMAT',
+      'ZMOCKUP_LOADER_COMMENT' ).
 
-      transfer_setting amt_format  'ZMOCKUP_LOADER_AMT_FORMAT'.
-      transfer_setting codepage    'ZMOCKUP_LOADER_CODEPAGE'.
-      transfer_setting date_format 'ZMOCKUP_LOADER_DATE_FORMAT'.
-      transfer_setting comment     'ZMOCKUP_LOADER_COMMENT'.
+    transfer_setting amt_format  'ZMOCKUP_LOADER_AMT_FORMAT'.
+    transfer_setting codepage    'ZMOCKUP_LOADER_CODEPAGE'.
+    transfer_setting date_format 'ZMOCKUP_LOADER_DATE_FORMAT'.
+    transfer_setting comment     'ZMOCKUP_LOADER_COMMENT'.
 
-    endselect.
+  endselect.
 
-    ro_instance = create(
-      i_path          = i_path
-      i_type          = i_type
-      i_amt_format    = l_settings-amt_format
-      i_encoding      = l_settings-codepage
-      i_date_format   = l_settings-date_format
-      i_begin_comment = l_settings-comment ).
+  ro_instance = create(
+    i_path          = i_path
+    i_type          = i_type
+    i_amt_format    = l_settings-amt_format
+    i_encoding      = l_settings-codepage
+    i_date_format   = l_settings-date_format
+    i_begin_comment = l_settings-comment ).
 
-  endmethod.
+endmethod.
 
 
 method INITIALIZE.
@@ -251,45 +251,45 @@ method INITIALIZE.
 
   " Load data
   case i_type.
-  when 'MIME'. " Load from SMW0
-    l_key-relid = 'MI'.
-    l_key-objid = i_path.
+    when 'MIME'. " Load from SMW0
+      l_key-relid = 'MI'.
+      l_key-objid = i_path.
 
-    call function 'WWWDATA_IMPORT'
+      call function 'WWWDATA_IMPORT'
+        exporting
+          key    = l_key
+        tables
+          mime   = lt_w3mime[]
+        exceptions
+          others = 1.
+
+      if sy-subrc is not initial.
+        zcx_mockup_loader_error=>raise( msg = 'SMW0 data import error' code = 'RE' ).  "#EC NOTEXT
+      endif.
+
+      describe table lt_w3mime lines l_size.
+      l_size = sy-tleng * sy-tfill.
+
+    when 'FILE'. " Load from frontend
+      call function 'GUI_UPLOAD'
       exporting
-        key    = l_key
+        filename   = i_path
+        filetype   = 'BIN'
+      importing
+        filelength = l_size
       tables
-        mime   = lt_w3mime[]
+        data_tab   = lt_w3mime
       exceptions
         others = 1.
 
-    if sy-subrc is not initial.
-      zcx_mockup_loader_error=>raise( msg = 'SMW0 data import error' code = 'RE' ).  "#EC NOTEXT
-    endif.
+      if sy-subrc is not initial.
+        zcx_mockup_loader_error=>raise( msg = |Cannot upload file: { i_path }| code = 'RE' ). "#EC NOTEXT
+      endif.
 
-    describe table lt_w3mime lines l_size.
-    l_size = sy-tleng * sy-tfill.
-
-  when 'FILE'. " Load from frontend
-    call function 'GUI_UPLOAD'
-    exporting
-      filename   = i_path
-      filetype   = 'BIN'
-    importing
-      filelength = l_size
-    tables
-      data_tab   = lt_w3mime
-    exceptions
-      others = 1.
-
-    if sy-subrc is not initial.
-      zcx_mockup_loader_error=>raise( msg = |Cannot upload file: { i_path }| code = 'RE' ). "#EC NOTEXT
-    endif.
-
-  when others.
-    if sy-subrc is not initial.
-      zcx_mockup_loader_error=>raise( msg = 'Wrong source type' code = 'WS' ). "#EC NOTEXT
-    endif.
+    when others.
+      if sy-subrc is not initial.
+        zcx_mockup_loader_error=>raise( msg = 'Wrong source type' code = 'WS' ). "#EC NOTEXT
+      endif.
 
   endcase.
 

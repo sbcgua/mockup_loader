@@ -21,12 +21,18 @@ class lcl_test_proxy_target implementation.
   method zif_mockup_loader_stub_dummy~proxy_test.
     r_val = |{ i_p1 } { i_p2 }|.
   endmethod.
-  method zif_mockup_loader_stub_dummy~tab_return. endmethod.
-  method zif_mockup_loader_stub_dummy~tab_export. endmethod.
-  method zif_mockup_loader_stub_dummy~tab_change. endmethod.
-  method zif_mockup_loader_stub_dummy~wrong_return. endmethod.
-  method zif_mockup_loader_stub_dummy~wrong_sift. endmethod.
-  method zif_mockup_loader_stub_dummy~gen_param_target. endmethod.
+  method zif_mockup_loader_stub_dummy~tab_return.
+  endmethod.
+  method zif_mockup_loader_stub_dummy~tab_export.
+  endmethod.
+  method zif_mockup_loader_stub_dummy~tab_change.
+  endmethod.
+  method zif_mockup_loader_stub_dummy~wrong_return.
+  endmethod.
+  method zif_mockup_loader_stub_dummy~wrong_sift.
+  endmethod.
+  method zif_mockup_loader_stub_dummy~gen_param_target.
+  endmethod.
 endclass.
 
 class lcl_test_base definition final.
