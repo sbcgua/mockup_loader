@@ -8,12 +8,17 @@ Legend
 + : added
 - : removed
 
-v2.0.2, 2010-01-25
+v2.0.3, 2019-03-26
+------------------
+! Removed dependency from W3MIPOLLER (at ZMOCKUP_LOADER_SWSRC)
++ Added ZMOCKUP_LOADER_SWSRC check for production env (block uploads)
+
+v2.0.2, 2019-01-25
 ------------------
 ! version moved to zif_mockup_loader_constants 
 + added `check_version_fits` method
 
-v2.0.1, 2010-01-18
+v2.0.1, 2019-01-18
 ------------------
 + 'create_from_sys_settings' method, takes default paras from `tvarvc` table (maintained with tr. `stvarv`)
 
