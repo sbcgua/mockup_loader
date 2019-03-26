@@ -270,6 +270,11 @@ class lcl_fs definition
         !ev_size type i
       raising
         lcx_error .
+
+    class-methods choose_file_dialog
+      returning
+        value(rv_path) type char255 .
+
 endclass.
 
 class lcl_fs implementation.
@@ -293,6 +298,33 @@ class lcl_fs implementation.
     endif.
 
   endmethod.  " read_file.
+
+  method choose_file_dialog.
+    data:
+          lt_files type filetable,
+          lv_rc    type i,
+          lv_uact  type i.
+
+    field-symbols <file> like line of lt_files.
+
+    cl_gui_frontend_services=>file_open_dialog(
+      changing
+        file_table  = lt_files
+        rc          = lv_rc
+        user_action = lv_uact
+      exceptions others = 4 ).
+
+    if sy-subrc > 0 OR lv_uact <> cl_gui_frontend_services=>action_ok.
+      return. " Empty value
+    endif.
+
+    read table lt_files assigning <file> index 1.
+    if sy-subrc = 0.
+      rv_path = <file>-filename.
+    endif.
+
+  endmethod.
+
 
 endclass.
 
@@ -500,9 +532,7 @@ endform.                    "get_stype
 form f4_file_path changing c_path.
   data: l_path type localfile.
 
-  call function 'F4_FILENAME'
-    importing
-      file_name = l_path.
+  l_path = lcl_fs=>choose_file_dialog( ).
 
   c_path = l_path.
   set parameter id 'ZMOCKUP_LOADER_SPATH' field l_path.
