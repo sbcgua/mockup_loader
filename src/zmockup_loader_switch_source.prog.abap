@@ -579,13 +579,21 @@ endform.                    "get_su3_value
 *&---------------------------------------------------------------------*
 form upload_mime.
   if p_file is initial.
-    message 'Upload only work in FILE mode' type 'E' display like 'S'. "#EC NOTEXT
+    message 'Upload only work in FILE mode' type 'E'. "#EC NOTEXT
   endif.
   if p_mpath is initial.
-    message 'Please enter MIME name' type 'E' display like 'S'. "#EC NOTEXT
+    message 'Please enter MIME name' type 'E'. "#EC NOTEXT
   endif.
   if p_fpath is initial.
-    message 'Please enter file path' type 'E' display like 'S'. "#EC NOTEXT
+    message 'Please enter file path' type 'E'. "#EC NOTEXT
+  endif.
+
+  data l_ccat type t000-cccategory.
+
+  select single cccategory into l_ccat from t000 where mandt = sy-mandt.
+  if l_ccat = 'P' or l_ccat = 'T'. " Production or test
+    message 'Client is productive or QA, upload is disabled' type 'E'. "#EC NOTEXT
+    return.
   endif.
 
   data lx type ref to lcx_error.
@@ -595,7 +603,7 @@ form upload_mime.
       iv_filename = |{ p_fpath }|
       iv_key      = p_mpath ).
   catch lcx_error into lx.
-    message lx->msg type 'E' display like 'S'.
+    message lx->msg type 'E'.
     return.
   endtry.
 
