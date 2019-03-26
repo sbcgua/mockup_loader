@@ -38,6 +38,308 @@ report zmockup_loader_switch_source.
 tables sscrfields.
 
 *&---------------------------------------------------------------------*
+*&      Class lib (part of w3mime poller)
+*&---------------------------------------------------------------------*
+
+class lcx_error definition
+  inheriting from cx_static_check
+  final
+  create public .
+
+  public section.
+    data msg type string read-only .
+
+    methods constructor
+      importing
+        !msg type string optional .
+    class-methods raise
+      importing
+        !msg type string
+      raising
+        lcx_error .
+endclass.
+
+class lcx_error implementation.
+  method constructor.
+    call method super->constructor.
+    me->msg = msg .
+  endmethod.
+
+  method raise.
+    raise exception type lcx_error
+      exporting
+        msg    = msg.
+  endmethod.
+endclass.
+
+
+class lcl_mime_storage definition
+  final
+  create public .
+
+  public section.
+
+    class-methods check_obj_exists
+      importing
+        !iv_key type wwwdata-objid
+        !iv_type type wwwdata-relid default 'MI'
+      returning
+        value(rv_yes) type abap_bool .
+    class-methods update_object
+      importing
+        !iv_key type wwwdata-objid
+        !iv_type type wwwdata-relid default 'MI'
+        !it_data type lvc_t_mime
+        !iv_size type i
+      raising
+        lcx_error .
+    class-methods get_object_info
+      importing
+        !iv_key type wwwdata-objid
+        !iv_type type wwwdata-relid default 'MI'
+      returning
+        value(rs_object) type wwwdatatab
+      raising
+        lcx_error .
+    class-methods read_object_single_meta
+      importing
+        !iv_param type w3_name
+        !iv_key type wwwdata-objid
+        !iv_type type wwwdata-relid default 'MI'
+      returning
+        value(rv_value) type w3_qvalue
+      raising
+        lcx_error .
+    class-methods update_object_single_meta
+      importing
+        !iv_param type w3_name
+        !iv_value type w3_qvalue
+        !iv_key type wwwdata-objid
+        !iv_type type wwwdata-relid default 'MI'
+      raising
+        lcx_error .
+endclass.
+
+class lcl_mime_storage implementation.
+
+  method check_obj_exists.
+
+    data dummy type wwwdata-relid.
+
+    select single relid into dummy
+      from wwwdata
+      where relid = iv_type
+      and   objid = iv_key
+      and   srtf2 = 0.
+
+    rv_yes = boolc( sy-subrc = 0 ).
+
+  endmethod.  " check_obj_exists.
+
+  method get_object_info.
+
+    select single * into corresponding fields of rs_object
+      from wwwdata
+      where relid = iv_type
+      and   objid = iv_key
+      and   srtf2 = 0.
+
+    if sy-subrc > 0.
+      lcx_error=>raise( 'Cannot read W3xx info' ). "#EC NOTEXT
+    endif.
+
+  endmethod.  " get_object_info.
+
+  method read_object_single_meta.
+
+    assert iv_type = 'MI' or iv_type = 'HT'.
+
+    call function 'WWWPARAMS_READ'
+      exporting
+        relid = iv_type
+        objid = iv_key
+        name  = iv_param
+      importing
+        value = rv_value
+      exceptions
+        others = 1.
+
+    if sy-subrc > 0.
+      lcx_error=>raise( |Cannot read W3xx metadata: { iv_param }| ). "#EC NOTEXT
+    endif.
+
+  endmethod.
+
+  method update_object.
+
+    data: lv_temp   type wwwparams-value,
+          ls_object type wwwdatatab.
+
+    " update file size
+    lv_temp = iv_size.
+    condense lv_temp.
+    update_object_single_meta(
+      iv_type  = iv_type
+      iv_key   = iv_key
+      iv_param = 'filesize'
+      iv_value = lv_temp ).
+
+    " update version
+    try .
+      lv_temp = read_object_single_meta(
+        iv_type  = iv_type
+        iv_key   = iv_key
+        iv_param = 'version' ).
+
+      if lv_temp is not initial and strlen( lv_temp ) = 5 and lv_temp+0(5) co '1234567890'.
+        data lv_version type numc_5.
+        lv_version = lv_temp.
+        lv_version = lv_version + 1.
+        lv_temp    = lv_version.
+        update_object_single_meta(
+          iv_type  = iv_type
+          iv_key   = iv_key
+          iv_param = 'version'
+          iv_value = lv_temp ).
+      endif.
+
+    catch lcx_error.
+      " ignore errors
+      clear lv_temp.
+    endtry.
+
+    " update data
+    ls_object = get_object_info( iv_key = iv_key iv_type = iv_type ).
+    ls_object-chname = sy-uname.
+    ls_object-tdate  = sy-datum.
+    ls_object-ttime  = sy-uzeit.
+
+    call function 'WWWDATA_EXPORT'
+      exporting
+        key               = ls_object
+      tables
+        mime              = it_data
+      exceptions
+        wrong_object_type = 1
+        export_error      = 2.
+
+    if sy-subrc > 0.
+      lcx_error=>raise( 'Cannot upload W3xx data' ). "#EC NOTEXT
+    endif.
+
+  endmethod.  " update_object.
+
+
+  method update_object_single_meta.
+
+    data: ls_param  type wwwparams,
+          ls_object type wwwdatatab.
+
+    assert iv_type = 'MI' or iv_type = 'HT'.
+
+    ls_param-relid = iv_type.
+    ls_param-objid = iv_key.
+    ls_param-name  = iv_param.
+    ls_param-value = iv_value.
+
+    call function 'WWWPARAMS_MODIFY_SINGLE'
+      exporting
+        params = ls_param
+      exceptions
+        others = 1.
+
+    if sy-subrc > 0.
+      lcx_error=>raise( |Cannot update W3xx metadata { iv_param }| ). "#EC NOTEXT
+    endif.
+
+  endmethod.
+
+endclass.
+
+
+class lcl_fs definition
+  final
+  create public .
+
+  public section.
+    class-methods read_file
+      importing
+        !iv_filename type string
+      exporting
+        !et_data type lvc_t_mime
+        !ev_size type i
+      raising
+        lcx_error .
+endclass.
+
+class lcl_fs implementation.
+
+  method read_file.
+    clear: et_data, ev_size.
+
+    cl_gui_frontend_services=>gui_upload(
+      exporting
+        filename   = iv_filename
+        filetype   = 'BIN'
+      importing
+        filelength = ev_size
+      changing
+        data_tab   = et_data
+      exceptions
+        others     = 1 ).
+
+    if sy-subrc > 0.
+      lcx_error=>raise( 'Cannot read file' ). "#EC NOTEXT
+    endif.
+
+  endmethod.  " read_file.
+
+endclass.
+
+
+class lcl_utils definition
+  final
+  create public .
+
+  public section.
+
+    class-methods upload
+      importing
+        iv_filename type string
+        iv_key  type wwwdata-objid
+        iv_type type wwwdata-relid default 'MI'
+      raising lcx_error.
+
+endclass.
+
+class lcl_utils implementation.
+  method upload.
+
+    data: lt_data type lvc_t_mime,
+          lv_size type i.
+
+    if abap_false = lcl_mime_storage=>check_obj_exists( iv_type = iv_type iv_key = iv_key ).
+      lcx_error=>raise( 'MIME object does not exist' ). "#EC NOTEXT
+    endif.
+
+    lcl_fs=>read_file(
+      exporting
+        iv_filename = iv_filename
+      importing
+        et_data     = lt_data
+        ev_size     = lv_size ).
+
+    lcl_mime_storage=>update_object(
+      iv_type  = iv_type
+      iv_key   = iv_key
+      it_data  = lt_data
+      iv_size  = lv_size ).
+
+  endmethod.  " upload.
+endclass.
+
+
+*&---------------------------------------------------------------------*
 *&      Selection screen
 *&---------------------------------------------------------------------*
 selection-screen begin of block b1 with frame title txt_b1.
@@ -286,26 +588,14 @@ form upload_mime.
     message 'Please enter file path' type 'E' display like 'S'. "#EC NOTEXT
   endif.
 
-  data:
-        lx     type ref to cx_root,
-        l_str  type string,
-        lo_obj type ref to object.
-  try.
-    create object lo_obj type ('ZCL_W3MIME_UTILS').
-  catch cx_sy_create_error into lx.
-    l_str = 'Install ZW3MIMEPOLL for this feature to work. https://github.com/sbcgua/abap_w3mi_poller'. "#EC NOTEXT
-    message l_str type 'E' display like 'S'.
-    return.
-  endtry.
+  data lx type ref to lcx_error.
 
   try.
-    call method ('ZCL_W3MIME_UTILS')=>('UPLOAD')
-      exporting
-        iv_filename = |{ p_fpath }|
-        iv_key      = p_mpath.
-  catch cx_static_check into lx.
-    l_str = lx->get_text( ).
-    message l_str type 'E' display like 'S'.
+    lcl_utils=>upload(
+      iv_filename = |{ p_fpath }|
+      iv_key      = p_mpath ).
+  catch lcx_error into lx.
+    message lx->msg type 'E' display like 'S'.
     return.
   endtry.
 
