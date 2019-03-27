@@ -61,7 +61,7 @@ endclass.
 
 class lcx_error implementation.
   method constructor.
-    call method super->constructor.
+    super->constructor( ).
     me->msg = msg .
   endmethod.
 

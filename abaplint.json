@@ -103,7 +103,7 @@
     "local_class_naming": {
       "enabled": true,
       "exclude": [],
-      "local": "^LCL_.*$",
+      "local": "^LC(L|X)_.*$",
       "test": "^LTCL_.*$"
     },
     "max_one_statement": {
