@@ -60,12 +60,16 @@ public section.
       value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
     raising
       ZCX_MOCKUP_LOADER_ERROR .
+  class-methods ASSERT_VERSION
+    importing
+      !I_REQUIRED_VERSION type STRING
+    raising
+      ZCX_MOCKUP_LOADER_ERROR .
   class-methods CHECK_VERSION_FITS
     importing
       !I_REQUIRED_VERSION type STRING
     returning
       value(R_FITS) type ABAP_BOOL .
-
   methods LOAD_RAW
     importing
       !I_OBJ type STRING
@@ -138,6 +142,23 @@ ENDCLASS.
 
 
 CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
+
+
+method ASSERT_VERSION.
+
+  data lv_version_ok type abap_bool.
+
+  lv_version_ok = zcl_text2tab_utils=>check_version_fits(
+    i_current_version  = zif_mockup_loader_constants=>version
+    i_required_version = i_required_version ).
+
+  if lv_version_ok = abap_false.
+    zcx_mockup_loader_error=>raise(
+      |mockup loader version ({ zif_mockup_loader_constants=>version
+      }) < required ({ i_required_version })| ). "#EC NOTEXT
+  endif.
+
+endmethod.
 
 
 method CHECK_VERSION_FITS.

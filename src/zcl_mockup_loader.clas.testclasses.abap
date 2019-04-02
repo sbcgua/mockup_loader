@@ -126,6 +126,8 @@ class lcl_test_mockup_loader definition for testing
     methods load_raw                 for testing.
     methods load_data_to_ref         for testing.
 
+    methods assert_version           for testing.
+
     methods get_dummy_data
       importing
         i_strict       type abap_bool default abap_true
@@ -693,5 +695,26 @@ class lcl_test_mockup_loader implementation.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
   endmethod.  " load_data_to_ref.
+
+  method assert_version.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try .
+      zcl_mockup_loader=>assert_version( zif_mockup_loader_constants=>version ).
+    catch zcx_mockup_loader_error into lx.
+    endtry.
+    cl_abap_unit_assert=>assert_not_bound( lx ).
+
+    try .
+      zcl_mockup_loader=>assert_version( 'v999.999.999' ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->msg
+        exp = '*loader version*' ).
+    endtry.
+    cl_abap_unit_assert=>assert_bound( lx ).
+
+  endmethod.
 
 endclass.       "lcl_test_mockup_loader
