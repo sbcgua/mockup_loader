@@ -78,6 +78,13 @@ public section.
       !E_CONTENT type XSTRING
     raising
       ZCX_MOCKUP_LOADER_ERROR .
+  methods LOAD_RAW_X
+    importing
+      !I_OBJ_PATH type STRING
+    returning
+      value(R_CONTENT) type XSTRING
+    raising
+      ZCX_MOCKUP_LOADER_ERROR .
   methods LOAD_AND_STORE
     importing
       !I_OBJ type STRING
@@ -429,6 +436,15 @@ method load_raw.
   mo_zip->get(
     exporting name    = l_filename
     importing content = e_content ).
+
+endmethod.
+
+
+method LOAD_RAW_X.
+
+  mo_zip->get(
+    exporting name    = i_obj_path
+    importing content = r_content ).
 
 endmethod.
 
