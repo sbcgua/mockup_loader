@@ -4,7 +4,6 @@
   <asx:values>
    <VSEOINTERF>
     <CLSNAME>ZIF_MOCKUP_LOADER_CONSTANTS</CLSNAME>
-    <VERSION>1</VERSION>
     <LANGU>E</LANGU>
     <DESCRIPT>Constants for mockup loader</DESCRIPT>
     <EXPOSURE>2</EXPOSURE>

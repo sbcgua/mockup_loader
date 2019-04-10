@@ -4,8 +4,6 @@
   <asx:values>
    <PROGDIR>
     <NAME>ZMOCKUP_LOADER_SWITCH_SOURCE</NAME>
-    <STATE>A</STATE>
-    <VARCL>X</VARCL>
     <SUBC>1</SUBC>
     <APPL>*</APPL>
     <RLOAD>E</RLOAD>
