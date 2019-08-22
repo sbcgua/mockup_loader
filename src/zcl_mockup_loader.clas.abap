@@ -40,6 +40,11 @@ class ZCL_MOCKUP_LOADER definition
 public section.
   type-pools ABAP .
 
+  interfaces zif_mockup_loader.
+  aliases:
+    load_raw_x for zif_mockup_loader~load_raw_x,
+    load_data for zif_mockup_loader~load_data.
+
   class-methods CREATE
     importing
       !I_PATH type STRING
@@ -78,13 +83,6 @@ public section.
       !E_CONTENT type XSTRING
     raising
       ZCX_MOCKUP_LOADER_ERROR .
-  methods LOAD_RAW_X
-    importing
-      !I_OBJ_PATH type STRING
-    returning
-      value(R_CONTENT) type XSTRING
-    raising
-      ZCX_MOCKUP_LOADER_ERROR .
   methods LOAD_AND_STORE
     importing
       !I_OBJ type STRING
@@ -93,15 +91,6 @@ public section.
       !I_TYPE type CSEQUENCE optional
       !I_TABKEY type ABAP_COMPNAME optional
       !I_TYPE_DESC type ref to CL_ABAP_TYPEDESCR optional
-    raising
-      ZCX_MOCKUP_LOADER_ERROR .
-  methods LOAD_DATA
-    importing
-      !I_OBJ type STRING
-      !I_STRICT type ABAP_BOOL default ABAP_TRUE
-      !I_WHERE type ANY optional
-    exporting
-      !E_CONTAINER type ANY
     raising
       ZCX_MOCKUP_LOADER_ERROR .
   methods SET_PARAMS
@@ -396,30 +385,6 @@ method load_and_store.
 endmethod.
 
 
-method load_data.
-  data l_rawdata  type string.
-
-  if e_container is not supplied.
-    zcx_mockup_loader_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
-  endif.
-
-  me->read_zip(
-    exporting
-      i_name    = i_obj && '.txt'
-    importing
-      e_rawdata = l_rawdata ).
-
-  me->parse_data(
-    exporting
-      i_rawdata   = l_rawdata
-      i_strict    = i_strict
-      i_where     = i_where
-    importing
-      e_container = e_container ).
-
-endmethod.
-
-
 method load_raw.
   data l_filename type string.
 
@@ -436,15 +401,6 @@ method load_raw.
   mo_zip->get(
     exporting name    = l_filename
     importing content = e_content ).
-
-endmethod.
-
-
-method LOAD_RAW_X.
-
-  mo_zip->get(
-    exporting name    = i_obj_path
-    importing content = r_content ).
 
 endmethod.
 
@@ -582,6 +538,40 @@ method SET_PARAMS.
   endif.
 
   me->mv_begin_comment = i_begin_comment.
+
+endmethod.
+
+
+method zif_mockup_loader~load_data.
+
+  data l_rawdata  type string.
+
+  if e_container is not supplied.
+    zcx_mockup_loader_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
+  endif.
+
+  me->read_zip(
+    exporting
+      i_name    = i_obj && '.txt'
+    importing
+      e_rawdata = l_rawdata ).
+
+  me->parse_data(
+    exporting
+      i_rawdata   = l_rawdata
+      i_strict    = i_strict
+      i_where     = i_where
+    importing
+      e_container = e_container ).
+
+endmethod.
+
+
+method zif_mockup_loader~load_raw_x.
+
+  mo_zip->get(
+    exporting name    = i_obj_path
+    importing content = r_content ).
 
 endmethod.
 ENDCLASS.
