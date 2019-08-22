@@ -8,6 +8,11 @@ Legend
 + : added
 - : removed
 
+v2.0.4, 2019-04-10
+------------------
++ Added ZMOCKUP_LOADER=>ASSERT_VERSION method
++ Added ZMOCKUP_LOADER=>LOAD_RAW_X method
+
 v2.0.3, 2019-03-26
 ------------------
 ! Removed dependency from W3MIPOLLER (at ZMOCKUP_LOADER_SWSRC)

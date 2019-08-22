@@ -34,6 +34,14 @@ call method zcl_mockup_loader=>create
     i_path = 'c:\sap\projectX\unit_tests\mockup.zip'. 
 ```
 
+### ASSERT_VERSION
+
+```abap
+importing
+  I_REQUIRED_VERSION type STRING
+```
+Checks if the mockup loader has at least same version than required. In comparison to `CHECK_VERSION_FITS` it throws an exception if the version does not fit.
+
 ### CHECK_VERSION_FITS
 
 ```abap
@@ -202,6 +210,8 @@ load_mockup_no_strict 'BKPF' lt_bkpf.
 
 ### LOAD_RAW
 
+**May be depreciated in future**
+
 ```abap
 importing
   I_OBJ type STRING
@@ -213,6 +223,19 @@ exporting
 The method is similar to `LOAD_DATA` except that it just extracts ZIPed information as `XSTRING`. Can be used to test some XML/XSLT procedures for example.  
 
 Optionally, **I_EXT** - file extension - can be specified explicitly. Defaulted to `'.txt'` otherwise.
+
+### LOAD_RAW_X
+
+**May succeed LOAD_RAW in future**
+
+```abap
+importing
+  i_obj_path type string
+returning
+  r_content type xstring
+```
+
+Same as `LOAD_RAW` except that the path should be completely specified, with the extension, and the data `xstring` is returned and not exported.
 
 ### LOAD_AND_STORE
 
