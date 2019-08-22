@@ -8,7 +8,7 @@ Legend
 + : added
 - : removed
 
-v2.0.4, 2019-04-10
+v2.0.5, 2019-04-10
 ------------------
 + Added ZMOCKUP_LOADER=>ASSERT_VERSION method
 + Added ZMOCKUP_LOADER=>LOAD_RAW_X method
