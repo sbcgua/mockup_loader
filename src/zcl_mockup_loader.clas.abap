@@ -179,7 +179,7 @@ endmethod.
 
 method CONSTRUCTOR.
 
-  data lv_required_text2tab_ver type string value 'v2.2.4'.
+  data lv_required_text2tab_ver type string value 'v2.3.0'.
   if zcl_text2tab_parser=>check_version_fits( lv_required_text2tab_ver ) = abap_false.
     zcx_mockup_loader_error=>raise(
       msg  = |text2tab version ({ zif_text2tab_constants=>version
