@@ -48,7 +48,12 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
     data MO_ML type ref to ZCL_MOCKUP_LOADER .
     data MD_IF_DESC type ref to CL_ABAP_OBJECTDESCR .
     data MO_PROXY_TARGET type ref to OBJECT .
+
   private section.
+    data mt_src type string_table.
+    methods _src
+      importing
+        iv_src_line type string.
 ENDCLASS.
 
 
@@ -230,69 +235,67 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
   method generate_stub.
 
-    define _src.
-      append &1 to lt_src.
-    end-of-definition.
-
     data:
-        ln            type string,
-        lv_message    type string,
-        l_prog_name   type string,
-        l_class_name  type string,
-        lt_src        type string_table.
+      lv_message    type string,
+      l_prog_name   type string,
+      l_class_name  type string.
 
     field-symbols <method> like line of md_if_desc->methods.
     field-symbols <conf> like line of mt_config.
 
-    _src 'program.'.                                        "#EC NOTEXT
-    _src 'class lcl_mockup_loader_stub definition final'.   "#EC NOTEXT
-    _src '  inheriting from zcl_mockup_loader_stub_base.'.  "#EC NOTEXT
-    _src '  public section.'.                               "#EC NOTEXT
-    ln = |    interfaces { mv_interface_name }.|. _src ln.  "#EC NOTEXT
-    _src 'endclass.'.                                       "#EC NOTEXT
+    clear mt_src.
 
-    _src 'class lcl_mockup_loader_stub implementation.'.    "#EC NOTEXT
+    _src( 'program.' ).                                        "#EC NOTEXT
+    _src( 'class lcl_mockup_loader_stub definition final' ).   "#EC NOTEXT
+    _src( '  inheriting from zcl_mockup_loader_stub_base.' ).  "#EC NOTEXT
+    _src( '  public section.' ).                               "#EC NOTEXT
+    _src( |    interfaces { mv_interface_name }.| ).           "#EC NOTEXT
+    _src( 'endclass.' ).                                       "#EC NOTEXT
+
+    _src( 'class lcl_mockup_loader_stub implementation.' ).    "#EC NOTEXT
 
     loop at md_if_desc->methods assigning <method>.
       unassign <conf>.
       read table mt_config assigning <conf> with key method_name = <method>-name.
-      ln = |  method { mv_interface_name }~{ <method>-name }.|. _src ln.
+      _src( |  method { mv_interface_name }~{ <method>-name }.| ).
       if <conf> is assigned.
         if <conf>-as_proxy = abap_true.
           field-symbols <param> like line of <method>-parameters.
           data l_param_kind type char1.
 
-          _src '    data lt_params type abap_parmbind_tab.'. "#EC NOTEXT
-          _src '    data ls_param like line of lt_params.'.  "#EC NOTEXT
+          _src( '    data lt_params type abap_parmbind_tab.' ). "#EC NOTEXT
+          _src( '    data ls_param like line of lt_params.' ).  "#EC NOTEXT
+
           loop at <method>-parameters assigning <param>.
             l_param_kind = <param>-parm_kind.
             translate l_param_kind using 'IEEICCRR'. " Inporting -> exporting, etc
-            ln = |    ls_param-name = '{ <param>-name }'.|. _src ln.
-            ln = |    ls_param-kind = '{ l_param_kind }'.|. _src ln.
-            ln = |    get reference of { <param>-name } into ls_param-value.|. _src ln.
-            _src '    insert ls_param into table lt_params.'.  "#EC NOTEXT
+            _src( |    ls_param-name = '{ <param>-name }'.| ).
+            _src( |    ls_param-kind = '{ l_param_kind }'.| ).
+            _src( |    get reference of { <param>-name } into ls_param-value.| ).
+            _src( '    insert ls_param into table lt_params.' ). "#EC NOTEXT
           endloop.
-          ln = |    call method mo_proxy_target->('{ mv_interface_name }~{ <method>-name }')|. _src ln. "#EC NOTEXT
-          ln = |      parameter-table lt_params.|. _src ln. "#EC NOTEXT
+
+          _src( |    call method mo_proxy_target->('{ mv_interface_name }~{ <method>-name }')| ). "#EC NOTEXT
+          _src( |      parameter-table lt_params.| ).            "#EC NOTEXT
 
         else.
-          _src '    data lr_data type ref to data.'.          "#EC NOTEXT
-          _src '    lr_data = get_mock_data('.                "#EC NOTEXT
+          _src( '    data lr_data type ref to data.' ).          "#EC NOTEXT
+          _src( '    lr_data = get_mock_data(' ).                "#EC NOTEXT
           if <conf>-sift_param is not initial.
-            ln = |      i_sift_value  = { <conf>-sift_param }|. _src ln.
+            _src( |      i_sift_value  = { <conf>-sift_param }| ).
           endif.
-          ln = |      i_method_name = '{ <method>-name }' ).|. _src ln.
-          _src '    field-symbols <container> type any.'.     "#EC NOTEXT
-          _src '    assign lr_data->* to <container>.'.       "#EC NOTEXT
-          ln = |    { <conf>-output_param } = <container>.|. _src ln.
+          _src( |      i_method_name = '{ <method>-name }' ).| ).
+          _src( '    field-symbols <container> type any.' ).      "#EC NOTEXT
+          _src( '    assign lr_data->* to <container>.' ).        "#EC NOTEXT
+          _src( |    { <conf>-output_param } = <container>.| ).
         endif.
       endif.
-      _src '  endmethod.'.                                  "#EC NOTEXT
-    endloop.                                                "#EC NOTEXT
+      _src( '  endmethod.' ).                                   "#EC NOTEXT
+    endloop.
 
-    _src 'endclass.'.
+    _src( 'endclass.' ).                                        "#EC NOTEXT
 
-    generate subroutine pool lt_src name l_prog_name MESSAGE lv_message. "#EC CI_GENERATE
+    generate subroutine pool mt_src name l_prog_name MESSAGE lv_message. "#EC CI_GENERATE
     l_class_name = |\\PROGRAM={ l_prog_name }\\CLASS=LCL_MOCKUP_LOADER_STUB|.
 
     create object r_stub type (l_class_name)
@@ -301,5 +304,10 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
         io_proxy_target = mo_proxy_target
         io_ml           = mo_ml.
 
+  endmethod.
+
+
+  method _src.
+    append iv_src_line to mt_src. " just to improve readability and linting
   endmethod.
 ENDCLASS.
