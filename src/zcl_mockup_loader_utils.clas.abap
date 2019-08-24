@@ -149,6 +149,8 @@ method BUILD_FILTER.
         if dy_struc->absolute_name = g_ty_where_abs_name. " ty_where
           l_filter = conv_where_to_filter( i_where ).
           append l_filter to lt_filter.
+        elseif dy_struc->absolute_name = g_ty_filter_abs_name. " ty_filter
+          append i_where to lt_filter.
         else.                      " structure with named components per range
           lt_filter = conv_nc_struc_to_filter(
             i_where  = i_where

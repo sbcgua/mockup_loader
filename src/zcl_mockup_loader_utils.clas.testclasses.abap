@@ -609,7 +609,14 @@ class lcl_test_mockup_utils implementation.
 
     cl_abap_unit_assert=>assert_equals( act = lt_filter_act exp = lt_filter ).
 
+    clear: lo_ex, lt_filter_act.
+    try . " ty_filter only
+      lt_filter_act = zcl_mockup_loader_utils=>build_filter( i_where = ls_filter ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( ).
+    endtry.
 
+    cl_abap_unit_assert=>assert_equals( act = lt_filter_act exp = lt_filter ).
 
   endmethod.  " build_filter.
 
