@@ -38,14 +38,14 @@ CLASS ZCL_MOCKUP_LOADER_DEEP_PROVIDR IMPLEMENTATION.
     if ls_address-key_value is initial and ls_address-ref_field is initial.
       return. " empty dataset
     elseif ls_address-key_value is not initial.
-      ls_filter = zcl_mockup_loader_utils=>conv_single_val_to_filter(
-        i_where = ls_address-key_field
-        i_value = ls_address-key_value ).
+      ls_filter-name = ls_address-key_field.
+      ls_filter-type = zcl_mockup_loader_utils=>c_filter_type-value.
+      get reference of ls_address-key_value into ls_filter-valref.
     else. " ref field is not initial
       field-symbols <valref> type any.
 
       ls_filter-name = ls_address-key_field.
-      ls_filter-type = 'V'. " Value " TODO refactor to a constant
+      ls_filter-type = zcl_mockup_loader_utils=>c_filter_type-value.
       assign component ls_address-ref_field of structure i_cursor to <valref>.
       if sy-subrc <> 0.
         "throw

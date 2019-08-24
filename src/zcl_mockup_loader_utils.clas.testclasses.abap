@@ -354,7 +354,7 @@ class lcl_test_mockup_utils implementation.
     l_str = '2015'.
     append initial line to lt_filter assigning <f>.
     <f>-name = 'TNUMBER'.
-    <f>-type = 'S'.
+    <f>-type = 'V'.
     get reference of l_str into <f>-valref.
 
     try .
@@ -491,7 +491,7 @@ class lcl_test_mockup_utils implementation.
     " Filter by string
     append initial line to lt_filter assigning <f>.
     <f>-name = 'TNUMBER'.
-    <f>-type = 'S'.
+    <f>-type = 'V'.
     get reference of l_str into <f>-valref.
     l_str = '2015'.
 
