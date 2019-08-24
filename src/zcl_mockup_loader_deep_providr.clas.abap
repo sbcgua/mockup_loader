@@ -48,19 +48,36 @@ CLASS ZCL_MOCKUP_LOADER_DEEP_PROVIDR IMPLEMENTATION.
       ls_filter-type = zcl_mockup_loader_utils=>c_filter_type-value.
       assign component ls_address-ref_field of structure i_cursor to <valref>.
       if sy-subrc <> 0.
-        "throw
+        raise exception type zcx_text2tab_error
+          exporting
+            msg  = |Cannot find { ls_address-ref_field } in {
+              cl_abap_typedescr=>describe_by_data( i_cursor )->absolute_name }|
+            code = 'ZZ' " ???
+            methname = 'DEEP->select'. " ???
+*            line = line
+*            field = field
+*            structure = structure
+*            location = location.
       endif.
       get reference of <valref> into ls_filter-valref.
-
     endif.
 
-    mi_ml_instance->load_data(
-      exporting
-        i_obj    = ls_address-location
-        i_strict = abap_false " ????
-        i_where  = ls_filter
-      importing
-        e_container = e_container ).
+    data lx type ref to zcx_mockup_loader_error.
+    try.
+      mi_ml_instance->load_data(
+        exporting
+          i_obj    = ls_address-location
+          i_strict = abap_false " ????
+          i_where  = ls_filter
+        importing
+          e_container = e_container ).
+    catch zcx_mockup_loader_error into lx.
+      raise exception type zcx_text2tab_error
+        exporting
+          msg  = |@{ ls_address-location }: { lx->get_text( ) }|
+          code = 'ZZ' " ???
+          methname = 'DEEP->select'. " ???
+    endtry.
 
   endmethod.
 ENDCLASS.
