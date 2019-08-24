@@ -50,8 +50,6 @@ public section.
     returning
       value(R_YESNO) type ABAP_BOOL .
   class-methods CLASS_CONSTRUCTOR .
-protected section.
-private section.
 
   class-methods CONV_TT_WHERE_TO_FILTER
     importing
@@ -91,6 +89,10 @@ private section.
     raising
       ZCX_MOCKUP_LOADER_ERROR
       CX_SY_MOVE_CAST_ERROR .
+
+protected section.
+private section.
+
 ENDCLASS.
 
 
