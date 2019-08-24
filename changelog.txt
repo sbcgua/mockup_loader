@@ -10,7 +10,7 @@ Legend
 
 v2.1.0, 2019-08-??
 ------------------
-+ deep structure loading
++ deep structure loading - major feature, see readme and reference
 ! move util helpers to public
 ! internal refactorings
 

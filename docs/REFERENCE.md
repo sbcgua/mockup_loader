@@ -67,6 +67,7 @@ call method zcl_mockup_loader=>set_params
 importing
   I_OBJ    type STRING
   I_STRICT type ABAP_BOOL default ABAP_TRUE
+  I_DEEP   type ABAP_BOOL default ABAP_FALSE
   I_WHERE  type ANY       optional
 exporting
   E_CONTAINER type ANY
@@ -75,6 +76,7 @@ exporting
 - **I_OBJ** - path to file inside ZIP. Extension `'.txt'` is automatically appended so should not be specified. Please be aware that ZIP file names are **case sensitive** (at least this is how SAP handles them).
 - **I_STRICT** - suggests if the structure of the file must strictly correspond to the structure of target container. The call **always** validates that all fields in the text file are present in target structure. `I_STRICT` = 'True' **additionally** means that the number of fields is the same as in the target structure.
     - One exception is `MANDT` field. It may be skipped in a text file even for strict validation. So a text file with all structure fields but MANDT is still considered as strictly equal.
+- **I_DEEP** - allow filling deep components (tables/structures) in the target structure. If the component is not empty it must have the form of `<source_path>[<source_id_field>=<value|@reference_field>]`. See more detail below.
 - **I_WHERE** - optional condition to filter the sourse table. See "Using filtering" section below for details.   
 - **E_CONTAINER** - container for the data. Can be a table or a structure. In the latter case just the first data line of the file is parsed, no error is thrown if there are more lines in case like that. Can also be **data ref** to a table or a structure. In this case data ref **must be** created and passed to the method, it cannot infere data type for proper convertion without it.
 
@@ -181,6 +183,83 @@ endtry.
 ```
 
 5) A structure `ZCL_MOCKUP_LOADER_UTILS=>TY_FILTER` - one line of `TT_FILTER` above.
+
+#### Filling deep components in one path
+
+If you have a target data with deep fields - tables or structures - it is possible to fill them in one run. Let's consider a simple example.
+
+Let's assume you have 2 linked tables - header and lines - the tables are represented by **separate** files in zip.
+
+```
+DOCUMENT
+========
+ID   DATE   ...
+1    ...
+2    ...
+
+LINES
+========
+DOCID   LINEID   AMOUNT   ...
+1       1        100.00   ...
+1       2        123.00   ...
+2       1        990.00   ...
+```
+
+Let's assume you have a target data of the following structure
+```abap
+types:
+  begin of ty_line,
+    docid  type numc10,
+    lineid type numc3,
+    " ...
+  end of ty_line,
+  tt_line type table of ty_line,
+  begin of ty_document,
+    id   type numc10,
+    " ...
+    lines type tt_line, " <<< DEEP FIELD, supposed to be filled with lines of the document
+  end of ty_document,
+  tt_documents type table of ty_document.
+```
+
+The following code will load this kind of structure
+
+```abap
+  o_ml->load_data(
+    exporting
+      i_obj  = 'path_to_head_file'
+      i_deep = abap_true            " <<< ENABLE DEEP LOADING
+    importing
+      e_container = lt_docs ).      " <<< type tt_documents
+```
+
+To instruct mockup loader how to find the data for deep components you have to fill these components in the text in special format: `<source_path>[<source_id_field>=<value|@reference_field>]` which means *"go find `source_path` file, parse it, extract the lines, filter those where `source_id_field` = `value` or `reference_field` value of the current header record"*. For example:
+
+```
+DOCUMENT
+========
+ID   DATE   ...   LINES
+1    ...          path_to_lines_file[docid=@id]
+2    ...          path_to_lines_file[docid=12345]
+```
+
+For the first record the mockup loader will find file `path_to_lines_file.txt` and load the lines with `docid` = `1` (value of `id` field of the first record). For the second record the explicit value `12345` will be used as the filter.
+
+## Typeless parsing
+
+You can also create an instance that does not validate type against some existing type structure. Instead it generates the table dynamically, where each field if the line is unconverted string.
+
+```abap
+data:
+  lr_data   type ref to data,
+  lt_fields type string_table.
+
+zcl_text2tab_parser=>create_typeless( )->parse( 
+  exporting 
+    i_data      = my_get_some_raw_text_data( )
+  importing 
+    e_head_fields = lt_fields  " Contain the list of field names !
+    e_container   = lr_data ). " The container is created inside the parser
 
 #### "Best practice" suggestions
 
