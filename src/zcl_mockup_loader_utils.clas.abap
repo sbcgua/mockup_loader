@@ -66,8 +66,8 @@ class ZCL_MOCKUP_LOADER_UTILS definition
         zcx_mockup_loader_error .
     class-methods conv_nc_struc_to_filter
       importing
-        !id_struc type ref to cl_abap_structdescr
-        !i_where type any
+        !i_where  type any
+        !id_struc type ref to cl_abap_structdescr optional
       returning
         value(rt_filter) type tt_filter
       raising
@@ -202,6 +202,8 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
 
 
   method CONV_NC_STRUC_TO_FILTER.
+
+    data dy_struc      type ref to cl_abap_structdescr.
     data dy_table      type ref to cl_abap_tabledescr.
     data l_filter      type ty_filter.
     data lt_components type cl_abap_structdescr=>component_table.
@@ -209,18 +211,23 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
 
     field-symbols <tab>  type any table.
 
-    lt_components  = id_struc->get_components( ).
+    dy_struc = id_struc.
+    if dy_struc is initial.
+      dy_struc ?= cl_abap_typedescr=>describe_by_data( i_where ).
+    endif.
+
+    lt_components  = dy_struc->get_components( ).
     loop at lt_components into l_component.
       if l_component-type->kind <> cl_abap_typedescr=>kind_table.
         zcx_mockup_loader_error=>raise(
-          msg  = |I_WHERE must be a structure of ranges or TY_WHERE|
+          msg  = |I_WHERE must be a structure of ranges|
           code = 'WS' ).   "#EC NOTEXT
       endif.
 
       dy_table ?= l_component-type.
       if dy_table->key ne g_range_key. " Not range-like structure ?
         zcx_mockup_loader_error=>raise(
-          msg  = |I_WHERE must be a structure of ranges or TY_WHERE|
+          msg  = |I_WHERE must be a structure of ranges|
           code = 'WS' ).   "#EC NOTEXT
       endif.
 
@@ -290,7 +297,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
   method conv_where_to_filter.
     data dy_table      type ref to cl_abap_tabledescr.
 
-    r_filter-name   = i_where-name.
+    r_filter-name   = to_upper( i_where-name ).
     r_filter-valref = i_where-range.
     r_filter-type   = c_filter_type-range.
     dy_table ?= cl_abap_typedescr=>describe_by_data_ref( r_filter-valref ). " Assume table, cast_error otherwise

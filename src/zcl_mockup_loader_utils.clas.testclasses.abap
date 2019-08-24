@@ -107,6 +107,21 @@ class lcl_test_mockup_utils definition for testing
     methods build_filter_with_value for testing.
     methods build_filter for testing.
 
+    methods assert_filter_equals
+      importing
+        act type zcl_mockup_loader_utils=>ty_filter
+        exp type zcl_mockup_loader_utils=>ty_filter.
+
+    methods assert_filter_tab_equals
+      importing
+        act type zcl_mockup_loader_utils=>tt_filter
+        exp type zcl_mockup_loader_utils=>tt_filter.
+
+    methods conv_single_val_to_filter for testing raising zcx_mockup_loader_error .
+    methods conv_string_to_filter     for testing raising zcx_mockup_loader_error .
+    methods conv_where_to_filter      for testing raising zcx_mockup_loader_error .
+    methods conv_nc_struc_to_filter   for testing raising zcx_mockup_loader_error .
+
 endclass.       "lcl_test_mockup_loader
 
 **********************************************************************
@@ -619,5 +634,194 @@ class lcl_test_mockup_utils implementation.
     cl_abap_unit_assert=>assert_equals( act = lt_filter_act exp = lt_filter ).
 
   endmethod.  " build_filter.
+
+  method assert_filter_equals.
+    field-symbols <act> type any.
+    field-symbols <exp> type any.
+    cl_abap_unit_assert=>assert_equals( act = act-name exp = exp-name ).
+    cl_abap_unit_assert=>assert_equals( act = act-type exp = exp-type ).
+    assign act-valref->* to <act>.
+    assign exp-valref->* to <exp>.
+    cl_abap_unit_assert=>assert_equals( act = <act> exp = <exp> ).
+  endmethod.
+
+  method assert_filter_tab_equals.
+    field-symbols <act> type any.
+    field-symbols <exp> type any.
+    cl_abap_unit_assert=>assert_equals( act = lines( act ) exp = lines( exp ) ).
+    loop at act assigning <act>.
+      read table exp index sy-tabix assigning <exp>.
+    endloop.
+    assert_filter_equals( act = <act> exp = <exp> ).
+  endmethod.
+
+  method conv_single_val_to_filter.
+
+    data ls_filter_act type zcl_mockup_loader_utils=>ty_filter.
+    data ls_filter_exp type zcl_mockup_loader_utils=>ty_filter.
+
+    data lv_str type string value 'efg'.
+    ls_filter_exp-name = 'ABC'.
+    ls_filter_exp-type = zcl_mockup_loader_utils=>c_filter_type-value.
+    get reference of lv_str into ls_filter_exp-valref.
+
+    ls_filter_act = zcl_mockup_loader_utils=>conv_single_val_to_filter(
+      i_where = 'abc'
+      i_value = |efg| ).
+
+    assert_filter_equals(
+      act = ls_filter_act
+      exp = ls_filter_exp ).
+
+    " Negative
+    data lx type ref to zcx_mockup_loader_error.
+    try .
+      zcl_mockup_loader_utils=>conv_single_val_to_filter(
+        i_where = 'abc'
+        i_value = ls_filter_act ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'ET' ).
+    endtry.
+
+  endmethod.
+
+  method conv_string_to_filter.
+
+    data ls_filter_act type zcl_mockup_loader_utils=>ty_filter.
+    data ls_filter_exp type zcl_mockup_loader_utils=>ty_filter.
+
+    data lv_str type string value 'efg'.
+    ls_filter_exp-name = 'ABC'.
+    ls_filter_exp-type = zcl_mockup_loader_utils=>c_filter_type-value.
+    get reference of lv_str into ls_filter_exp-valref.
+
+    ls_filter_act = zcl_mockup_loader_utils=>conv_string_to_filter( 'abc = efg' ).
+
+    assert_filter_equals(
+      act = ls_filter_act
+      exp = ls_filter_exp ).
+
+    " Negative
+    data lx type ref to zcx_mockup_loader_error.
+    try .
+      zcl_mockup_loader_utils=>conv_string_to_filter( 'abcefg' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'SP' ).
+    endtry.
+
+    try .
+      zcl_mockup_loader_utils=>conv_string_to_filter( '=abcefg' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'SP' ).
+    endtry.
+
+  endmethod.
+
+  method conv_where_to_filter.
+
+    data ls_filter_act type zcl_mockup_loader_utils=>ty_filter.
+    data ls_filter_exp type zcl_mockup_loader_utils=>ty_filter.
+
+    data lr_i type range of numc4.
+    field-symbols <r> like line of lr_i.
+    append initial line to lr_i assigning <r>.
+    <r>-option = 'EQ'.
+
+    ls_filter_exp-name = 'ABC'.
+    ls_filter_exp-type = zcl_mockup_loader_utils=>c_filter_type-range.
+    get reference of lr_i into ls_filter_exp-valref.
+
+    data ls_where type zcl_mockup_loader_utils=>ty_where.
+    ls_where-name = 'abc'.
+    get reference of lr_i into ls_where-range.
+
+    ls_filter_act = zcl_mockup_loader_utils=>conv_where_to_filter( ls_where ).
+
+    assert_filter_equals(
+      act = ls_filter_act
+      exp = ls_filter_exp ).
+
+    " Negative
+    data lx type ref to zcx_mockup_loader_error.
+    data lt_dummy_tab type string_table.
+    try .
+      get reference of lt_dummy_tab into ls_where-range.
+      zcl_mockup_loader_utils=>conv_where_to_filter( ls_where ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'RT' ).
+    endtry.
+
+  endmethod.
+
+  method conv_nc_struc_to_filter.
+
+    data:
+      begin of ls_where,
+        num  type range of numc4,
+        char type range of c,
+      end of ls_where.
+
+    field-symbols <n> like line of ls_where-num.
+    append initial line to ls_where-num assigning <n>.
+    <n>-option = 'EQ'.
+    field-symbols <c> like line of ls_where-char.
+    append initial line to ls_where-char assigning <c>.
+    <c>-option = 'EQ'.
+
+    data lt_filter_act type zcl_mockup_loader_utils=>tt_filter.
+    data lt_filter_exp type zcl_mockup_loader_utils=>tt_filter.
+    field-symbols <f> like line of lt_filter_exp.
+
+    append initial line to lt_filter_exp assigning <f>.
+    <f>-name = 'NUM'.
+    <f>-type = zcl_mockup_loader_utils=>c_filter_type-range.
+    get reference of ls_where-num into <f>-valref.
+
+    append initial line to lt_filter_exp assigning <f>.
+    <f>-name = 'CHAR'.
+    <f>-type = zcl_mockup_loader_utils=>c_filter_type-range.
+    get reference of ls_where-char into <f>-valref.
+
+    data lo_type type ref to cl_abap_structdescr.
+    lo_type ?= cl_abap_typedescr=>describe_by_data( ls_where ).
+    lt_filter_act = zcl_mockup_loader_utils=>conv_nc_struc_to_filter(
+      id_struc = lo_type
+      i_where  = ls_where ).
+
+    assert_filter_tab_equals(
+      act = lt_filter_act
+      exp = lt_filter_exp ).
+
+    " Negative
+    data:
+      lx type ref to zcx_mockup_loader_error,
+      begin of ls_where_err1,
+        number  type range of numc04,
+        other   type tt_dummy,
+      end of ls_where_err1,
+      begin of ls_where_err2,
+        number  type range of numc04,
+        tother   type c,
+      end of ls_where_err2.
+
+    try .
+      zcl_mockup_loader_utils=>conv_nc_struc_to_filter( ls_where_err1 ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'WS' ).
+    endtry.
+
+    try .
+      zcl_mockup_loader_utils=>conv_nc_struc_to_filter( ls_where_err2 ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'WS' ).
+    endtry.
+
+  endmethod.
 
 endclass.
