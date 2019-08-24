@@ -118,6 +118,7 @@ private section.
     importing
       !I_RAWDATA type STRING
       !I_STRICT type ABAP_BOOL default ABAP_TRUE
+      !I_DEEP type ABAP_BOOL default ABAP_FALSE
       !I_WHERE type ANY optional
     exporting
       !E_CONTAINER type ANY
@@ -445,10 +446,17 @@ method parse_data.
 
   try.
     data lo_parser type ref to zcl_text2tab_parser.
+    data lo_deep_provider type ref to zcl_mockup_loader_deep_providr.
+
+    if i_deep = abap_true.
+      create object lo_deep_provider exporting ii_ml_instance = me.
+    endif.
+
     lo_parser = zcl_text2tab_parser=>create(
       i_pattern       = <container>
       i_amount_format = mv_amt_format
       i_date_format   = mv_date_format
+      i_deep_provider = lo_deep_provider
       i_begin_comment = mv_begin_comment ).
 
     lo_parser->parse(
@@ -560,6 +568,7 @@ method zif_mockup_loader~load_data.
     exporting
       i_rawdata   = l_rawdata
       i_strict    = i_strict
+      i_deep      = i_deep
       i_where     = i_where
     importing
       e_container = e_container ).

@@ -105,6 +105,20 @@ class lcl_test_mockup_loader definition for testing
       end of ty_dummy,
       tt_dummy type table of ty_dummy with default key.
 
+    types:
+      begin of ty_deep_line,
+        docid  type i,
+        lineid type i,
+        text   type string,
+      end of ty_deep_line,
+      tt_deep_line type standard table of ty_deep_line with key docid lineid,
+      begin of ty_deep_head,
+        docid type i,
+        lines type tt_deep_line,
+        first_line type ty_deep_line,
+      end of ty_deep_head,
+      tt_deep_head type standard table of ty_deep_head with key docid.
+
 * ================
   private section.
     constants c_tab  like cl_abap_char_utilities=>horizontal_tab value cl_abap_char_utilities=>horizontal_tab.
@@ -125,6 +139,7 @@ class lcl_test_mockup_loader definition for testing
     methods load_and_store           for testing.
     methods load_raw                 for testing.
     methods load_data_to_ref         for testing.
+    methods load_deep                for testing raising zcx_mockup_loader_error.
 
     methods assert_version           for testing.
 
@@ -714,6 +729,63 @@ class lcl_test_mockup_loader implementation.
         exp = '*loader version*' ).
     endtry.
     cl_abap_unit_assert=>assert_bound( lx ).
+
+  endmethod.
+
+  method load_deep.
+
+    " DATA
+    data lt_docs_exp type tt_deep_head.
+    field-symbols <h> like line of lt_docs_exp.
+    field-symbols <l> like line of <h>-lines.
+
+    append initial line to lt_docs_exp assigning <h>.
+    <h>-docid = 1.
+    <h>-first_line-docid  = 1.
+    <h>-first_line-lineid = 1.
+    <h>-first_line-text   = 'Hello'.
+    append initial line to <h>-lines assigning <l>.
+    <l>-docid  = 1.
+    <l>-lineid = 1.
+    <l>-text   = 'Hello'.
+    append initial line to <h>-lines assigning <l>.
+    <l>-docid  = 1.
+    <l>-lineid = 2.
+    <l>-text   = 'Mockup'.
+
+    append initial line to lt_docs_exp assigning <h>.
+    <h>-docid = 2.
+    <h>-first_line-docid  = 2.
+    <h>-first_line-lineid = 1.
+    <h>-first_line-text   = 'Loader'.
+    append initial line to <h>-lines assigning <l>.
+    <l>-docid  = 2.
+    <l>-lineid = 1.
+    <l>-text   = 'Loader'.
+
+    append initial line to lt_docs_exp assigning <h>.
+    <h>-docid = 3.
+
+    append initial line to lt_docs_exp assigning <h>.
+    <h>-docid = 4.
+    <h>-first_line-docid  = 99.
+    <h>-first_line-lineid = 1.
+    <h>-first_line-text   = '!!!'.
+    append initial line to <h>-lines assigning <l>.
+    <l>-docid  = 99.
+    <l>-lineid = 1.
+    <l>-text   = '!!!'.
+
+    " TEST
+    data lt_docs_act like lt_docs_exp.
+    o->load_data(
+      exporting
+        i_obj  = 'testdir/deep_head'
+        i_deep = abap_true
+      importing
+        e_container = lt_docs_act ).
+
+    cl_abap_unit_assert=>assert_equals( act = lt_docs_act exp = lt_docs_exp ).
 
   endmethod.
 
