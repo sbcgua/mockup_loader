@@ -612,9 +612,9 @@ class lcl_test_mockup_loader implementation.
     clear lo_ex.
     try.
       o->load_and_store(
-        exporting i_obj       = 'testdir/testfile_complete'
-                  i_name      = 'TAB'
-                  i_type      = '************' ).
+        i_obj       = 'testdir/testfile_complete'
+        i_name      = 'TAB'
+        i_type      = '************' ).
 
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
@@ -624,10 +624,10 @@ class lcl_test_mockup_loader implementation.
     clear lo_ex.
     try.
       o->load_and_store(
-        exporting i_obj       = 'testdir/testfile_complete'
-                  i_name      = 'TAB'
-                  i_type_desc = lo_type_desc
-                  i_type      = '************' ).
+        i_obj       = 'testdir/testfile_complete'
+        i_name      = 'TAB'
+        i_type_desc = lo_type_desc
+        i_type      = '************' ).
 
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
