@@ -505,6 +505,16 @@ lt_filter = zcl_mockup_loader_utils=>build_filter(
 
 `e_container` can also be a structure - the first matching record is retrieved.
 
+### Filter Helpers
+
+The class contains several helper methods to create filter from other data structures.
+
+- **conv_single_val_to_filter** - `conv_single_val_to_filter( i_where = 'FIELD_NAME' i_value = 'VALUE_TO_FILTER' )`
+- **conv_string_to_filter** - `conv_string_to_filter( i_where = 'FIELD_NAME = VALUE_TO_FILTER' )`
+- **conv_nc_struc_to_filter** - `conv_nc_struc_to_filter( i_where = structure_of_ranges )` - structure of range fields, see *Using filtering* above.
+- **conv_where_to_filter** - `conv_where_to_filter( i_where = structure_of_ty_where_type )` - `ty_where` structure of name and reference to range, see *Using filtering* above.
+- **build_filter** - universal method that accepts all above (in fact calling the above internally) e.g. `build_filter( i_where = 'BELNR = 0000000010' )` or `build_filter( i_where = structure_of_ty_where_type )`
+
 ## ZCL_MOCKUP_LOADER_STUB_FACTORY
 
 Since 2.0.0 mockup loader supports generating of interface stubs. As a more proper alternative for STORE feature above. :tada:
