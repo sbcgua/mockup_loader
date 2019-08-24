@@ -52,8 +52,8 @@ CLASS ZCL_MOCKUP_LOADER_DEEP_PROVIDR IMPLEMENTATION.
           exporting
             msg  = |Cannot find { ls_address-ref_field } in {
               cl_abap_typedescr=>describe_by_data( i_cursor )->absolute_name }|
-            code = 'ZZ' " ???
-            methname = 'DEEP->select'. " ???
+            code = 'ZZ'                 " TODO improve error visibility
+            methname = 'deep->select'.  "#EC NOTEXT
 *            line = line
 *            field = field
 *            structure = structure
@@ -75,8 +75,8 @@ CLASS ZCL_MOCKUP_LOADER_DEEP_PROVIDR IMPLEMENTATION.
       raise exception type zcx_text2tab_error
         exporting
           msg  = |@{ ls_address-location }: { lx->get_text( ) }|
-          code = 'ZZ' " ???
-          methname = 'DEEP->select'. " ???
+          code = 'ZZ'                 " TODO improve error visibility
+          methname = 'DEEP->select'.  "#EC NOTEXT
     endtry.
 
   endmethod.

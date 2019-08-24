@@ -1,5 +1,6 @@
 class ltcl_mockup_loader_mock definition final
   for testing.
+
   public section.
     interfaces zif_mockup_loader.
     data:
