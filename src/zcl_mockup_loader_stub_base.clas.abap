@@ -22,9 +22,9 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
 
     methods constructor
       importing
-        !IT_CONFIG type TT_MOCK_CONFIG
-        !IO_ML type ref to ZCL_MOCKUP_LOADER
-        !IO_PROXY_TARGET type ref to OBJECT OPTIONAL .
+        !it_config type tt_mock_config
+        !io_ml type ref to zcl_mockup_loader
+        !io_proxy_target type ref to object optional .
   protected section.
     methods get_mock_data
       importing

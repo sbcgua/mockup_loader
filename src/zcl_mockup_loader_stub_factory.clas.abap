@@ -4,50 +4,50 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
 
   public section.
 
-    methods CONSTRUCTOR
+    methods constructor
       importing
-        !I_INTERFACE_NAME type SEOCLSNAME
-        !IO_ML_INSTANCE type ref to ZCL_MOCKUP_LOADER
-        !IO_PROXY_TARGET type ref to OBJECT optional
+        !i_interface_name type seoclsname
+        !io_ml_instance type ref to zcl_mockup_loader
+        !io_proxy_target type ref to object optional
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    methods CONNECT_METHOD
+        zcx_mockup_loader_error .
+    methods connect_method
       importing
-        !I_METHOD_NAME type ABAP_METHNAME
-        !I_MOCK_NAME type STRING
-        !I_LOAD_STRICT type ABAP_BOOL default ABAP_FALSE
-        !I_SIFT_PARAM type ABAP_PARMNAME optional
-        !I_MOCK_TAB_KEY type ABAP_COMPNAME optional
-        !I_OUTPUT_PARAM type ABAP_PARMNAME optional
+        !i_method_name type abap_methname
+        !i_mock_name type string
+        !i_load_strict type abap_bool default abap_false
+        !i_sift_param type abap_parmname optional
+        !i_mock_tab_key type abap_compname optional
+        !i_output_param type abap_parmname optional
       returning
-        value(R_INSTANCE) type ref to ZCL_MOCKUP_LOADER_STUB_FACTORY
+        value(r_instance) type ref to zcl_mockup_loader_stub_factory
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    methods FORWARD_METHOD
+        zcx_mockup_loader_error .
+    methods forward_method
       importing
-        !I_METHOD_NAME type ABAP_METHNAME
+        !i_method_name type abap_methname
       returning
-        value(R_INSTANCE) type ref to ZCL_MOCKUP_LOADER_STUB_FACTORY
+        value(r_instance) type ref to zcl_mockup_loader_stub_factory
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    methods GENERATE_STUB
+        zcx_mockup_loader_error .
+    methods generate_stub
       returning
-        value(R_STUB) type ref to OBJECT .
-    class-methods BUILD_CONFIG
+        value(r_stub) type ref to object .
+    class-methods build_config
       importing
-        !ID_IF_DESC type ref to CL_ABAP_OBJECTDESCR
-        !I_CONFIG type ZCL_MOCKUP_LOADER_STUB_BASE=>TY_MOCK_CONFIG
+        !id_if_desc type ref to cl_abap_objectdescr
+        !i_config type zcl_mockup_loader_stub_base=>ty_mock_config
       returning
-        value(R_CONFIG) type ZCL_MOCKUP_LOADER_STUB_BASE=>TY_MOCK_CONFIG
+        value(r_config) type zcl_mockup_loader_stub_base=>ty_mock_config
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
+        zcx_mockup_loader_error .
   protected section.
 
-    data MV_INTERFACE_NAME type SEOCLSNAME .
-    data MT_CONFIG type ZCL_MOCKUP_LOADER_STUB_BASE=>TT_MOCK_CONFIG .
-    data MO_ML type ref to ZCL_MOCKUP_LOADER .
-    data MD_IF_DESC type ref to CL_ABAP_OBJECTDESCR .
-    data MO_PROXY_TARGET type ref to OBJECT .
+    data mv_interface_name type seoclsname .
+    data mt_config type zcl_mockup_loader_stub_base=>tt_mock_config .
+    data mo_ml type ref to zcl_mockup_loader .
+    data md_if_desc type ref to cl_abap_objectdescr .
+    data mo_proxy_target type ref to object .
 
   private section.
     data mt_src type string_table.

@@ -38,102 +38,102 @@ class ZCL_MOCKUP_LOADER definition
   create private .
 
   public section.
-    type-pools ABAP .
+    type-pools abap .
 
     interfaces zif_mockup_loader.
     aliases:
       load_raw_x for zif_mockup_loader~load_raw_x,
       load_data for zif_mockup_loader~load_data.
 
-    class-methods CREATE
+    class-methods create
       importing
-        !I_PATH type STRING
-        !I_TYPE type CHAR4 default 'MIME'
-        !I_AMT_FORMAT type CHAR2 optional
-        !I_ENCODING type ABAP_ENCODING optional
-        !I_DATE_FORMAT type CHAR4 optional
-        !I_BEGIN_COMMENT type CHAR1 optional
+        !i_path type string
+        !i_type type char4 default 'MIME'
+        !i_amt_format type char2 optional
+        !i_encoding type abap_encoding optional
+        !i_date_format type char4 optional
+        !i_begin_comment type char1 optional
       returning
-        value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
+        value(ro_instance) type ref to zcl_mockup_loader
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    class-methods CREATE_FROM_SYS_SETTINGS
+        zcx_mockup_loader_error .
+    class-methods create_from_sys_settings
       importing
-        !I_PATH type STRING
-        !I_TYPE type CHAR4 default 'MIME'
+        !i_path type string
+        !i_type type char4 default 'MIME'
       returning
-        value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER
+        value(ro_instance) type ref to zcl_mockup_loader
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    class-methods ASSERT_VERSION
+        zcx_mockup_loader_error .
+    class-methods assert_version
       importing
-        !I_REQUIRED_VERSION type STRING
+        !i_required_version type string
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    class-methods CHECK_VERSION_FITS
+        zcx_mockup_loader_error .
+    class-methods check_version_fits
       importing
-        !I_REQUIRED_VERSION type STRING
+        !i_required_version type string
       returning
-        value(R_FITS) type ABAP_BOOL .
-    methods LOAD_RAW
+        value(r_fits) type abap_bool .
+    methods load_raw
       importing
-        !I_OBJ type STRING
-        !I_EXT type STRING optional
+        !i_obj type string
+        !i_ext type string optional
       exporting
-        !E_CONTENT type XSTRING
+        !e_content type xstring
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    methods LOAD_AND_STORE
+        zcx_mockup_loader_error .
+    methods load_and_store
       importing
-        !I_OBJ type STRING
-        !I_STRICT type ABAP_BOOL default ABAP_TRUE
-        !I_NAME type CHAR40
-        !I_TYPE type CSEQUENCE optional
-        !I_TABKEY type ABAP_COMPNAME optional
-        !I_TYPE_DESC type ref to CL_ABAP_TYPEDESCR optional
+        !i_obj type string
+        !i_strict type abap_bool default abap_true
+        !i_name type char40
+        !i_type type csequence optional
+        !i_tabkey type abap_compname optional
+        !i_type_desc type ref to cl_abap_typedescr optional
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    methods SET_PARAMS
+        zcx_mockup_loader_error .
+    methods set_params
       importing
-        !I_AMT_FORMAT type CHAR2 optional
-        !I_ENCODING type ABAP_ENCODING optional
-        !I_DATE_FORMAT type CHAR4 optional
-        !I_BEGIN_COMMENT type CHAR1 optional .
+        !i_amt_format type char2 optional
+        !i_encoding type abap_encoding optional
+        !i_date_format type char4 optional
+        !i_begin_comment type char1 optional .
   protected section.
   private section.
 
-    data MO_ZIP type ref to CL_ABAP_ZIP .
-    data MV_AMT_FORMAT type CHAR2 .
-    data MV_ENCODING type ABAP_ENCODING .
-    data MV_DATE_FORMAT type CHAR4 .
+    data mo_zip type ref to cl_abap_zip .
+    data mv_amt_format type char2 .
+    data mv_encoding type abap_encoding .
+    data mv_date_format type char4 .
     data mv_begin_comment type char1.
 
-    methods INITIALIZE
+    methods initialize
       importing
-        !I_PATH type STRING
-        !I_TYPE type CHAR4
+        !i_path type string
+        !i_type type char4
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    methods PARSE_DATA
+        zcx_mockup_loader_error .
+    methods parse_data
       importing
-        !I_RAWDATA type STRING
-        !I_STRICT type ABAP_BOOL default ABAP_TRUE
-        !I_DEEP type ABAP_BOOL default ABAP_FALSE
-        !I_WHERE type ANY optional
+        !i_rawdata type string
+        !i_strict type abap_bool default abap_true
+        !i_deep type abap_bool default abap_false
+        !i_where type any optional
       exporting
-        !E_CONTAINER type ANY
+        !e_container type any
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    methods READ_ZIP
+        zcx_mockup_loader_error .
+    methods read_zip
       importing
-        !I_NAME type STRING
+        !i_name type string
       exporting
-        !E_RAWDATA type STRING
+        !e_rawdata type string
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    methods CONSTRUCTOR
+        zcx_mockup_loader_error .
+    methods constructor
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
+        zcx_mockup_loader_error .
 ENDCLASS.
 
 
@@ -141,7 +141,7 @@ ENDCLASS.
 CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
 
-  method ASSERT_VERSION.
+  method assert_version.
 
     data lv_version_ok type abap_bool.
 
@@ -158,7 +158,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   endmethod.
 
 
-  method CHECK_VERSION_FITS.
+  method check_version_fits.
 
     r_fits = zcl_text2tab_utils=>check_version_fits(
       i_current_version  = zif_mockup_loader_constants=>version
@@ -167,7 +167,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   endmethod.
 
 
-  method CONSTRUCTOR.
+  method constructor.
 
     data lv_required_text2tab_ver type string value 'v2.3.0'.
     if zcl_text2tab_parser=>check_version_fits( lv_required_text2tab_ver ) = abap_false.
@@ -180,7 +180,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   endmethod.
 
 
-  method CREATE.
+  method create.
 
     create object ro_instance.
 
@@ -260,7 +260,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   endmethod.
 
 
-  method INITIALIZE.
+  method initialize.
     data: l_key       type wwwdatatab,
           l_xstring   type xstring,
           l_size      type int4,

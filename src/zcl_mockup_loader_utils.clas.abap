@@ -27,74 +27,74 @@ class ZCL_MOCKUP_LOADER_UTILS definition
     types:
       tt_where type standard table of ty_where with key name .
 
-    type-pools ABAP .
-    class-data G_TY_WHERE_ABS_NAME type ABAP_ABSTYPENAME read-only .
-    class-data G_RANGE_KEY type ABAP_KEYDESCR_TAB read-only .
-    class-data G_TY_FILTER_ABS_NAME type ABAP_ABSTYPENAME read-only .
+    type-pools abap .
+    class-data g_ty_where_abs_name type abap_abstypename read-only .
+    class-data g_range_key type abap_keydescr_tab read-only .
+    class-data g_ty_filter_abs_name type abap_abstypename read-only .
 
-    class-methods FILTER_TABLE
+    class-methods filter_table
       importing
-        !I_FILTER type TT_FILTER optional
-        !I_TAB type ANY TABLE
-        !I_WHERE type ANY optional
+        !i_filter type tt_filter optional
+        !i_tab type any table
+        !i_where type any optional
       exporting
-        !E_CONTAINER type ANY
+        !e_container type any
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    class-methods BUILD_FILTER
+        zcx_mockup_loader_error .
+    class-methods build_filter
       importing
-        !I_WHERE type ANY
-        !I_SINGLE_VALUE type ANY optional
+        !i_where type any
+        !i_single_value type any optional
       returning
-        value(R_FILTER) type TT_FILTER
+        value(r_filter) type tt_filter
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    class-methods DOES_LINE_FIT_FILTER
+        zcx_mockup_loader_error .
+    class-methods does_line_fit_filter
       importing
-        !I_LINE type ANY
-        !I_FILTER type TT_FILTER
+        !i_line type any
+        !i_filter type tt_filter
       returning
-        value(R_YESNO) type ABAP_BOOL .
-    class-methods CLASS_CONSTRUCTOR .
+        value(r_yesno) type abap_bool .
+    class-methods class_constructor .
 
-    class-methods CONV_TT_WHERE_TO_FILTER
+    class-methods conv_tt_where_to_filter
       importing
-        !I_WHERE type ANY
+        !i_where type any
       returning
-        value(R_FILTER) type TT_FILTER
+        value(r_filter) type tt_filter
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    class-methods CONV_NC_STRUC_TO_FILTER
+        zcx_mockup_loader_error .
+    class-methods conv_nc_struc_to_filter
       importing
-        !ID_STRUC type ref to CL_ABAP_STRUCTDESCR
-        !I_WHERE type ANY
+        !id_struc type ref to cl_abap_structdescr
+        !i_where type any
       returning
-        value(RT_FILTER) type TT_FILTER
+        value(rt_filter) type tt_filter
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    class-methods CONV_SINGLE_VAL_TO_FILTER
+        zcx_mockup_loader_error .
+    class-methods conv_single_val_to_filter
       importing
-        !I_WHERE type CSEQUENCE
-        !I_VALUE type ANY
+        !i_where type csequence
+        !i_value type any
       returning
-        value(R_FILTER) type TY_FILTER
+        value(r_filter) type ty_filter
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    class-methods CONV_STRING_TO_FILTER
+        zcx_mockup_loader_error .
+    class-methods conv_string_to_filter
       importing
-        !I_WHERE type CLIKE
+        !i_where type clike
       returning
-        value(R_FILTER) type TY_FILTER
+        value(r_filter) type ty_filter
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    class-methods CONV_WHERE_TO_FILTER
+        zcx_mockup_loader_error .
+    class-methods conv_where_to_filter
       importing
-        !I_WHERE type TY_WHERE
+        !i_where type ty_where
       returning
-        value(R_FILTER) type TY_FILTER
+        value(r_filter) type ty_filter
       raising
-        ZCX_MOCKUP_LOADER_ERROR
-        CX_SY_MOVE_CAST_ERROR .
+        zcx_mockup_loader_error
+        cx_sy_move_cast_error .
 
   protected section.
   private section.

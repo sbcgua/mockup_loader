@@ -3,7 +3,7 @@ class ZCL_MOCKUP_LOADER_STORE definition
   final
   create private
 
-  global friends ZCL_MOCKUP_LOADER .
+  global friends zcl_mockup_loader .
 
   public section.
 
@@ -16,53 +16,53 @@ class ZCL_MOCKUP_LOADER_STORE definition
     types:
       tt_store type standard table of ty_store with key name .
 
-    class-methods GET_INSTANCE
+    class-methods get_instance
       returning
-        value(RO_INSTANCE) type ref to ZCL_MOCKUP_LOADER_STORE .
-    class-methods FREE_INSTANCE .
-    methods PURGE
+        value(ro_instance) type ref to zcl_mockup_loader_store .
+    class-methods free_instance .
+    methods purge
       importing
-        !I_NAME type CHAR40 .
-    class-methods RETRIEVE
+        !i_name type char40 .
+    class-methods retrieve
       importing
-        !I_NAME type CHAR40
-        !I_SIFT type CLIKE optional
-        !I_WHERE type ANY optional
+        !i_name type char40
+        !i_sift type clike optional
+        !i_where type any optional
       exporting
-        !E_DATA type ANY
+        !e_data type any
       exceptions
-        RETRIEVE_ERROR .
-    type-pools ABAP .
-    methods STORE
+        retrieve_error .
+    type-pools abap .
+    methods store
       importing
-        !I_NAME type CHAR40
-        !I_DATA type ANY
-        !I_TABKEY type ABAP_COMPNAME optional
+        !i_name type char40
+        !i_data type any
+        !i_tabkey type abap_compname optional
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
+        zcx_mockup_loader_error .
   protected section.
   private section.
 
-    class-data GO_INSTANCE type ref to ZCL_MOCKUP_LOADER_STORE .
-    data MT_STORE type TT_STORE .
+    class-data go_instance type ref to zcl_mockup_loader_store .
+    data mt_store type tt_store .
 
-    type-pools ABAP .
-    methods _STORE
+    type-pools abap .
+    methods _store
       importing
-        !I_NAME type CHAR40
-        !I_DATA_REF type ref to DATA
-        !I_TABKEY type ABAP_COMPNAME optional
+        !i_name type char40
+        !i_data_ref type ref to data
+        !i_tabkey type abap_compname optional
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
-    methods _RETRIEVE
+        zcx_mockup_loader_error .
+    methods _retrieve
       importing
-        !I_NAME type CHAR40
-        !I_SIFT type CLIKE optional
-        !I_WHERE type ANY optional
+        !i_name type char40
+        !i_sift type clike optional
+        !i_where type any optional
       exporting
-        !E_DATA type ANY
+        !e_data type any
       raising
-        ZCX_MOCKUP_LOADER_ERROR .
+        zcx_mockup_loader_error .
 ENDCLASS.
 
 
