@@ -8,6 +8,12 @@ Legend
 + : added
 - : removed
 
+v2.1.0, 2019-08-??
+------------------
++ deep structure loading
+! move util helpers to public
+! internal refactorings
+
 v2.0.3, 2019-03-26
 ------------------
 ! Removed dependency from W3MIPOLLER (at ZMOCKUP_LOADER_SWSRC)

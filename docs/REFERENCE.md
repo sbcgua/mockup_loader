@@ -180,6 +180,8 @@ endtry.
       e_container = lt_bseg ).
 ```
 
+5) A structure `ZCL_MOCKUP_LOADER_UTILS=>TY_FILTER` - one line of `TT_FILTER` above.
+
 #### "Best practice" suggestions
 
 To improve code readability within numerous datasets we use macros.
