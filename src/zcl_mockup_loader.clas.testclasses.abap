@@ -140,6 +140,7 @@ class lcl_test_mockup_loader definition for testing
     methods load_raw                 for testing.
     methods load_data_to_ref         for testing.
     methods load_deep                for testing raising zcx_mockup_loader_error.
+    methods load_deep_negative       for testing.
 
     methods assert_version           for testing.
 
@@ -776,6 +777,9 @@ class lcl_test_mockup_loader implementation.
     <l>-lineid = 1.
     <l>-text   = '!!!'.
 
+    append initial line to lt_docs_exp assigning <h>.
+    <h>-docid = 5.
+
     " TEST
     data lt_docs_act like lt_docs_exp.
     o->load_data(
@@ -786,6 +790,37 @@ class lcl_test_mockup_loader implementation.
         e_container = lt_docs_act ).
 
     cl_abap_unit_assert=>assert_equals( act = lt_docs_act exp = lt_docs_exp ).
+
+  endmethod.
+
+  method load_deep_negative.
+
+    data lt_docs_act type tt_deep_head.
+    data lx type ref to zcx_mockup_loader_error.
+
+    try .
+      o->load_data(
+        exporting
+          i_obj  = 'testdir/deep_head_with_wrong_path'
+          i_deep = abap_true
+        importing
+          e_container = lt_docs_act ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'XE' ).
+    endtry.
+
+    try .
+      o->load_data(
+        exporting
+          i_obj  = 'testdir/deep_head_with_wrong_field'
+          i_deep = abap_true
+        importing
+          e_container = lt_docs_act ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'XE' ).
+    endtry.
 
   endmethod.
 
