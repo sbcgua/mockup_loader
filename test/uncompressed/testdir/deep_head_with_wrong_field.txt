@@ -1,0 +1,2 @@
+﻿DOCID	LINES	FIRST_LINE
+1	testdir/deep_lines[docid=@xxxx]	

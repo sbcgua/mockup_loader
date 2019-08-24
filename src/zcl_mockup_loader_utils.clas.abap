@@ -5,6 +5,12 @@ class ZCL_MOCKUP_LOADER_UTILS definition
 
 public section.
 
+  constants:
+    begin of c_filter_type,
+      value type c length 1 value 'V',
+      range type c length 1 value 'R',
+    end of c_filter_type.
+
   types:
     begin of ty_filter,
       name   type string,
@@ -50,8 +56,6 @@ public section.
     returning
       value(R_YESNO) type ABAP_BOOL .
   class-methods CLASS_CONSTRUCTOR .
-protected section.
-private section.
 
   class-methods CONV_TT_WHERE_TO_FILTER
     importing
@@ -91,6 +95,10 @@ private section.
     raising
       ZCX_MOCKUP_LOADER_ERROR
       CX_SY_MOVE_CAST_ERROR .
+
+protected section.
+private section.
+
 ENDCLASS.
 
 
@@ -141,6 +149,8 @@ method BUILD_FILTER.
         if dy_struc->absolute_name = g_ty_where_abs_name. " ty_where
           l_filter = conv_where_to_filter( i_where ).
           append l_filter to lt_filter.
+        elseif dy_struc->absolute_name = g_ty_filter_abs_name. " ty_filter
+          append i_where to lt_filter.
         else.                      " structure with named components per range
           lt_filter = conv_nc_struc_to_filter(
             i_where  = i_where
@@ -215,7 +225,7 @@ method CONV_NC_STRUC_TO_FILTER.
     endif.
 
     l_filter-name = l_component-name.
-    l_filter-type = 'R'. " Range
+    l_filter-type = c_filter_type-range.
     assign component l_component-name of structure i_where to <tab>.
     get reference of <tab> into l_filter-valref.
     append l_filter to rt_filter.
@@ -235,7 +245,7 @@ method conv_single_val_to_filter.
   create data r_filter-valref type handle dy_data.
   assign r_filter-valref->* to <value>.
 
-  r_filter-type = 'V'. " Any value
+  r_filter-type = c_filter_type-value.
   r_filter-name = to_upper( i_where ).
   <value>       = i_value.
 
@@ -245,7 +255,7 @@ endmethod.
 method CONV_STRING_TO_FILTER.
   field-symbols <value> type string.
 
-  r_filter-type = 'S'. " String
+  r_filter-type = c_filter_type-value.
   create data r_filter-valref type string.
   assign r_filter-valref->* to <value>.
 
@@ -282,7 +292,7 @@ method conv_where_to_filter.
 
   r_filter-name   = i_where-name.
   r_filter-valref = i_where-range.
-  r_filter-type   = 'R'. " Range
+  r_filter-type   = c_filter_type-range.
   dy_table ?= cl_abap_typedescr=>describe_by_data_ref( r_filter-valref ). " Assume table, cast_error otherwise
   if dy_table->key ne g_range_key. " Not range ?
     zcx_mockup_loader_error=>raise( msg = |I_WHERE-RANGE must be a range table| code = 'RT' ).   "#EC NOTEXT
@@ -302,16 +312,18 @@ method DOES_LINE_FIT_FILTER.
     assign component l_filter-name of structure i_line to <field>.
     check <field> is assigned. " Just skip irrelevant ranges
 
-    if l_filter-type = 'R'.               " Range
+    if l_filter-type = c_filter_type-range.
       assign l_filter-valref->* to <range>.
       if not <field> in <range>.
         r_yesno = abap_false.
       endif.
-    else.                                 " String and value
+    elseif l_filter-type = c_filter_type-value.
       assign l_filter-valref->* to <value>.
       if not <field> = <value>. " cx_sy_conversion_error does not catch that :(
         r_yesno = abap_false.
       endif.
+    else.
+      assert 1 = 0.
     endif.
 
     if r_yesno = abap_false.

@@ -8,6 +8,12 @@ Legend
 + : added
 - : removed
 
+v2.1.0, 2019-08-??
+------------------
++ deep structure loading - major feature, see readme and reference
+! move util helpers to public
+! internal refactorings
+
 v2.0.5, 2019-04-10
 ------------------
 + Added ZMOCKUP_LOADER=>ASSERT_VERSION method

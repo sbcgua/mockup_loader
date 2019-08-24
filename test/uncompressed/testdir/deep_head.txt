@@ -1,0 +1,6 @@
+﻿DOCID	LINES	FIRST_LINE
+1	testdir/deep_lines[docid=@docid]	testdir/deep_lines[docid=@docid]
+2	testdir/deep_lines[docid=@docid]	testdir/deep_lines[docid=@docid]
+3		
+4	testdir/deep_lines[docid=99]	testdir/deep_lines[docid=99]
+5	testdir/deep_lines[docid=1000]	testdir/deep_lines[docid=1000]

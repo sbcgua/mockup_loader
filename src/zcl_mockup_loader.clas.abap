@@ -40,6 +40,11 @@ class ZCL_MOCKUP_LOADER definition
 public section.
   type-pools ABAP .
 
+  interfaces zif_mockup_loader.
+  aliases:
+    load_raw_x for zif_mockup_loader~load_raw_x,
+    load_data for zif_mockup_loader~load_data.
+
   class-methods CREATE
     importing
       !I_PATH type STRING
@@ -78,13 +83,6 @@ public section.
       !E_CONTENT type XSTRING
     raising
       ZCX_MOCKUP_LOADER_ERROR .
-  methods LOAD_RAW_X
-    importing
-      !I_OBJ_PATH type STRING
-    returning
-      value(R_CONTENT) type XSTRING
-    raising
-      ZCX_MOCKUP_LOADER_ERROR .
   methods LOAD_AND_STORE
     importing
       !I_OBJ type STRING
@@ -93,15 +91,6 @@ public section.
       !I_TYPE type CSEQUENCE optional
       !I_TABKEY type ABAP_COMPNAME optional
       !I_TYPE_DESC type ref to CL_ABAP_TYPEDESCR optional
-    raising
-      ZCX_MOCKUP_LOADER_ERROR .
-  methods LOAD_DATA
-    importing
-      !I_OBJ type STRING
-      !I_STRICT type ABAP_BOOL default ABAP_TRUE
-      !I_WHERE type ANY optional
-    exporting
-      !E_CONTAINER type ANY
     raising
       ZCX_MOCKUP_LOADER_ERROR .
   methods SET_PARAMS
@@ -129,6 +118,7 @@ private section.
     importing
       !I_RAWDATA type STRING
       !I_STRICT type ABAP_BOOL default ABAP_TRUE
+      !I_DEEP type ABAP_BOOL default ABAP_FALSE
       !I_WHERE type ANY optional
     exporting
       !E_CONTAINER type ANY
@@ -179,7 +169,7 @@ endmethod.
 
 method CONSTRUCTOR.
 
-  data lv_required_text2tab_ver type string value 'v2.2.4'.
+  data lv_required_text2tab_ver type string value 'v2.3.0'.
   if zcl_text2tab_parser=>check_version_fits( lv_required_text2tab_ver ) = abap_false.
     zcx_mockup_loader_error=>raise(
       msg  = |text2tab version ({ zif_text2tab_constants=>version
@@ -396,30 +386,6 @@ method load_and_store.
 endmethod.
 
 
-method load_data.
-  data l_rawdata  type string.
-
-  if e_container is not supplied.
-    zcx_mockup_loader_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
-  endif.
-
-  me->read_zip(
-    exporting
-      i_name    = i_obj && '.txt'
-    importing
-      e_rawdata = l_rawdata ).
-
-  me->parse_data(
-    exporting
-      i_rawdata   = l_rawdata
-      i_strict    = i_strict
-      i_where     = i_where
-    importing
-      e_container = e_container ).
-
-endmethod.
-
-
 method load_raw.
   data l_filename type string.
 
@@ -436,15 +402,6 @@ method load_raw.
   mo_zip->get(
     exporting name    = l_filename
     importing content = e_content ).
-
-endmethod.
-
-
-method LOAD_RAW_X.
-
-  mo_zip->get(
-    exporting name    = i_obj_path
-    importing content = r_content ).
 
 endmethod.
 
@@ -489,10 +446,17 @@ method parse_data.
 
   try.
     data lo_parser type ref to zcl_text2tab_parser.
+    data lo_deep_provider type ref to zcl_mockup_loader_deep_providr.
+
+    if i_deep = abap_true.
+      create object lo_deep_provider exporting ii_ml_instance = me.
+    endif.
+
     lo_parser = zcl_text2tab_parser=>create(
       i_pattern       = <container>
       i_amount_format = mv_amt_format
       i_date_format   = mv_date_format
+      i_deep_provider = lo_deep_provider
       i_begin_comment = mv_begin_comment ).
 
     lo_parser->parse(
@@ -582,6 +546,41 @@ method SET_PARAMS.
   endif.
 
   me->mv_begin_comment = i_begin_comment.
+
+endmethod.
+
+
+method zif_mockup_loader~load_data.
+
+  data l_rawdata  type string.
+
+  if e_container is not supplied.
+    zcx_mockup_loader_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
+  endif.
+
+  me->read_zip(
+    exporting
+      i_name    = i_obj && '.txt'
+    importing
+      e_rawdata = l_rawdata ).
+
+  me->parse_data(
+    exporting
+      i_rawdata   = l_rawdata
+      i_strict    = i_strict
+      i_deep      = i_deep
+      i_where     = i_where
+    importing
+      e_container = e_container ).
+
+endmethod.
+
+
+method zif_mockup_loader~load_raw_x.
+
+  mo_zip->get(
+    exporting name    = i_obj_path
+    importing content = r_content ).
 
 endmethod.
 ENDCLASS.

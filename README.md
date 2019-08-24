@@ -2,7 +2,7 @@
 
 # Mockup Loader for ABAP unit testing
 
-*Version: 2.0.5 ([history of changes](/changelog.txt))*
+*Version: 2.1.0 ([history of changes](/changelog.txt))*
 
 ## Major changes in version 2
 
@@ -132,6 +132,66 @@ This will result in the data set where key field `CONNID` will be equal to `I_CO
 In addition, forwarding calls to another object (implementing same interface) is supported. For example if some of accessor methods must be connected to mocks and some others were implemented manually in a supprting test (or real production) class. See [REFERENCE.md](docs/REFERENCE.md).
 
 ![accessor pattern](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/sbcgua/mockup_loader/master/docs/mockup-stub.puml)
+
+### Deep data loading
+
+If you have a target data with deep fields - tables or structures - it is possible to fill them in one run. Let's consider a simple example: assume you have 2 linked tables - header and lines - the tables are represented by **separate** files in zip.
+
+```
+DOCUMENT
+========
+ID   DATE   ...
+1    ...
+2    ...
+
+LINES
+========
+DOCID   LINEID   AMOUNT   ...
+1       1        100.00   ...
+1       2        123.00   ...
+2       1        990.00   ...
+```
+
+The target structure is:
+
+```abap
+types:
+  begin of ty_line,
+    docid  type numc10,
+    lineid type numc3,
+    " ...
+  end of ty_line,
+  tt_line type table of ty_line,
+  begin of ty_document,
+    id   type numc10,
+    " ...
+    lines type tt_line, " <<< DEEP FIELD, supposed to be filled with lines of the document
+  end of ty_document.
+  tt_documents type table of ty_document.
+```
+
+The following code will load this kind of structure
+
+```abap
+  o_ml->load_data(
+    exporting
+      i_obj  = 'path_to_head_file'
+      i_deep = abap_true            " <<< ENABLE DEEP LOADING
+    importing
+      e_container = lt_docs ).      " <<< type tt_documents
+```
+
+To instruct mockup loader how to find the data for deep components you have to fill these components in the text in special format: `<source_path>[<source_id_field>=<value|@reference_field>]` which means *"go find `source_path` file, parse it, extract the lines, filter those where `source_id_field` = `value` or `reference_field` value of the current header record"*. For example:
+
+```
+DOCUMENT
+========
+ID   DATE   ...   LINES
+1    ...          path_to_lines_file[docid=@id]
+2    ...          path_to_lines_file[docid=12345]
+```
+
+For the first record the mockup loader will find file `path_to_lines_file.txt` and load the lines with `docid` = `1` (value of `id` field of the first record). For the second record the explicit value `12345` will be used as the filter.
 
 ### Store/Retrieve
 
