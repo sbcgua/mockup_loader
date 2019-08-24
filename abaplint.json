@@ -3,7 +3,8 @@
     "version": "v702",
     "skipGeneratedGatewayClasses": true,
     "skipGeneratedPersistentClasses": true,
-    "skipGeneratedFunctionGroups": true
+    "skipGeneratedFunctionGroups": true,
+    "applyUnspecifiedRules": false
   },
   "rules": {
     "7bit_ascii": {
