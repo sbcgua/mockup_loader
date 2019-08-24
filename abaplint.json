@@ -78,7 +78,7 @@
     "indentation": {
       "enabled": true,
       "alignTryCatch": true,
-      "globalClassSkipFirst": true,
+      "globalClassSkipFirst": false,
       "exclude": [],
       "ignoreExceptions": true
     },
@@ -107,6 +107,10 @@
       "local": "^LC(L|X)_.*$",
       "test": "^LTCL_.*$"
     },
+    "local_testclass_location": {
+      "enabled": true,
+      "exclude": []
+    },    
     "max_one_statement": {
       "enabled": false,
       "exclude": []
