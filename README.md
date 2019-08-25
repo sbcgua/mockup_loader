@@ -288,7 +288,7 @@ Dependencies (to install before mockup loader):
 - [text2tab](https://github.com/sbcgua/abap_data_parser) - tab-delimited text parser (was a part of *mockup loader* but now a separate reusable tool). Mandatory prerequisite.
 - [abap_w3mi_poller](https://github.com/sbcgua/abap_w3mi_poller) - *optional* - enables 'Upload to MIME' button in `ZMOCKUP_LOADER_SWSRC`. The mockup loader **can be compiled without this** package (the call is dynamic).
 
-P.S. APACK implementation is planned to automate dependencies.
+P.S. APACK manifest implementation is under consideration.
 
 ## Load source redirection
 
