@@ -11,6 +11,7 @@ Legend
 v2.1.0, 2019-08-??
 ------------------
 + deep structure loading - major feature, see readme and reference
+! source redirection logic change - now redirects to file only if the same MIME is specified in ZMOCKUP_LOADER_SMIME. To make possible redirect specific package only
 ! move util helpers to public
 ! internal refactorings
 

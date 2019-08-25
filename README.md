@@ -2,15 +2,24 @@
 
 # Mockup Loader for ABAP unit testing
 
+![logo](docs/logo80.png)
+
 *Version: 2.1.0 ([history of changes](/changelog.txt))*
 
-## Major changes in version 2
+Mockup loader is a tool to simplify data preparation for SAP ABAP unit tests. Create unit test data in Excel, easily convert it into MIME object that travels with ABAP package, easily consume the data from your unit test code. The tool was created with the following high level goals in mind:
+- simplify communication process between a developer and business analyst (from client side in particular)
+- simplify test data preparation and maintenance - do and store it in Excel (and commit the Excel file to git)
+- simplify test data consumption - in particular, reduce volume of code required for a complex data tests
 
-- `zcl_mockup_loader` split into several classes to separate loading, store and utils.
-- parsing logic was separated into [abap_data_parser](https://github.com/sbcgua/abap_data_parser) package which is now a prerequisite. Sorry for this. We believe this is for good.
-- `zcl_mockup_loader` is not a singleton anymore. Must be instantiated with `create` method. `zcl_mockup_loader_store` remained the singleton.
-- VBA zip compiler depreciated, see below 'Conversion to Excel' section.
-- Interface stubbing :tada:. See 'Data delivery' section.
+Features:
+
+- Interface stubbing - dynamically create double implementations of data accessor interfaces and connect their methods to files in mocks. Does not depend on ABAP test double framework. See *'Data delivery'* section.
+- Singleton memory storage to be able to substitute data selections in the legacy code without data accessor interfaces. See *'Store/Retrieve'* section below.
+- Strict and non-strict parsing - skip irrelevant table fields in your test data.
+- "Deep" data loading - load master-detail structures in one step. See *'Deep data loading'* section
+- Load source redirection - convenient utility to temporarily redirect loading from in-SAP-MIME objet to local file, while you are working on or enhancing your test dataset.
+- Tools to simplify conversion from Excel to MIME object inside the system as well as CI flows - [mockup compiler](https://github.com/sbcgua/mockup_compiler), [mockup compiler JS](https://github.com/sbcgua/mockup-compiler-js), [mockup editor](https://github.com/sbcgua/mockup_editor) (alpha, view only at the moment).
+- Utilities for table data filtering.
 
 ## Contents
 
@@ -21,8 +30,7 @@
 - [Installation](#installation)
 - [Load source redirection](#load-source-redirection)
 - [Conversion from Excel](#conversion-from-excel)
-- [Reference](#reference)
-- [Examples](#examples)
+- [Examples and Reference](#examples-and-reference)
 - [Contributors](#contributors)
 - [Publications](#publications)
 - [License](#license)
@@ -135,6 +143,8 @@ In addition, forwarding calls to another object (implementing same interface) is
 
 ### Deep data loading
 
+Available since v2.1.0.
+
 If you have a target data with deep fields - tables or structures - it is possible to fill them in one run. Let's consider a simple example: assume you have 2 linked tables - header and lines - the tables are represented by **separate** files in zip.
 
 ```
@@ -196,6 +206,8 @@ For the first record the mockup loader will find file `path_to_lines_file.txt` a
 ### Store/Retrieve
 
 **Disclaimer**: *There is an opinion that adding test-related code to the production code is a 'code smell'. I sincerely agree in general. If the code was designed to use e.g. accessor interfaces from the beginning this is good. Still 'store' functionality can be useful for older pieces of code to be tested without much refactoring.*
+
+![data flow](docs/illustration.png)
 
 Some code is quite difficult to test when it has a *db select* in the middle. Of course, good code design would assume isolation of DB operations from business logic code, but it is not always possible (or was not done in proper time). So we needed to create a way to substitute *selects* in code to a simple call, which would take the prepared test data instead if test environment was identified. We came up with the solution we called `store`. 
    
@@ -263,8 +275,6 @@ As the final result we can perform completely dynamic unit tests, covering most 
 
 The `zcl_mockup_loader` has a *shortcut* method `load_and_store` to load data to the store directly without technical variables. For more information see [REFERENCE.md](docs/REFERENCE.md).
 
-![data flow](docs/illustration.png)
-
 Some design facts about the `store`:
 
 - The store class `ZCL_MOCKUP_LOADER_STORE` is designed as a singleton class. So it is initiated once in a test class and the exists in one instance only.
@@ -272,41 +282,46 @@ Some design facts about the `store`:
 
 ## Installation
 
-The most convenient way to install the package is to use [abapGit](https://github.com/larshp/abapGit) - it is easily installed itself and then a couple of click to clone the repo into the system. There is also an option for offline installation - download the repo as zip file and import it with abapGit. Unit test execution is always recommended after-installation.
+The most convenient way to install the package is to use [abapGit](https://github.com/larshp/abapGit) - it is easily installed itself and then a couple of click to clone the repo into the system. There is also an option for offline installation - download the repo as zip file and import it with abapGit. Unit test execution is always recommended after installation.
 
 Dependencies (to install before mockup loader):
 - [text2tab](https://github.com/sbcgua/abap_data_parser) - tab-delimited text parser (was a part of *mockup loader* but now a separate reusable tool). Mandatory prerequisite.
 - [abap_w3mi_poller](https://github.com/sbcgua/abap_w3mi_poller) - *optional* - enables 'Upload to MIME' button in `ZMOCKUP_LOADER_SWSRC`. The mockup loader **can be compiled without this** package (the call is dynamic).
 
+P.S. APACK implementation is planned to automate dependencies.
+
 ## Load source redirection
 
-Zipped mockups slug is supposed to be uploaded as a MIME object via SMW0. However, during data or test creation, it is more convenient (and faster) to read local file. Also not to upload 'draft' test data to the system.
+Zipped mockups slug is supposed to be uploaded as a MIME object via SMW0. However, during data or test creation, it is more convenient (and faster) to read local file. In particular, not to upload 'draft' test data to the system.
 
 `i_type` and `i_path` are the parameters to the `create` method to define the 'normal' mockup source. To **temporarily** switch to another source you can use the transaction `ZMOCKUP_LOADER_SWSRC`. It will initialize SET/GET parameters  `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH(MIME)` which will **override** defaults for the current session only.
 
 ![switch source](docs/switch.png)
 
-N.B. Type change in the selection screen immediately changes the parameters in session memory, no run is required ('enter' should be pressed though after manual text fields change to trigger `on screen`). `Get SU3` reads param values from user master (useful when you work on the same project for some time). `Upload to MIME` uploads the file to MIME storage (requires [abap_w3mi_poller](https://github.com/sbcgua/abap_w3mi_poller) to be installed).
+N.B.
+- Type change in the selection screen immediately changes the parameters in session memory, no run is required ('enter' should be pressed though after manual text fields change to trigger `on screen`)
+- `Get SU3` reads param values from user master (useful when you work on the same project for some time)
+- `Upload to MIME` uploads the file to MIME storage instead of going through `SMW0` (the MIME object must exist)
+- Saving variants is also convenient ;)
 
 ## Conversion from Excel
 
 You may have a lot of data prepared in Excel files. Many files, many sheets in each. Although Ctrl+C in Excel actually copies TAB-delimited text, which greatly simplifies the matter for minor cases, it is boring and time consuming to copy all the test cases to text. Here are special tools to simplify this workflow. Briefly: they take directory of excel files with mockup data and convert them into format compatible with mockup loader.
 
 - [mockup compiler](https://github.com/sbcgua/mockup_compiler) - ABAP implementation, requires [abap2xlsx](https://github.com/ivanfemia/abap2xlsx) installed.
-- [mockup compiler JS](https://github.com/sbcgua/mockup-compiler-js) - java script implemenation, requires nodejs environment at the developer's machine.
+
+  ![compile zip slug](docs/compiler.png)
+
+- [mockup compiler JS](https://github.com/sbcgua/mockup-compiler-js) - java script implementation, requires nodejs environment at the developer's machine. This tool also make it possible to compile the target zip **via continuous integration flows** - so the test data in excel can be a part of source repository. (I'm planning a dedicated publication on this subject).
 
 See [EXCEL2TXT.md](docs/EXCEL2TXT.md) for more info.
 
-![compile zip slug](docs/compiler.png)
+## Examples and Reference
 
-## Reference
-
-Complete reference of classes and methods can be found in [REFERENCE.md](docs/REFERENCE.md). 
-
-## Examples
-
-- Have a look at the howto section in the project [Wiki](../../wiki).
+- Complete reference of classes and methods can be found in [REFERENCE.md](docs/REFERENCE.md). 
 - A simple example can be found in [/src/zmockup_loader_example.prog.abap](/src/zmockup_loader_example.prog.abap).
+- Also see unit tests - these are the most up-to-date examples
+- Have a look at the howto section in the project [Wiki](../../wiki).
 
 ## Contributing
 
