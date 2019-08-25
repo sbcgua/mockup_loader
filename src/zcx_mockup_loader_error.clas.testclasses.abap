@@ -1,4 +1,4 @@
-class lcl_ml_cx_test definition for testing
+class ltcl_ml_cx_test definition for testing
   duration short
   risk level harmless.
 
@@ -7,7 +7,7 @@ class lcl_ml_cx_test definition for testing
     methods raise_error for testing.
 endclass.
 
-class lcl_ml_cx_test implementation.
+class ltcl_ml_cx_test implementation.
 
   method raise_error.
     data lcx type ref to zcx_mockup_loader_error.

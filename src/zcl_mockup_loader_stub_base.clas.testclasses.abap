@@ -1,4 +1,4 @@
-class lcl_mockup_stub_base_test definition final
+class ltcl_mockup_stub_base_test definition final
   for testing
   duration short
   risk level harmless.
@@ -9,12 +9,12 @@ endclass.
 
 class lcl_mockup_loader_stub_final definition final
   inheriting from zcl_mockup_loader_stub_base
-  friends lcl_mockup_stub_base_test.
+  friends ltcl_mockup_stub_base_test.
 endclass.
 class lcl_mockup_loader_stub_final implementation.
 endclass.
 
-class lcl_mockup_stub_base_test implementation.
+class ltcl_mockup_stub_base_test implementation.
 
   method get_mock_data.
 

@@ -1,4 +1,4 @@
-class lcl_mockup_stub_factory_test definition final
+class ltcl_mockup_stub_factory_test definition final
   for testing
   duration short
   risk level harmless.
@@ -117,7 +117,7 @@ define assert_excode.
   cl_abap_unit_assert=>assert_equals( exp = &1 act = lo_ex->code ).
 end-of-definition.
 
-class lcl_mockup_stub_factory_test implementation.
+class ltcl_mockup_stub_factory_test implementation.
 
   method main_test_stub.
     lcl_test_base=>main_test( 'ZCL_MOCKUP_LOADER_STUB_FACTORY' ).

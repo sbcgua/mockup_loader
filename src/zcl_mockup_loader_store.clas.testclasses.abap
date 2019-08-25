@@ -50,7 +50,7 @@ end-of-definition.
 * Test Class definition
 **********************************************************************
 
-class lcl_test_mockup_store definition for testing
+class ltcl_test_mockup_store definition for testing
   duration short
   risk level harmless.
 
@@ -89,13 +89,13 @@ class lcl_test_mockup_store definition for testing
 endclass.       "lcl_test_mockup_loader
 
 * Friends
-class zcl_mockup_loader_store definition local friends lcl_test_mockup_store.
+class zcl_mockup_loader_store definition local friends ltcl_test_mockup_store.
 
 **********************************************************************
 * Implementation
 **********************************************************************
 
-class lcl_test_mockup_store implementation.
+class ltcl_test_mockup_store implementation.
 
 **********************************************************************
 * Setup methods

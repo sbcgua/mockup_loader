@@ -84,7 +84,7 @@ end-of-definition.
 * Test Class definition
 **********************************************************************
 
-class lcl_test_mockup_loader definition for testing
+class ltcl_test_mockup_loader definition for testing
   duration short
   risk level harmless.
 
@@ -159,13 +159,13 @@ class lcl_test_mockup_loader definition for testing
 endclass.       "lcl_test_mockup_loader
 
 * Friends
-class zcl_mockup_loader definition local friends lcl_test_mockup_loader.
+class zcl_mockup_loader definition local friends ltcl_test_mockup_loader.
 
 **********************************************************************
 * Implementation
 **********************************************************************
 
-class lcl_test_mockup_loader implementation.
+class ltcl_test_mockup_loader implementation.
 
 **********************************************************************
 * Setup methods
@@ -617,14 +617,14 @@ class lcl_test_mockup_loader implementation.
 
     get_dummy_data( importing e_dummy_tab   = dummy_tab_exp ).
 
-    lo_type_desc = cl_abap_typedescr=>describe_by_name( 'LCL_TEST_MOCKUP_LOADER=>TT_DUMMY' ).
+    lo_type_desc = cl_abap_typedescr=>describe_by_name( 'LTCL_TEST_MOCKUP_LOADER=>TT_DUMMY' ).
 
     " Positive test ************************************
     try.
       o->load_and_store(
         i_obj       = 'testdir/testfile_complete'
         i_name      = 'TAB'
-        i_type      = 'LCL_TEST_MOCKUP_LOADER=>TT_DUMMY' ).
+        i_type      = 'LTCL_TEST_MOCKUP_LOADER=>TT_DUMMY' ).
 
       zcl_mockup_loader_store=>retrieve(
         exporting i_name   = 'TAB'

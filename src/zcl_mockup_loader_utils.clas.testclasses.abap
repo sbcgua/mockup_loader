@@ -60,7 +60,7 @@ end-of-definition.
 * Test Class definition
 **********************************************************************
 
-class lcl_test_mockup_utils definition for testing
+class ltcl_test_mockup_utils definition for testing
   duration short
   risk level harmless.
 
@@ -84,7 +84,6 @@ class lcl_test_mockup_utils definition for testing
 * ================
   private section.
 
-    methods setup.
     methods range_filtering          for testing.
 
     methods get_dummy_data
@@ -109,13 +108,13 @@ class lcl_test_mockup_utils definition for testing
 
     methods assert_filter_equals
       importing
-        act type zcl_mockup_loader_utils=>ty_filter
-        exp type zcl_mockup_loader_utils=>ty_filter.
+        i_act type zcl_mockup_loader_utils=>ty_filter
+        i_exp type zcl_mockup_loader_utils=>ty_filter.
 
     methods assert_filter_tab_equals
       importing
-        act type zcl_mockup_loader_utils=>tt_filter
-        exp type zcl_mockup_loader_utils=>tt_filter.
+        i_act type zcl_mockup_loader_utils=>tt_filter
+        i_exp type zcl_mockup_loader_utils=>tt_filter.
 
     methods conv_single_val_to_filter for testing raising zcx_mockup_loader_error .
     methods conv_string_to_filter     for testing raising zcx_mockup_loader_error .
@@ -128,13 +127,7 @@ endclass.       "lcl_test_mockup_loader
 * Implementation
 **********************************************************************
 
-class lcl_test_mockup_utils implementation.
-
-**********************************************************************
-* Setup methods
-**********************************************************************
-  method setup.
-  endmethod.       "setup
+class ltcl_test_mockup_utils implementation.
 
 **********************************************************************
 * Dummy data generation
@@ -638,21 +631,21 @@ class lcl_test_mockup_utils implementation.
   method assert_filter_equals.
     field-symbols <act> type any.
     field-symbols <exp> type any.
-    cl_abap_unit_assert=>assert_equals( act = act-name exp = exp-name ).
-    cl_abap_unit_assert=>assert_equals( act = act-type exp = exp-type ).
-    assign act-valref->* to <act>.
-    assign exp-valref->* to <exp>.
+    cl_abap_unit_assert=>assert_equals( act = i_act-name exp = i_exp-name ).
+    cl_abap_unit_assert=>assert_equals( act = i_act-type exp = i_exp-type ).
+    assign i_act-valref->* to <act>.
+    assign i_exp-valref->* to <exp>.
     cl_abap_unit_assert=>assert_equals( act = <act> exp = <exp> ).
   endmethod.
 
   method assert_filter_tab_equals.
     field-symbols <act> type any.
     field-symbols <exp> type any.
-    cl_abap_unit_assert=>assert_equals( act = lines( act ) exp = lines( exp ) ).
-    loop at act assigning <act>.
-      read table exp index sy-tabix assigning <exp>.
+    cl_abap_unit_assert=>assert_equals( act = lines( i_act ) exp = lines( i_exp ) ).
+    loop at i_act assigning <act>.
+      read table i_exp index sy-tabix assigning <exp>.
     endloop.
-    assert_filter_equals( act = <act> exp = <exp> ).
+    assert_filter_equals( i_act = <act> i_exp = <exp> ).
   endmethod.
 
   method conv_single_val_to_filter.
@@ -670,8 +663,8 @@ class lcl_test_mockup_utils implementation.
       i_value = |efg| ).
 
     assert_filter_equals(
-      act = ls_filter_act
-      exp = ls_filter_exp ).
+      i_act = ls_filter_act
+      i_exp = ls_filter_exp ).
 
     " Negative
     data lx type ref to zcx_mockup_loader_error.
@@ -699,8 +692,8 @@ class lcl_test_mockup_utils implementation.
     ls_filter_act = zcl_mockup_loader_utils=>conv_string_to_filter( 'abc = efg' ).
 
     assert_filter_equals(
-      act = ls_filter_act
-      exp = ls_filter_exp ).
+      i_act = ls_filter_act
+      i_exp = ls_filter_exp ).
 
     " Negative
     data lx type ref to zcx_mockup_loader_error.
@@ -741,8 +734,8 @@ class lcl_test_mockup_utils implementation.
     ls_filter_act = zcl_mockup_loader_utils=>conv_where_to_filter( ls_where ).
 
     assert_filter_equals(
-      act = ls_filter_act
-      exp = ls_filter_exp ).
+      i_act = ls_filter_act
+      i_exp = ls_filter_exp ).
 
     " Negative
     data lx type ref to zcx_mockup_loader_error.
@@ -793,8 +786,8 @@ class lcl_test_mockup_utils implementation.
       i_where  = ls_where ).
 
     assert_filter_tab_equals(
-      act = lt_filter_act
-      exp = lt_filter_exp ).
+      i_act = lt_filter_act
+      i_exp = lt_filter_exp ).
 
     " Negative
     data:
