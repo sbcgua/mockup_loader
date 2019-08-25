@@ -5,6 +5,13 @@ class ZCL_MOCKUP_LOADER_DEEP_PROVIDR definition
 
   public section.
 
+    types:
+      begin of ty_cache,
+        location type string,
+        dref type ref to data,
+      end of ty_cache,
+      tt_cache type standard table of ty_cache with key location.
+
     interfaces zif_text2tab_deep_provider .
 
     methods constructor
@@ -13,7 +20,7 @@ class ZCL_MOCKUP_LOADER_DEEP_PROVIDR definition
   protected section.
   private section.
     data mi_ml_instance type ref to zif_mockup_loader.
-
+    data mt_cache type tt_cache.
 ENDCLASS.
 
 
@@ -63,14 +70,37 @@ CLASS ZCL_MOCKUP_LOADER_DEEP_PROVIDR IMPLEMENTATION.
     endif.
 
     data lx type ref to zcx_mockup_loader_error.
+    field-symbols <cache> like line of mt_cache.
+    field-symbols <tab> type standard table.
+
     try.
-      mi_ml_instance->load_data(
+
+      read table mt_cache assigning <cache> with key location = ls_address-location.
+
+      if sy-subrc <> 0. " Not found in cache
+        append initial line to mt_cache assigning <cache>.
+        <cache>-location = ls_address-location.
+        <cache>-dref     = zcl_text2tab_utils=>create_standard_table_of( e_container ).
+        assign <cache>-dref->* to <tab>.
+        assert sy-subrc = 0.
+
+        mi_ml_instance->load_data(
+          exporting
+            i_obj    = ls_address-location
+            i_strict = abap_false " ????
+          importing
+            e_container = <tab> ).
+      endif.
+
+      assign <cache>-dref->* to <tab>.
+      assert sy-subrc = 0.
+      zcl_mockup_loader_utils=>filter_table(
         exporting
-          i_obj    = ls_address-location
-          i_strict = abap_false " ????
-          i_where  = ls_filter
+          i_where = ls_filter
+          i_tab   = <tab>
         importing
           e_container = e_container ).
+
     catch zcx_mockup_loader_error into lx.
       raise exception type zcx_text2tab_error
         exporting

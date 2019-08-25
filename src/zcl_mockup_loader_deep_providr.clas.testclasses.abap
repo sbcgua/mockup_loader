@@ -2,12 +2,17 @@ class ltcl_mockup_loader_mock definition final
   for testing.
 
   public section.
+
+    types:
+      begin of ty_data,
+        data type string,
+      end of ty_data.
+
     interfaces zif_mockup_loader.
     data:
       mv_calls  type i,
       mv_obj    type string,
-      mv_strict type abap_bool,
-      ms_where  type zcl_mockup_loader_utils=>ty_filter.
+      mv_strict type abap_bool.
 endclass.
 
 class ltcl_mockup_loader_mock implementation.
@@ -16,11 +21,20 @@ class ltcl_mockup_loader_mock implementation.
   endmethod.
 
   method zif_mockup_loader~load_data.
-    e_container = 'RESPONSE'.
-    mv_obj    = i_obj.
-    mv_strict = i_strict.
-    ms_where  = i_where.
-    mv_calls  = mv_calls + 1.
+    data ls_data type ty_data.
+    ls_data-data = 'RESPONSE'.
+
+    if cl_abap_typedescr=>describe_by_data( e_container )->kind = 'T'.
+      field-symbols <tab> type standard table.
+      assign e_container to <tab>.
+      append ls_data to <tab>.
+    else.
+      e_container  = ls_data.
+    endif.
+
+    mv_obj       = i_obj.
+    mv_strict    = i_strict.
+    mv_calls     = mv_calls + 1.
   endmethod.
 
 endclass.
@@ -50,7 +64,8 @@ class ltcl_deep_provider_test implementation.
     data lo_cut type ref to zcl_mockup_loader_deep_providr.
     data lo_ml_mock type ref to ltcl_mockup_loader_mock.
     data ls_record_dummy type ty_data.
-    data lv_data type string.
+    data ls_data type ltcl_mockup_loader_mock=>ty_data.
+    data ls_exp_data type ltcl_mockup_loader_mock=>ty_data.
     data ls_where type zcl_mockup_loader_utils=>ty_filter.
 
     create object lo_ml_mock.
@@ -63,11 +78,12 @@ class ltcl_deep_provider_test implementation.
         i_address = 'anotherfile[key=@id]'
         i_cursor  = ls_record_dummy
       importing
-        e_container = lv_data ).
+        e_container = ls_data ).
 
+    ls_exp_data-data = 'RESPONSE'.
     cl_abap_unit_assert=>assert_equals(
-      act = lv_data
-      exp = 'RESPONSE' ).
+      act = ls_data
+      exp = ls_exp_data ).
 
     cl_abap_unit_assert=>assert_equals(
       act = lo_ml_mock->mv_calls
@@ -80,14 +96,6 @@ class ltcl_deep_provider_test implementation.
     cl_abap_unit_assert=>assert_equals(
       act = lo_ml_mock->mv_strict
       exp = abap_false ). " ???
-
-    ls_where-name = 'KEY'.
-    ls_where-type = 'V'.
-    get reference of ls_record_dummy-id into ls_where-valref.
-
-    cl_abap_unit_assert=>assert_equals(
-      act = lo_ml_mock->ms_where
-      exp = ls_where ).
 
   endmethod.
 
