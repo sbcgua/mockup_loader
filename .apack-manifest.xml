@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+ <asx:values>
+  <DATA>
+   <GROUP_ID>sbcgua</GROUP_ID>
+   <ARTIFACT_ID>mockup_loader</ARTIFACT_ID>
+   <VERSION>v2.0.5</VERSION>
+   <REPOSITORY_TYPE>abapGit</REPOSITORY_TYPE>
+   <GIT_URL>https://github.com/sbcgua/mockup_loader.git</GIT_URL>
+   <DEPENDENCIES>
+    <item>
+     <GROUP_ID>sbcgua</GROUP_ID>
+     <ARTIFACT_ID>text2tab</ARTIFACT_ID>
+     <GIT_URL>https://github.com/sbcgua/abap_data_parser.git</GIT_URL>
+    </item>
+   </DEPENDENCIES>
+  </DATA>
+ </asx:values>
+</asx:abap>
