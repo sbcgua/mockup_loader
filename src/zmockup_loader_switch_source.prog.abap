@@ -417,7 +417,7 @@ initialization.
   txt_file = 'FILE'.                                        "#EC NOTEXT
   txt_fp   = 'File path'.                                   "#EC NOTEXT
   txt_mp   = 'MIME object'.                                 "#EC NOTEXT
-  txt_mp2  = '(for upload only)'.                           "#EC NOTEXT
+  txt_mp2  = '(to redirect)'.                               "#EC NOTEXT
 
   sscrfields-functxt_01 = 'Get SU3 value'.                  "#EC NOTEXT
   sscrfields-functxt_02 = 'Upload to MIME'.                 "#EC NOTEXT
@@ -443,7 +443,7 @@ at selection-screen on p_fpath.
   endif.
 
 at selection-screen on p_mpath.
-  if p_mime is not initial.
+  if p_mime is not initial or p_file is not initial.
     set parameter id 'ZMOCKUP_LOADER_SMIME' field p_mpath.
   endif.
 

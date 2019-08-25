@@ -134,6 +134,11 @@ class ZCL_MOCKUP_LOADER definition
     methods constructor
       raising
         zcx_mockup_loader_error .
+    class-methods redirect_source
+      changing
+        c_src_type      type char4
+        c_src_path      type string.
+
 ENDCLASS.
 
 
@@ -190,28 +195,16 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       i_date_format = i_date_format
       i_begin_comment = i_begin_comment ).
 
-    data:
-          l_src_type  type char4,
-          l_src_path  type string,
-          l_type_tmp  type char4,
-          l_path_tmp  type char128.
+    data l_src_type type char4.
+    data l_src_path type string.
 
     l_src_type = i_type.
     l_src_path = i_path.
 
-    " Get re-direction settings from session memory
-    get parameter id 'ZMOCKUP_LOADER_STYPE' field l_type_tmp.
-    if l_type_tmp is not initial.
-      if l_type_tmp = 'MIME'.
-        get parameter id 'ZMOCKUP_LOADER_SMIME' field l_path_tmp.
-      elseif l_type_tmp = 'FILE'.
-        get parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_tmp.
-      endif.
-      if l_path_tmp is not initial.
-        l_src_type = l_type_tmp.
-        l_src_path = l_path_tmp.
-      endif.
-    endif.
+    redirect_source(
+      changing
+        c_src_type = l_src_type
+        c_src_path = l_src_path ).
 
     ro_instance->initialize(
       i_type = l_src_type
@@ -517,6 +510,36 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     catch cx_root into l_ex.
       zcx_mockup_loader_error=>raise( msg = 'Codepage conversion error' code = 'CP' ). "#EC NOTEXT
     endtry.
+
+  endmethod.
+
+
+  method redirect_source.
+
+    data:
+      l_redirect_type type char4,
+      l_redirect_mime type char128,
+      l_redirect_file type char128.
+
+    " Get re-direction settings from session memory
+    get parameter id 'ZMOCKUP_LOADER_STYPE' field l_redirect_type.
+    if l_redirect_type is initial.
+      return.
+    endif.
+
+    get parameter id 'ZMOCKUP_LOADER_SMIME' field l_redirect_mime.
+    get parameter id 'ZMOCKUP_LOADER_SPATH' field l_redirect_file.
+
+    if l_redirect_type = 'MIME' and l_redirect_mime is not initial.
+      " Just redirect always - maybe not good, maybe refactor
+      " or maybe remove feature at all ? not used, at least by me :)
+      c_src_type = l_redirect_type.
+      c_src_path = l_redirect_mime.
+    elseif l_redirect_type = 'FILE' and l_redirect_file is not initial and l_redirect_mime = c_src_path.
+      " Redirect only if redirect mime = original mime
+      c_src_type = l_redirect_type.
+      c_src_path = l_redirect_file.
+    endif.
 
   endmethod.
 

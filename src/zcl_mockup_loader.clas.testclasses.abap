@@ -333,50 +333,88 @@ class lcl_test_mockup_loader implementation.
 * Source redirection via SET/GET parameters test
 **********************************************************************
   method source_redirect_test.
+
+    constants:
+      c_getset_type type memoryid value 'ZMOCKUP_LOADER_STYPE',
+      c_getset_mime type memoryid value 'ZMOCKUP_LOADER_SMIME',
+      c_getset_file type memoryid value 'ZMOCKUP_LOADER_SPATH'.
+
     data:
-          lo_ex      type ref to zcx_mockup_loader_error,
-          l_type     type char4,
-          l_path     type char40,
-          l_path_tmp type char40.
+      lx_ut      type ref to cx_aunit_fail,
+      l_mime_bak type char40,
+      l_file_bak type char40.
+
+    data:
+      lo_ex      type ref to zcx_mockup_loader_error,
+      l_type     type char4,
+      l_path     type char40.
 
     " "DANGEROUS" TEST AS MODIFIES SET/GET PARAMS
-    get parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_tmp. " Preserve
-
-    l_type = 'FILE'.
-    l_path = 'ZMOCKUP_LOADER_WRONG_OBJECT'.
-    set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
-    set parameter id 'ZMOCKUP_LOADER_SPATH' field l_path.
-
-    try.
-      o = create_default( ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-
-    " Fallback before assert
-    clear l_type.
-    set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
-    set parameter id 'ZMOCKUP_LOADER_SPATH' field l_path_tmp.
-
-    assert_excode 'RE'.
+    define _bak_params.
+      get parameter id c_getset_file field l_file_bak.
+      get parameter id c_getset_mime field l_mime_bak.
+    end-of-definition.
+    define _restore_params.
+      clear l_type.
+      set parameter id c_getset_type field l_type.
+      set parameter id c_getset_file field l_file_bak.
+      set parameter id c_getset_mime field l_mime_bak.
+    end-of-definition.
 
     " MIME
-    get parameter id 'ZMOCKUP_LOADER_SMIME' field l_path_tmp. " Preserve
+    _bak_params.
 
     l_type = 'MIME'.
+    set parameter id c_getset_type field l_type.
     l_path = 'ZMOCKUP_LOADER_WRONG_OBJECT'.
-    set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
-    set parameter id 'ZMOCKUP_LOADER_SMIME' field l_path.
+    set parameter id c_getset_mime field l_path.
 
+    clear lo_ex.
     try.
       o = create_default( ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
 
-    clear l_type.
-    set parameter id 'ZMOCKUP_LOADER_STYPE' field l_type.
-    set parameter id 'ZMOCKUP_LOADER_SMIME' field l_path_tmp.
-
+    _restore_params.
     assert_excode 'RE'.
+
+    " FILE
+    _bak_params.
+
+    l_type = 'FILE'.
+    set parameter id c_getset_type field l_type.
+    l_path = 'ZMOCKUP_LOADER_WRONG_OBJECT'.
+    set parameter id c_getset_file field l_path.
+    l_path = 'ZMOCKUP_LOADER_UNIT_TEST'.
+    set parameter id c_getset_mime field l_path. " replace the mock which was in setup
+
+    clear lo_ex.
+    try.
+      o = create_default( ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    _restore_params.
+    assert_excode 'RE'.
+
+    " FILE, BUT FOR ANOTHER MIME
+    _bak_params.
+
+    l_type = 'FILE'.
+    set parameter id c_getset_type field l_type.
+    l_path = 'ZMOCKUP_LOADER_WRONG_OBJECT'.
+    set parameter id c_getset_file field l_path.
+    l_path = 'ZMOCKUP_LOADER_NOT_EXISTING'.
+    set parameter id c_getset_mime field l_path. " replace the mock which was in setup
+
+    clear lo_ex.
+    try.
+      o = create_default( ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+
+    _restore_params.
+    cl_abap_unit_assert=>assert_initial( lo_ex ).
 
   endmethod.       " source_redirect_test
 
