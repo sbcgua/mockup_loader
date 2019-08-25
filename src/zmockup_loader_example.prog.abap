@@ -122,7 +122,7 @@ endclass.  " lcl_main_logic
 **********************************************************************
 * TEST CLASS
 **********************************************************************
-class lcl_test definition for testing duration short
+class ltcl_test definition for testing duration short
   risk level harmless.
 
   public section.
@@ -144,7 +144,7 @@ class lcl_test definition for testing duration short
 
 endclass.   "lcl_test
 
-class lcl_test implementation.
+class ltcl_test implementation.
   method setup. " Initialize instances
     data lo_context type ref to lcl_context.
     data lo_ex      type ref to cx_static_check.
