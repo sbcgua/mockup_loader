@@ -7,26 +7,26 @@
 *Version: 2.1.0 ([history of changes](/changelog.txt))*
 
 Mockup loader is a tool to simplify data preparation for SAP ABAP unit tests. Create unit test data in Excel, easily convert it into MIME object that travels with ABAP package, easily consume the data from your unit test code. The tool was created with the following high level goals in mind:
-- simplify communication process between a developer and business analyst (from client side in particular)
+- simplify **communication process between a developer and a business analyst** (from client side in particular)
 - simplify test data preparation and maintenance - do and store it in Excel (and commit the Excel file to git)
 - simplify test data consumption - in particular, reduce volume of code required for a complex data tests
 
 Features:
 
-- Interface stubbing - dynamically create double implementations of data accessor interfaces and connect their methods to files in mocks. Does not depend on ABAP test double framework. See *'Data delivery'* section.
-- Singleton memory storage to be able to substitute data selections in the legacy code without data accessor interfaces. See *'Store/Retrieve'* section below.
-- Strict and non-strict parsing - skip irrelevant table fields in your test data.
+- Interface stubbing - dynamically create double implementations of data accessor interfaces and connect their methods to files in mocks. Does not depend on ABAP test double framework. See *'Data delivery'* section
+- Singleton memory storage to be able to substitute data selections in the legacy code without data accessor interfaces. See *'Store/Retrieve'* section below
+- Strict and non-strict parsing - skip irrelevant table fields in your test data
 - "Deep" data loading - load master-detail structures in one step. See *'Deep data loading'* section
-- Load source redirection - convenient utility to temporarily redirect loading from in-SAP-MIME objet to local file, while you are working on or enhancing your test dataset.
-- Tools to simplify conversion from Excel to MIME object inside the system as well as CI flows - [mockup compiler](https://github.com/sbcgua/mockup_compiler), [mockup compiler JS](https://github.com/sbcgua/mockup-compiler-js), [mockup editor](https://github.com/sbcgua/mockup_editor) (alpha, view only at the moment).
-- Utilities for table data filtering.
+- Load source redirection - convenient utility to temporarily redirect loading from in-system-MIME object to local file, while you are working on or enhancing your test dataset. See *Load source redirection* section
+- Tools to simplify conversion from Excel to MIME object inside the system as well as CI flows - [mockup compiler](https://github.com/sbcgua/mockup_compiler), [mockup compiler JS](https://github.com/sbcgua/mockup-compiler-js), [mockup editor](https://github.com/sbcgua/mockup_editor) (alpha, view only at the moment)
+- Utilities for table data filtering
 
 ## Contents
 
 <!-- start toc -->
 
 - [Synopsis](#synopsis)
-- [Data delivery](#data-delivery)
+- [Data delivery features](#data-delivery)
 - [Installation](#installation)
 - [Load source redirection](#load-source-redirection)
 - [Conversion from Excel](#conversion-from-excel)

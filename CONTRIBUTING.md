@@ -6,7 +6,7 @@ Also please kindly follow the following guidelines:
 - respect the name-spacing. e.g. call new objects `z??_mockup_loader_***`
 - please create pull requests on top of the latest code, rebase your changes
 - please add meaningful descriptions to commit/PRs
-- please maintain the documentation appropriately e.g. update the README.md with details of changes to the interface
+- please maintain the documentation appropriately e.g. update the README.md / REFERENCE.md with details of changes
 - please kindly restrain from changing the version unless agreed with the owners of this repository
 - please keep pull requests small and focused on one issue. Don't mix formatting fixes with functional changes
 - keep functions/methods short and focused on one task (NASA style, < 60 lines of code is a good example)
@@ -23,3 +23,4 @@ Other considerations
 - Functional programming approach is welcomed. In particular use static side-effect-less methods where appropriate. They are easier to test and less bug-prone.
 - Avoid undefined state, use asserts/exceptions, code should self protect itself
 - Code should be as self descriptive as possible - use meaningful variable and function/method names
+- Cover code with unit tests
