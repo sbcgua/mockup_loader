@@ -106,7 +106,7 @@ ENDCLASS.
 CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
 
 
-  method BUILD_FILTER.
+  method build_filter.
     data dy_type       type ref to cl_abap_typedescr.
     data dy_struc      type ref to cl_abap_structdescr.
     data dy_table      type ref to cl_abap_tabledescr.
@@ -201,7 +201,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
   endmethod.
 
 
-  method CONV_NC_STRUC_TO_FILTER.
+  method conv_nc_struc_to_filter.
 
     data dy_struc      type ref to cl_abap_structdescr.
     data dy_table      type ref to cl_abap_tabledescr.
@@ -259,7 +259,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
   endmethod.
 
 
-  method CONV_STRING_TO_FILTER.
+  method conv_string_to_filter.
     field-symbols <value> type string.
 
     r_filter-type = c_filter_type-value.
@@ -280,7 +280,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
   endmethod.
 
 
-  method CONV_TT_WHERE_TO_FILTER.
+  method conv_tt_where_to_filter.
     data l_filter         type ty_filter.
     field-symbols <tab>   type any table.
     field-symbols <where> type ty_where.
@@ -307,7 +307,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
   endmethod.
 
 
-  method DOES_LINE_FIT_FILTER.
+  method does_line_fit_filter.
     data l_filter         type ty_filter.
     field-symbols <field> type any.
     field-symbols <range> type any table.
@@ -343,7 +343,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
   endmethod.
 
 
-  method FILTER_TABLE.
+  method filter_table.
     data dy_type2      type ref to cl_abap_typedescr.
     data dy_struc      type ref to cl_abap_structdescr.
     data dy_stru2      type ref to cl_abap_structdescr.
