@@ -76,6 +76,7 @@ class ZCL_MOCKUP_LOADER_UTILS definition
       importing
         !i_where type csequence
         !i_value type any
+        !id_struc type ref to cl_abap_structdescr optional
       returning
         value(r_filter) type ty_filter
       raising
@@ -83,6 +84,7 @@ class ZCL_MOCKUP_LOADER_UTILS definition
     class-methods conv_string_to_filter
       importing
         !i_where type clike
+        !id_struc type ref to cl_abap_structdescr optional
       returning
         value(r_filter) type ty_filter
       raising
@@ -98,6 +100,16 @@ class ZCL_MOCKUP_LOADER_UTILS definition
 
   protected section.
   private section.
+
+    class-methods create_type_aware_valref
+      importing
+        !i_value          type any
+        !i_component_name type abap_compname
+        !id_struc         type ref to cl_abap_structdescr optional
+      returning
+        value(r_valref) type ref to data
+      raising
+        zcx_mockup_loader_error.
 
 ENDCLASS.
 
@@ -241,41 +253,44 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
 
 
   method conv_single_val_to_filter.
-    data dy_data type ref to cl_abap_datadescr.
-    dy_data ?= cl_abap_typedescr=>describe_by_data( i_value ).
 
+    data dy_data type ref to cl_abap_datadescr.
+
+    dy_data ?= cl_abap_typedescr=>describe_by_data( i_value ).
     if dy_data->kind <> cl_abap_typedescr=>kind_elem.
       zcx_mockup_loader_error=>raise( msg  = 'I_VALUE must be of elementary type' code = 'ET' ). "#EC NOTEXT
     endif.
 
-    field-symbols <value> type any.
-    create data r_filter-valref type handle dy_data.
-    assign r_filter-valref->* to <value>.
-
-    r_filter-type = c_filter_type-value.
-    r_filter-name = to_upper( i_where ).
-    <value>       = i_value.
+    r_filter-type   = c_filter_type-value.
+    r_filter-name   = to_upper( i_where ).
+    r_filter-valref = create_type_aware_valref(
+      i_component_name = |{ r_filter-name }| " TODO refactor, remove conversion
+      i_value          = i_value
+      id_struc         = id_struc ).
 
   endmethod.
 
 
   method conv_string_to_filter.
-    field-symbols <value> type string.
 
-    r_filter-type = c_filter_type-value.
-    create data r_filter-valref type string.
-    assign r_filter-valref->* to <value>.
+    data l_value type string.
 
-    split i_where at '=' into r_filter-name <value>.
+    split i_where at '=' into r_filter-name l_value.
     shift r_filter-name right deleting trailing space.
     shift r_filter-name left  deleting leading space.
-    shift <value>       right deleting trailing space.
-    shift <value>       left  deleting leading space.
+    shift l_value       right deleting trailing space.
+    shift l_value       left  deleting leading space.
     translate r_filter-name to upper case.
+    r_filter-type = c_filter_type-value.
 
-    if r_filter-name is initial or <value> is initial.
+    if r_filter-name is initial or l_value is initial.
       zcx_mockup_loader_error=>raise( msg = |Incorrect I_WHERE string pattern| code = 'SP' ).   "#EC NOTEXT
     endif.
+
+    r_filter-valref = create_type_aware_valref(
+      i_component_name = |{ r_filter-name }| " TODO refactor, remove conversion
+      i_value          = l_value
+      id_struc         = id_struc ).
 
   endmethod.
 
@@ -304,6 +319,81 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
     if dy_table->key ne g_range_key. " Not range ?
       zcx_mockup_loader_error=>raise( msg = |I_WHERE-RANGE must be a range table| code = 'RT' ).   "#EC NOTEXT
     endif.
+  endmethod.
+
+
+  method create_type_aware_valref.
+
+    field-symbols <newval> type any.
+
+    if id_struc is not bound.
+
+      create data r_valref type string.
+      assign r_valref->* to <newval>.
+      <newval> = i_value.
+
+    else.
+
+      data lo_type type ref to cl_abap_datadescr.
+      id_struc->get_component_type(
+        exporting
+          p_name = i_component_name
+        receiving
+          p_descr_ref = lo_type
+        exceptions
+          others = 1 ).
+      if sy-subrc <> 0.
+        zcx_mockup_loader_error=>raise(
+          msg = |Incorrect component { i_component_name }| code = 'CN' ).   "#EC NOTEXT
+      endif.
+      if lo_type->kind <> cl_abap_typedescr=>kind_elem.
+        zcx_mockup_loader_error=>raise(
+          msg = |Component must be element { i_component_name }| code = 'CT' ). "#EC NOTEXT
+      endif.
+
+      data lo_etype type ref to cl_abap_elemdescr.
+      lo_etype ?= lo_type.
+      if lo_etype->output_length < strlen( i_value ).
+        zcx_mockup_loader_error=>raise(
+          msg = |Value too long ({ strlen( i_value ) } > { lo_etype->length })| code = 'CL' ). "#EC NOTEXT
+      endif.
+
+      create data r_valref type handle lo_type.
+      assign r_valref->* to <newval>.
+
+      if lo_etype->edit_mask is initial.
+        <newval> = i_value.
+      else.
+
+        data l_fm_name type rs38l_fnam value 'CONVERSION_EXIT_XXXXX_INPUT'.
+        data l_mask type abap_editmask.
+
+        l_mask = lo_etype->edit_mask.
+        shift l_mask by 2 places left. " remove '=='
+
+        replace first occurrence of 'XXXXX' in l_fm_name with l_mask.
+        if zcl_text2tab_utils=>function_exists( l_fm_name ) = abap_false.
+          zcx_mockup_loader_error=>raise(
+            msg = |Conversion exit { l_mask } not found| code = 'CE' ). "#EC NOTEXT
+        endif.
+
+        call function l_fm_name
+          exporting
+            input  = i_value
+          importing
+            output = <newval>
+          exceptions
+            others = 1.
+
+        if sy-subrc <> 0.
+          zcx_mockup_loader_error=>raise(
+            msg = |Conversion exit { l_mask } failed| code = 'CF' ). "#EC NOTEXT
+        endif.
+
+      endif.
+
+    endif.
+
   endmethod.
 
 

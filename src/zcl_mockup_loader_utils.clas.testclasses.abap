@@ -121,6 +121,9 @@ class ltcl_test_mockup_utils definition for testing
     methods conv_string_to_filter     for testing raising zcx_mockup_loader_error .
     methods conv_where_to_filter      for testing raising zcx_mockup_loader_error .
     methods conv_nc_struc_to_filter   for testing raising zcx_mockup_loader_error .
+    methods conv_string_to_filter_w_type for testing raising zcx_mockup_loader_error .
+    methods conv_single_val_w_type    for testing raising zcx_mockup_loader_error .
+    methods conv_w_type_negative      for testing raising zcx_mockup_loader_error .
 
 endclass.       "lcl_test_mockup_loader
 
@@ -742,6 +745,104 @@ class ltcl_test_mockup_utils implementation.
       cl_abap_unit_assert=>fail( ).
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'SP' ).
+    endtry.
+
+  endmethod.
+
+  method conv_string_to_filter_w_type.
+
+    data ls_filter_act type zcl_mockup_loader_utils=>ty_filter.
+    data ls_filter_exp type zcl_mockup_loader_utils=>ty_filter.
+    data ls_dummy type ty_dummy.
+    data lo_type type ref to cl_abap_structdescr.
+
+    lo_type ?= cl_abap_typedescr=>describe_by_data( ls_dummy ).
+
+    ls_filter_act = zcl_mockup_loader_utils=>conv_string_to_filter(
+      i_where  = 'talpha = 1234'
+      id_struc = lo_type ).
+
+    ls_filter_exp-name = 'TALPHA'.
+    ls_dummy-talpha    = '0000001234'.
+    ls_filter_exp-type = zcl_mockup_loader_utils=>c_filter_type-value.
+    get reference of ls_dummy-talpha into ls_filter_exp-valref.
+
+    assert_filter_equals(
+      i_act = ls_filter_act
+      i_exp = ls_filter_exp ).
+
+  endmethod.
+
+  method conv_single_val_w_type.
+
+    data ls_filter_act type zcl_mockup_loader_utils=>ty_filter.
+    data ls_filter_exp type zcl_mockup_loader_utils=>ty_filter.
+    data ls_dummy type ty_dummy.
+    data lo_type type ref to cl_abap_structdescr.
+
+    lo_type ?= cl_abap_typedescr=>describe_by_data( ls_dummy ).
+
+    ls_filter_act = zcl_mockup_loader_utils=>conv_single_val_to_filter(
+      i_where  = 'talpha'
+      i_value  = '1234'
+      id_struc = lo_type ).
+
+    ls_filter_exp-name = 'TALPHA'.
+    ls_dummy-talpha    = '0000001234'.
+    ls_filter_exp-type = zcl_mockup_loader_utils=>c_filter_type-value.
+    get reference of ls_dummy-talpha into ls_filter_exp-valref.
+
+    assert_filter_equals(
+      i_act = ls_filter_act
+      i_exp = ls_filter_exp ).
+
+  endmethod.
+
+  method conv_w_type_negative.
+
+    data ls_filter_act type zcl_mockup_loader_utils=>ty_filter.
+    data lo_type type ref to cl_abap_structdescr.
+    data lx type ref to zcx_mockup_loader_error.
+
+    types:
+      begin of ty_dummy2.
+        include type ty_dummy.
+      types:
+        struc type ty_dummy,
+      end of ty_dummy2.
+
+    data: ls_dummy type ty_dummy2.
+
+    lo_type ?= cl_abap_typedescr=>describe_by_data( ls_dummy ).
+
+    try.
+      ls_filter_act = zcl_mockup_loader_utils=>conv_single_val_to_filter(
+        i_where  = 'talpha'
+        i_value  = '123456789ABC'
+        id_struc = lo_type ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'CL' ).
+    endtry.
+
+    try.
+      ls_filter_act = zcl_mockup_loader_utils=>conv_single_val_to_filter(
+        i_where  = 'XXX'
+        i_value  = '1234'
+        id_struc = lo_type ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'CN' ).
+    endtry.
+
+    try.
+      ls_filter_act = zcl_mockup_loader_utils=>conv_single_val_to_filter(
+        i_where  = 'STRUC'
+        i_value  = '1234'
+        id_struc = lo_type ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'CT' ).
     endtry.
 
   endmethod.
