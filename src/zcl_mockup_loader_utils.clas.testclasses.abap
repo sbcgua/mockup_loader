@@ -424,7 +424,6 @@ class ltcl_test_mockup_utils implementation.
 
     data:
       dummy_tab_src type tt_dummy,
-      ls_filter     type zcl_mockup_loader_utils=>ty_filter,
       lt_act        type tt_dummy,
       lt_exp        type tt_dummy,
       ls_act        type ty_dummy,
@@ -432,15 +431,9 @@ class ltcl_test_mockup_utils implementation.
 
     get_dummy_data( importing e_dummy_tab = dummy_tab_src ).
 
-    " Filter table
-    data lv_str type string value '200000'.
-    ls_filter-name = 'TALPHA'.
-    ls_filter-type = zcl_mockup_loader_utils=>c_filter_type-value.
-    get reference of lv_str into ls_filter-valref.
-
     zcl_mockup_loader_utils=>filter_table(
       exporting
-        i_where     = ls_filter
+        i_where     = 'TALPHA = 200000'
         i_tab       = dummy_tab_src
       importing
         e_container = lt_act ).

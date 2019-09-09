@@ -45,6 +45,7 @@ class ZCL_MOCKUP_LOADER_UTILS definition
       importing
         !i_where type any
         !i_single_value type any optional
+        !id_struc type ref to cl_abap_structdescr optional
       returning
         value(r_filter) type tt_filter
       raising
@@ -173,9 +174,12 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
           if i_single_value is supplied.
             l_filter = conv_single_val_to_filter(
               i_where = i_where
-              i_value = i_single_value ).
+              i_value = i_single_value
+              id_struc = id_struc ).
           else.
-            l_filter = conv_string_to_filter( i_where ).
+            l_filter = conv_string_to_filter(
+              i_where  = i_where
+              id_struc = id_struc ).
           endif.
           append l_filter to lt_filter.
 
@@ -446,13 +450,6 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
       zcx_mockup_loader_error=>raise( msg = 'i_where or i_filter must be supplied' code = 'OO' ). "#EC NOTEXT
     endif.
 
-    data lt_filter like i_filter.
-    if i_where is supplied.
-      lt_filter = build_filter( i_where = i_where ).
-    else. " i_filter is supplied
-      lt_filter = i_filter.
-    endif.
-
     clear e_container.
 
     " Check proper type
@@ -473,6 +470,16 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
     dy_struc ?= dy_table->get_table_line_type( ).
     if dy_struc->absolute_name <> dy_stru2->absolute_name.
       zcx_mockup_loader_error=>raise( msg = 'Src and dst line types are not similar' code = 'LT' ). "#EC NOTEXT
+    endif.
+
+    " Normalize filter
+    data lt_filter like i_filter.
+    if i_where is supplied.
+      lt_filter = build_filter(
+        i_where  = i_where
+        id_struc = dy_struc ).
+    else. " i_filter is supplied
+      lt_filter = i_filter.
     endif.
 
     " create line container
