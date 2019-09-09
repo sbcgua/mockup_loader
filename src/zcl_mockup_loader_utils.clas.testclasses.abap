@@ -100,6 +100,7 @@ class ltcl_test_mockup_utils definition for testing
       returning value(r_tab) type tt_dummy.
 
     methods filter_table for testing.
+    methods filter_table_with_alpha for testing raising zcx_mockup_loader_error.
     methods filter_table_neg for testing.
     methods does_line_fit_filter for testing.
 
@@ -415,6 +416,38 @@ class ltcl_test_mockup_utils implementation.
 
 
   endmethod.  " filter_table.
+
+  method filter_table_with_alpha.
+
+    data:
+      dummy_tab_src type tt_dummy,
+      ls_filter     type zcl_mockup_loader_utils=>ty_filter,
+      lt_act        type tt_dummy,
+      lt_exp        type tt_dummy,
+      ls_act        type ty_dummy,
+      ls_exp        type ty_dummy.
+
+    get_dummy_data( importing e_dummy_tab = dummy_tab_src ).
+
+    " Filter table
+    data lv_str type string value '200000'.
+    ls_filter-name = 'TALPHA'.
+    ls_filter-type = zcl_mockup_loader_utils=>c_filter_type-value.
+    get reference of lv_str into ls_filter-valref.
+
+    zcl_mockup_loader_utils=>filter_table(
+      exporting
+        i_where     = ls_filter
+        i_tab       = dummy_tab_src
+      importing
+        e_container = lt_act ).
+
+    cl_abap_unit_assert=>assert_equals( act = lines( lt_act ) exp = 1 ).
+    read table dummy_tab_src into ls_exp index 2.
+    read table lt_act into ls_act index 1.
+    cl_abap_unit_assert=>assert_equals( act = ls_act exp = ls_exp ).
+
+  endmethod.
 
   method filter_table_neg.
     data:
