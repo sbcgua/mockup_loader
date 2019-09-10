@@ -11,7 +11,7 @@
     "version": "v702",
     "errorNamespace": "^(Z|Y)",
     "globalConstants": [],
-    "globalMacros": []
+    "globalMacros": ["transfer_setting"]
   },   
   "rules": {
     "7bit_ascii": {
