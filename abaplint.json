@@ -1,11 +1,18 @@
 {
   "global": {
-    "version": "v702",
+    "files": "/src/**/*.*",
     "skipGeneratedGatewayClasses": true,
     "skipGeneratedPersistentClasses": true,
     "skipGeneratedFunctionGroups": true,
     "applyUnspecifiedRules": false
   },
+  "dependencies": [],
+  "syntax": {
+    "version": "v702",
+    "errorNamespace": "^(Z|Y)",
+    "globalConstants": [],
+    "globalMacros": ["transfer_setting"]
+  },   
   "rules": {
     "7bit_ascii": {
       "enabled": true,
