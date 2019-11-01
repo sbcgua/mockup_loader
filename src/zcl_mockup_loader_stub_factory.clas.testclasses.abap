@@ -12,6 +12,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods proxy_forwarding for testing.
     methods filtering for testing raising zcx_mockup_loader_error.
     methods filtering_w_struc_param for testing raising zcx_mockup_loader_error.
+    methods returning_value for testing raising zcx_mockup_loader_error.
 
     methods get_ml
       returning
@@ -56,6 +57,8 @@ class lcl_test_proxy_target implementation.
   method zif_mockup_loader_stub_dummy~wrong_sift.
   endmethod.
   method zif_mockup_loader_stub_dummy~gen_param_target.
+  endmethod.
+  method zif_mockup_loader_stub_dummy~return_value.
   endmethod.
 endclass.
 
@@ -505,6 +508,33 @@ class ltcl_mockup_stub_factory_test implementation.
     stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return_w_struc_param( i_params = call_params ).
     cl_abap_unit_assert=>assert_equals( act = lt_act exp = lt_exp ).
+
+  endmethod.
+
+  method returning_value.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data lt_exp type flighttab.
+    data ls_exp like line of lt_exp.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    lt_exp  = get_sflights( ml ).
+    read table lt_exp into ls_exp index 1.
+
+    factory->connect_method(
+      i_sift_param      = 'I_CONNID'
+      i_mock_tab_key    = 'CONNID'
+      i_field_only      = 'PRICE'
+      i_method_name     = 'RETURN_VALUE'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+
+    stub ?= factory->generate_stub( ).
+    cl_abap_unit_assert=>assert_equals(
+      act = stub->return_value( i_connid = '1000' )
+      exp = '100.00' ).
 
   endmethod.
 

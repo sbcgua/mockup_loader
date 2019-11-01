@@ -18,6 +18,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         !i_load_strict type abap_bool default abap_false
         !i_sift_param type string optional
         !i_mock_tab_key type abap_compname optional
+        !i_field_only type abap_parmname optional
         !i_output_param type abap_parmname optional
       returning
         value(r_instance) type ref to zcl_mockup_loader_stub_factory
