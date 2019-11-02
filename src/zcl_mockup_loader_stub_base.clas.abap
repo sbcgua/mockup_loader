@@ -74,7 +74,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
       exporting
         i_obj    = <conf>-mock_name
         i_strict = <conf>-load_strict
-*        i_corresponding = boolc( <conf>-field_only is not initial )
+        i_corresponding = boolc( <conf>-field_only is not initial )
         i_where  = lt_filter
       importing
         e_container = r_data ).

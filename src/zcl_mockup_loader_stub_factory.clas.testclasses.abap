@@ -549,6 +549,12 @@ class ltcl_mockup_stub_factory_test implementation.
     cl_abap_unit_assert=>assert_equals(
       act = stub->return_value( i_connid = '1000' )
       exp = '100.00' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = stub->return_value( i_connid = '2000' )
+      exp = '200.00' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = stub->return_value( i_connid = '9999' ) " Missing record, return initial
+      exp = '' ).
 
   endmethod.
 
