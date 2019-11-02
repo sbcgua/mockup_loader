@@ -37,6 +37,7 @@ class ZCL_MOCKUP_LOADER_UTILS definition
         !i_filter type tt_filter optional
         !i_tab type any table
         !i_where type any optional
+        !i_corresponding type abap_bool default abap_false
       exporting
         !e_container type any
       raising
