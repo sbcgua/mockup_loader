@@ -20,5 +20,5 @@ deploy:
 env:
   global:
     - DEPLOY_VERSION_FILE="src/zif_mockup_loader_constants.intf.abap"
-    - DEPLOY_VERSION_CONST="VERSION"
+    - DEPLOY_VERSION_CONST="version"
     - ENCRYPTION_LABEL="885bbce9f605"

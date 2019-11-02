@@ -24,7 +24,8 @@ if [ -z $VERSION_FILE ] || [ -z $VERSION_CONSTANT ]; then
 fi
 
 # this does not work on merge, maybe use HEAD HEAD^1 ... maybe just change versions in master directly !
-git diff-tree --no-commit-id --name-only -r HEAD | grep $VERSION_FILE > /dev/null 2>&1
+# git diff-tree --no-commit-id --name-only -r HEAD | grep $VERSION_FILE > /dev/null 2>&1
+git diff-tree --no-commit-id --name-only -r HEAD | grep $VERSION_FILE
 if [ $? -ne 0 ]; then
     echo "No version change detected, skipping tag creation"
     exit 0
@@ -32,7 +33,8 @@ fi
 
 VERSION_DIFF=$(git diff HEAD^:$VERSION_FILE HEAD:$VERSION_FILE)
 
-echo "$VERSION_DIFF" | grep $VERSION_CONSTANT > /dev/null 2>&1
+# echo "$VERSION_DIFF" | grep $VERSION_CONSTANT > /dev/null 2>&1
+echo "$VERSION_DIFF" | grep $VERSION_CONSTANT
 if [ $? -ne 0 ]; then
     echo "No version change detected, skipping tag creation"
     exit 0
