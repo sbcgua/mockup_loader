@@ -61,8 +61,18 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         id_if_desc type ref to cl_abap_objectdescr
         iv_method_name type abap_methname
         iv_param_name type string
+      returning
+        value(rd_sift_type) type ref to cl_abap_typedescr
       raising
         zcx_mockup_loader_error .
+
+    class-methods build_field_only_struc_type
+      importing
+        id_output_type type ref to cl_abap_typedescr
+        id_sift_type type ref to cl_abap_typedescr
+        i_config type zcl_mockup_loader_stub_base=>ty_mock_config
+      returning
+        value(rd_type) type ref to cl_abap_structdescr.
 
 ENDCLASS.
 
@@ -73,6 +83,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
   method build_config.
     data ld_type type ref to cl_abap_typedescr.
+    data ld_sift_type type ref to cl_abap_typedescr.
 
     " Config basic checks
     if i_config-method_name is initial.
@@ -101,7 +112,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     " check if sift param
     field-symbols <param> like line of <method>-parameters.
     if i_config-sift_param is not initial.
-      validate_sift_param(
+      ld_sift_type = validate_sift_param(
         id_if_desc = id_if_desc
         iv_method_name = i_config-method_name
         iv_param_name = i_config-sift_param ).
@@ -137,12 +148,46 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     ld_type = id_if_desc->get_method_parameter_type(
       p_method_name    = <method>-name
       p_parameter_name = <param>-name ).
-    if not ld_type->kind ca 'ST'. " Table or structure
-      zcx_mockup_loader_error=>raise(
-        msg  = |Param { r_config-output_param } must be table or structure|
-        code = 'PT' ). "#EC NOTEXT
+    if r_config-field_only is initial.
+      if not ld_type->kind co 'ST'. " Table or structure
+        zcx_mockup_loader_error=>raise(
+          msg  = |Param { r_config-output_param } must be table or structure|
+          code = 'PT' ). "#EC NOTEXT
+      endif.
+      r_config-output_type ?= ld_type.
+    else.
+      if ld_type->kind <> cl_abap_typedescr=>kind_elem. " Elementary
+        zcx_mockup_loader_error=>raise(
+          msg  = |Field only param { r_config-output_param } must be elementary|
+          code = 'PL' ). "#EC NOTEXT
+      endif.
+      r_config-output_type ?= build_field_only_struc_type(
+        id_output_type = ld_type
+        id_sift_type = ld_sift_type
+        i_config = r_config ).
     endif.
-    r_config-output_type ?= ld_type.
+
+  endmethod.
+
+
+  method build_field_only_struc_type.
+
+    data ld_struc type ref to cl_abap_structdescr.
+    data lt_components type cl_abap_structdescr=>component_table.
+    field-symbols <c> like line of lt_components.
+
+    append initial line to lt_components assigning <c>.
+    <c>-name = i_config-field_only.
+    <c>-type ?= id_output_type.
+
+    if i_config-sift_param is not initial.
+      assert id_sift_type is bound.
+      append initial line to lt_components assigning <c>.
+        <c>-name = i_config-mock_tab_key.
+        <c>-type ?= id_sift_type.
+    endif.
+
+    rd_type = cl_abap_structdescr=>get( lt_components ).
 
   endmethod.
 
@@ -155,6 +200,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     ls_config-sift_param   = to_upper( i_sift_param ).
     ls_config-mock_tab_key = to_upper( i_mock_tab_key ).
     ls_config-output_param = to_upper( i_output_param ).
+    ls_config-field_only   = to_upper( i_field_only ).
 
     read table mt_config with key method_name = ls_config-method_name transporting no fields.
     if sy-subrc is initial.
@@ -312,6 +358,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
     data lv_part1 type abap_parmname.
     data lv_part2 type abap_parmname.
+    data lv_final_param type abap_parmname.
     split iv_param_name at '-' into lv_part1 lv_part2.
 
     id_if_desc->get_method_parameter_type(
@@ -329,15 +376,11 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     endif.
 
     if lv_part2 is initial. " elementary param
-      if ld_type->kind <> cl_abap_typedescr=>kind_elem.
-        zcx_mockup_loader_error=>raise(
-          msg  = |Param { lv_part1 } must be elementary|
-          code = 'PE' ). "#EC NOTEXT
-      endif.
+      lv_final_param = lv_part1.
     else. " structured param
       if ld_type->kind <> cl_abap_typedescr=>kind_struct. " TODO class ref ?
         zcx_mockup_loader_error=>raise(
-          msg  = |Param { lv_part1 } must be a strcture|
+          msg  = |Param { lv_part1 } must be a structure|
           code = 'PE' ). "#EC NOTEXT
       endif.
 
@@ -357,12 +400,15 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
           code = 'PF' ). "#EC NOTEXT
       endif.
 
-      if ld_type->kind <> cl_abap_typedescr=>kind_elem.
-        zcx_mockup_loader_error=>raise(
-          msg  = |Param { lv_part2 } must be elementary|
-          code = 'PE' ). "#EC NOTEXT
-      endif.
+      lv_final_param = lv_part2.
     endif.
+
+    if ld_type->kind <> cl_abap_typedescr=>kind_elem.
+      zcx_mockup_loader_error=>raise(
+        msg  = |Param { lv_final_param } must be elementary|
+        code = 'PE' ). "#EC NOTEXT
+    endif.
+    rd_sift_type = ld_type.
 
   endmethod.
 

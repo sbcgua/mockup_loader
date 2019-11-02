@@ -332,6 +332,18 @@ class ltcl_mockup_stub_factory_test implementation.
     endtry.
     assert_excode 'PT'.
 
+    try. " field only elementary param
+      clear: lo_ex, ls_conf.
+      ls_conf-method_name  = 'TAB_RETURN'.
+      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      ls_conf-field_only   = 'PRICE'.
+      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+        id_if_desc = ld_if
+        i_config   = ls_conf ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'PL'.
+
   endmethod.
 
   method instantiation.
