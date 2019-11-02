@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-  - "10"
+  - "12"
 notifications:
   email: false
 before_script:
@@ -11,3 +11,14 @@ script:
 branches:
   only: 
     - master
+deploy:
+  - provider: script
+    script: ./ci/deploy-release-tag.sh
+    on:
+      branch: master
+      tags: false
+env:
+  global:
+    - DEPLOY_VERSION_FILE="src/zif_mockup_loader_constants.intf.abap"
+    - DEPLOY_VERSION_CONST="VERSION"
+    - ENCRYPTION_LABEL="885bbce9f605"
