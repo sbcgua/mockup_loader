@@ -139,7 +139,15 @@ class ZCL_MOCKUP_LOADER definition
       changing
         c_src_type      type char4
         c_src_path      type string.
-
+    class-methods build_table_type
+      importing
+        io_type_descr   type ref to cl_abap_typedescr
+        it_filter       type zcl_mockup_loader_utils=>tt_filter
+        i_corresponding type abap_bool default abap_false
+      returning
+        value(ro_table_descr) type ref to cl_abap_tabledescr
+      raising
+        zcx_mockup_loader_error .
 ENDCLASS.
 
 
@@ -160,6 +168,26 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         |mockup loader version ({ zif_mockup_loader_constants=>version
         }) < required ({ i_required_version })| ). "#EC NOTEXT
     endif.
+
+  endmethod.
+
+
+  method build_table_type.
+
+    data lo_table_descr type ref to cl_abap_tabledescr.
+    data lo_struc_descr type ref to cl_abap_structdescr.
+
+    case io_type_descr->kind.
+      when 'T'. " Table
+        lo_table_descr ?= io_type_descr.
+        lo_struc_descr ?= lo_table_descr->get_table_line_type( ).
+      when 'S'. " Structure
+        lo_struc_descr ?= io_type_descr.
+      when others. " Not a table or structure ?
+        zcx_mockup_loader_error=>raise( msg = 'Table or structure containers only' code = 'DT' ). "#EC NOTEXT
+    endcase.
+
+    ro_table_descr = cl_abap_tabledescr=>create( lo_struc_descr ).
 
   endmethod.
 
@@ -402,14 +430,14 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
   method parse_data.
     data:
-          lx_dp          type ref to zcx_text2tab_error,
-          lo_type_descr  type ref to cl_abap_typedescr,
-          lo_table_descr type ref to cl_abap_tabledescr,
-          lo_struc_descr type ref to cl_abap_structdescr,
-          ld_temp_tab    type ref to data.
+      lx_dp          type ref to zcx_text2tab_error,
+      lo_type_descr  type ref to cl_abap_typedescr,
+      lt_filter      type zcl_mockup_loader_utils=>tt_filter,
+      lo_table_descr type ref to cl_abap_tabledescr,
+      ld_temp_tab    type ref to data.
     field-symbols:
-          <container>     type any,
-          <temp_tab>      type standard table.
+      <container>     type any,
+      <temp_tab>      type standard table.
 
     " Handle data reference container (use exporting value ???)
     lo_type_descr = cl_abap_typedescr=>describe_by_data( e_container ).
@@ -421,20 +449,16 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     endif.
     clear <container>.
 
-    " Identify container type and create temp container
-    case lo_type_descr->kind.
-      when 'T'. " Table
-        lo_table_descr ?= lo_type_descr.
-        lo_struc_descr ?= lo_table_descr->get_table_line_type( ).
-      when 'S'. " Structure
-        lo_struc_descr ?= lo_type_descr.
-      when others. " Not a table or structure ?
-        zcx_mockup_loader_error=>raise( msg = 'Table or structure containers only' code = 'DT' ). "#EC NOTEXT
-    endcase.
+    " Build filter
+    if i_where is not initial.
+      lt_filter = zcl_mockup_loader_utils=>build_filter( i_where ).
+    endif.
 
-    lo_table_descr ?= cl_abap_tabledescr=>create(
-      p_line_type  = lo_struc_descr
-      p_table_kind = cl_abap_tabledescr=>tablekind_std ).
+    " Identify container type and create temp container
+    lo_table_descr = build_table_type(
+      i_corresponding = i_corresponding
+      it_filter       = lt_filter
+      io_type_descr   = lo_type_descr ).
     create data ld_temp_tab type handle lo_table_descr.
     assign ld_temp_tab->* to <temp_tab>.
 
@@ -469,7 +493,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     if i_where is not initial.
       zcl_mockup_loader_utils=>filter_table(
         exporting
-          i_where     = i_where
+          i_where     = lt_filter
           i_tab       = <temp_tab>
         importing
           e_container = <container> ).
