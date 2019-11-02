@@ -1,12 +1,24 @@
 interface zif_mockup_loader_stub_dummy
   public .
 
+  types:
+    begin of ty_params,
+      param1 type string,
+      connid type s_conn_id,
+    end of ty_params.
 
   methods tab_return
     importing
       !i_connid type s_conn_id
     returning
       value(r_tab) type flighttab .
+
+  methods tab_return_w_struc_param
+    importing
+      !i_params type ty_params
+    returning
+      value(r_tab) type flighttab .
+
   methods tab_export
     importing
       !i_connid type s_conn_id

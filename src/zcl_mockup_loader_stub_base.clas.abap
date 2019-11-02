@@ -10,7 +10,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         method_name     type abap_methname,
         mock_name       type string,
         load_strict     type abap_bool,
-        sift_param      type abap_parmname,
+        sift_param      type string,
         mock_tab_key    type abap_compname,
         output_param    type abap_parmname,
         output_pkind    type abap_parmkind,

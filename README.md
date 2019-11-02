@@ -92,7 +92,7 @@ On-the-fly data filtering is supported. For more information see [REFERENCE.md](
 
 Since 2.0.0 mockup loader supports generating of interface stubs. :tada:
 
-It creates an instance object which implements the given interface where one or more methods retrive the data from the mockup. Optional filtering is supported, thus one of the method parameters is treated as the value to filter the mockup data by the given key field.
+It creates an instance object which implements the given interface where one or more methods retrieve the data from the mockup. Optional filtering is supported, thus one of the method parameters is treated as the value to filter the mockup data by the given key field.
 
 ```abap
   data lo_factory type ref to zcl_mockup_loader_stub_factory.
@@ -133,11 +133,11 @@ It creates an instance object which implements the given interface where one or 
     i_mock_name       = 'EXAMPLE/sflight' ). " <MOCK PATH>
   ...
 ```
-This will result in the data set where key field `CONNID` will be equal to `I_CONNID` parameter actually passed to interface call.
+This will result in the data set where key field `CONNID` will be equal to `I_CONNID` parameter actually passed to interface call. Structured addressing also supported, e.g. `IS_PARAMS-CONNID`.
 
-`Returning`, `exporting` and `chainging` parameters are supported. For more information see [REFERENCE.md](docs/REFERENCE.md).
+`Returning`, `exporting` and `changing` parameters are supported. For more information see [REFERENCE.md](docs/REFERENCE.md).
 
-In addition, forwarding calls to another object (implementing same interface) is supported. For example if some of accessor methods must be connected to mocks and some others were implemented manually in a supprting test (or real production) class. See [REFERENCE.md](docs/REFERENCE.md).
+In addition, forwarding calls to another object (implementing same interface) is supported. For example if some of accessor methods must be connected to mocks and some others were implemented manually in a supporting test (or real production) class. See [REFERENCE.md](docs/REFERENCE.md).
 
 ![accessor pattern](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/sbcgua/mockup_loader/master/docs/mockup-stub.puml)
 
@@ -321,16 +321,16 @@ See [EXCEL2TXT.md](docs/EXCEL2TXT.md) for more info.
 - Complete reference of classes and methods can be found in [REFERENCE.md](docs/REFERENCE.md). 
 - A simple example can be found in [/src/zmockup_loader_example.prog.abap](/src/zmockup_loader_example.prog.abap).
 - Also see unit tests - these are the most up-to-date examples
-- Have a look at the howto section in the project [Wiki](../../wiki).
+- Have a look at the how-to section in the project [Wiki](../../wiki).
 
 ## Contributing
 
-You are welcomed to suggest ideas and code improvements ! :) Let's make ABAP development more convenient. Please kindly respect the [code convensions](/CONTRIBUTING.md)
+You are welcomed to suggest ideas and code improvements ! :) Let's make ABAP development more convenient. Please kindly respect the [code conventions](/CONTRIBUTING.md)
 
 ## Publications
 
 - [Unit testing mockup loader for ABAP @SCN](http://scn.sap.com/community/abap/blog/2015/11/12/unit-testing-mockup-loader-for-abap)
-- [How to do convenient multicase unit tests with zmockup_loader @SCN](http://scn.sap.com/community/abap/blog/2016/03/20/how-to-do-convenient-multicase-test-with-zmockuploader)
+- [How to do convenient multi-case unit tests with zmockup_loader @SCN](http://scn.sap.com/community/abap/blog/2016/03/20/how-to-do-convenient-multicase-test-with-zmockuploader)
 - [zmockup_loader and unit tests with interface stubbing](https://blogs.sap.com/?p=712675)
 - [zmockup_loader: unit test data preparation flow](https://blogs.sap.com/?p=714903)
 

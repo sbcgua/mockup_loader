@@ -10,6 +10,28 @@ class ltcl_mockup_stub_factory_test definition final
     methods instantiation for testing.
     methods forward_method for testing.
     methods proxy_forwarding for testing.
+    methods filtering for testing raising zcx_mockup_loader_error.
+    methods filtering_w_struc_param for testing raising zcx_mockup_loader_error.
+
+    methods get_ml
+      returning
+        value(ro_ml) type ref to zcl_mockup_loader
+      raising zcx_mockup_loader_error.
+
+    methods get_factory
+      importing
+        io_ml type ref to zcl_mockup_loader
+      returning
+        value(ro_factory) type ref to zcl_mockup_loader_stub_factory
+      raising zcx_mockup_loader_error.
+
+    methods get_sflights
+      importing
+        io_ml type ref to zcl_mockup_loader
+      returning
+        value(rt_tab) type flighttab
+      raising zcx_mockup_loader_error.
+
 endclass.
 
 class lcl_test_proxy_target definition.
@@ -22,6 +44,8 @@ class lcl_test_proxy_target implementation.
     r_val = |{ i_p1 } { i_p2 }|.
   endmethod.
   method zif_mockup_loader_stub_dummy~tab_return.
+  endmethod.
+  method zif_mockup_loader_stub_dummy~tab_return_w_struc_param.
   endmethod.
   method zif_mockup_loader_stub_dummy~tab_export.
   endmethod.
@@ -404,6 +428,83 @@ class ltcl_mockup_stub_factory_test implementation.
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( ).
     endtry.
+
+  endmethod.
+
+**********************************************************************
+
+  method get_ml.
+    ro_ml = zcl_mockup_loader=>create(
+      i_type = 'MIME'
+      i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
+  endmethod.
+
+  method get_factory.
+    create object ro_factory
+      exporting
+        io_ml_instance   = io_ml " get_ml( )
+        i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+  endmethod.
+
+  method get_sflights.
+    io_ml->load_data(
+      exporting
+        i_obj    = 'EXAMPLE/sflight'
+        i_strict = abap_false
+      importing
+        e_container = rt_tab ).
+  endmethod.
+
+  method filtering.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data lt_exp type flighttab.
+    data lt_act type flighttab.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    lt_exp  = get_sflights( ml ).
+    delete lt_exp index 2.
+
+    factory->connect_method(
+      i_sift_param      = 'I_CONNID'
+      i_mock_tab_key    = 'CONNID'
+      i_method_name     = 'TAB_RETURN'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+
+    stub ?= factory->generate_stub( ).
+    lt_act = stub->tab_return( i_connid = '1000' ).
+    cl_abap_unit_assert=>assert_equals( act = lt_act exp = lt_exp ).
+
+  endmethod.
+
+  method filtering_w_struc_param.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data lt_exp type flighttab.
+    data lt_act type flighttab.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    lt_exp  = get_sflights( ml ).
+    delete lt_exp index 2.
+
+    factory->connect_method(
+      i_sift_param      = 'I_PARAMS-CONNID'
+      i_mock_tab_key    = 'CONNID'
+      i_method_name     = 'TAB_RETURN_W_STRUC_PARAM'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+
+    data call_params type zif_mockup_loader_stub_dummy=>ty_params.
+    call_params-connid = '1000'.
+
+    stub ?= factory->generate_stub( ).
+    lt_act = stub->tab_return_w_struc_param( i_params = call_params ).
+    cl_abap_unit_assert=>assert_equals( act = lt_act exp = lt_exp ).
 
   endmethod.
 

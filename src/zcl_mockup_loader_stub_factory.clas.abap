@@ -16,7 +16,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         !i_method_name type abap_methname
         !i_mock_name type string
         !i_load_strict type abap_bool default abap_false
-        !i_sift_param type abap_parmname optional
+        !i_sift_param type string optional
         !i_mock_tab_key type abap_compname optional
         !i_output_param type abap_parmname optional
       returning
@@ -54,6 +54,15 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
     methods _src
       importing
         iv_src_line type string.
+
+    class-methods validate_sift_param
+      importing
+        id_if_desc type ref to cl_abap_objectdescr
+        iv_method_name type abap_methname
+        iv_param_name type string
+      raising
+        zcx_mockup_loader_error .
+
 ENDCLASS.
 
 
@@ -91,21 +100,10 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     " check if sift param
     field-symbols <param> like line of <method>-parameters.
     if i_config-sift_param is not initial.
-      read table <method>-parameters with key name = i_config-sift_param assigning <param>.
-      if sy-subrc is not initial.
-        zcx_mockup_loader_error=>raise(
-          msg  = |Param { i_config-sift_param } not found|
-          code = 'PF' ). "#EC NOTEXT
-      endif.
-
-      ld_type = id_if_desc->get_method_parameter_type(
-        p_method_name    = <method>-name
-        p_parameter_name = <param>-name ).
-      if ld_type->kind <> cl_abap_typedescr=>kind_elem.
-        zcx_mockup_loader_error=>raise(
-          msg  = |Param { i_config-sift_param } must be elementary|
-          code = 'PE' ). "#EC NOTEXT
-      endif.
+      validate_sift_param(
+        id_if_desc = id_if_desc
+        iv_method_name = i_config-method_name
+        iv_param_name = i_config-sift_param ).
     endif.
 
     r_config = i_config.
@@ -303,6 +301,67 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
         it_config       = mt_config
         io_proxy_target = mo_proxy_target
         io_ml           = mo_ml.
+
+  endmethod.
+
+
+  method validate_sift_param.
+
+    data ld_type type ref to cl_abap_typedescr.
+
+    data lv_part1 type abap_parmname.
+    data lv_part2 type abap_parmname.
+    split iv_param_name at '-' into lv_part1 lv_part2.
+
+    id_if_desc->get_method_parameter_type(
+      exporting
+        p_method_name    = iv_method_name
+        p_parameter_name = lv_part1
+      receiving
+        p_descr_ref = ld_type
+      exceptions
+        parameter_not_found = 1 ).
+    if sy-subrc = 1.
+      zcx_mockup_loader_error=>raise(
+        msg  = |Param { lv_part1 } not found|
+        code = 'PF' ). "#EC NOTEXT
+    endif.
+
+    if lv_part2 is initial. " elementary param
+      if ld_type->kind <> cl_abap_typedescr=>kind_elem.
+        zcx_mockup_loader_error=>raise(
+          msg  = |Param { lv_part1 } must be elementary|
+          code = 'PE' ). "#EC NOTEXT
+      endif.
+    else. " structured param
+      if ld_type->kind <> cl_abap_typedescr=>kind_struct. " TODO class ref ?
+        zcx_mockup_loader_error=>raise(
+          msg  = |Param { lv_part1 } must be a strcture|
+          code = 'PE' ). "#EC NOTEXT
+      endif.
+
+      data ld_struc type ref to cl_abap_structdescr.
+      ld_struc ?= ld_type.
+
+      ld_struc->get_component_type(
+        exporting
+          p_name = lv_part2
+        receiving
+          p_descr_ref = ld_type
+        exceptions
+          component_not_found = 1 ).
+      if sy-subrc = 1.
+        zcx_mockup_loader_error=>raise(
+          msg  = |Param { lv_part2 } not found|
+          code = 'PF' ). "#EC NOTEXT
+      endif.
+
+      if ld_type->kind <> cl_abap_typedescr=>kind_elem.
+        zcx_mockup_loader_error=>raise(
+          msg  = |Param { lv_part2 } must be elementary|
+          code = 'PE' ). "#EC NOTEXT
+      endif.
+    endif.
 
   endmethod.
 

@@ -59,7 +59,7 @@ importing
   I_DATE_FORMAT type CHAR4
 ```
 
-Changes the parsing parameters on-the-fly. See `CREATE` descrition for parameter explanation.
+Changes the parsing parameters on-the-fly. See `CREATE` description for parameter explanation.
 
 **Example:**
 
@@ -85,8 +85,8 @@ exporting
 - **I_STRICT** - suggests if the structure of the file must strictly correspond to the structure of target container. The call **always** validates that all fields in the text file are present in target structure. `I_STRICT` = 'True' **additionally** means that the number of fields is the same as in the target structure.
     - One exception is `MANDT` field. It may be skipped in a text file even for strict validation. So a text file with all structure fields but MANDT is still considered as strictly equal.
 - **I_DEEP** - allow filling deep components (tables/structures) in the target structure. If the component is not empty it must have the form of `<source_path>[<source_id_field>=<value|@reference_field>]`. See more detail below.
-- **I_WHERE** - optional condition to filter the sourse table. See "Using filtering" section below for details.   
-- **E_CONTAINER** - container for the data. Can be a table or a structure. In the latter case just the first data line of the file is parsed, no error is thrown if there are more lines in case like that. Can also be **data ref** to a table or a structure. In this case data ref **must be** created and passed to the method, it cannot infere data type for proper convertion without it.
+- **I_WHERE** - optional condition to filter the source table. See "Using filtering" section below for details.   
+- **E_CONTAINER** - container for the data. Can be a table or a structure. In the latter case just the first data line of the file is parsed, no error is thrown if there are more lines in case like that. Can also be **data ref** to a table or a structure. In this case data ref **must be** created and passed to the method, it cannot infer data type for proper conversion without it.
 
 The method assumes that field names are specified in the first line of the text file and are **capitalized**. The order is not important and can be mixed. `MANDT` field, if present, is ignored (no value transferred).
 
@@ -253,7 +253,7 @@ ID   DATE   ...   LINES
 
 For the first record the mockup loader will find file `path_to_lines_file.txt` and load the lines with `docid` = `1` (value of `id` field of the first record). For the second record the explicit value `12345` will be used as the filter.
 
-## Typeless parsing
+## Type-less parsing
 
 You can also create an instance that does not validate type against some existing type structure. Instead it generates the table dynamically, where each field if the line is unconverted string.
 
@@ -350,7 +350,7 @@ try.
   call method o->load_and_store
     exporting i_obj       = 'TEST1/BSEG'
               i_name      = 'BSEG'
-              i_type      = 'BSEG_T'. " Disctionary BSEG table type
+              i_type      = 'BSEG_T'. " Dictionary BSEG table type
 catch zcx_mockup_loader_error into lo_ex.
   fail( lo_ex->get_text( ) ).
 endtry.
@@ -550,7 +550,7 @@ Since 2.0.0 mockup loader supports generating of interface stubs. As a more prop
   " lt_res contains the mock data ...
 ```
 
-Stubing was implemented in 2 ways. Initially it was implemented to utilize popular *test double framework*. However, it is not available on systems below 7.4 so *'native'* stubbing was also implemented via dynamic `generate subroutine pool` and became the default approach.
+Stubbing was implemented in 2 ways. Initially it was implemented to utilize popular *test double framework*. However, it is not available on systems below 7.4 so *'native'* stubbing was also implemented via dynamic `generate subroutine pool` and became the default approach.
 
 The test double related code was saved but moved to a separate package [mockup_loader_stub_double](https://github.com/sbcgua/mockup_loader_stub_double). It is a lightweight 'addon' that just redefines a couple of factory methods but works in similar way. Feel free to use it if you prefer test double framework. See the [repo](https://github.com/sbcgua/mockup_loader_stub_double) for details.
 
@@ -583,7 +583,7 @@ Activates stub for the given method, connects it to the specified mockup path, o
 - **i_method_name**  - interface method to stub
 - **i_mock_name**    - mock path (in-zip) to load data from
 - **i_load_strict**  - if the mockdata should be loaded strictly (see `load_data` method for more info)
-- **i_sift_param**   - importing parameter of the interface to take filter value from
+- **i_sift_param**   - importing parameter of the interface to take filter value from. Structured addressing also supported, e.g. `IS_PARAMS-CONNID`
 - **i_mock_tab_key** - key field in the mock data to use for the filter
 - **i_output_param** - parameter of the interface to save data to. Exporting, changing and returning are supported. If empty - the returning parameter is assumed and searched in the method definition. Parameter must be a table or a structure (as all load targets)
 - **returning value** is the instance of stub factory, for chaining

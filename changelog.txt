@@ -8,7 +8,11 @@ Legend
 + : added
 - : removed
 
-v2.1.0, 2019-08-??
+v2.1.1, 2019-11-??
+------------------
++ support for structured i_sift_param, e.g. 'is_params-connid'
+
+v2.1.0, 2019-08-25
 ------------------
 + deep structure loading - major feature, see readme and reference
 ! source redirection logic change - now redirects to file only if the same MIME is specified in ZMOCKUP_LOADER_SMIME. To make possible redirect specific package only
