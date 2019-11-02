@@ -8,9 +8,14 @@ Legend
 + : added
 - : removed
 
+v2.1.2, 2019-11-03
+------------------
++ support for loading corresponding fields (i_corresponding = abap_true)
++ support for returning value in stub (i_field_only)
+
 v2.1.1, 2019-11-02
 ------------------
-+ support for structured i_sift_param, e.g. 'is_params-connid'
++ support for structured i_sift_param in stub, e.g. 'is_params-connid'
 
 v2.1.0, 2019-08-25
 ------------------
