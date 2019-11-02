@@ -151,6 +151,7 @@ class ltcl_test_mockup_loader definition for testing
     methods load_deep_negative       for testing.
 
     methods load_corresponding       for testing raising zcx_mockup_loader_error.
+    methods load_corresponding_w_filter for testing raising zcx_mockup_loader_error.
 
     methods assert_version           for testing.
 
@@ -907,6 +908,36 @@ class ltcl_test_mockup_loader implementation.
         i_strict        = abap_false
         i_corresponding = abap_true
         i_where         = 'tchar = Trololo3'
+      importing
+        e_container = dummy_tab_act ).
+    cl_abap_unit_assert=>assert_equals(
+      act = dummy_tab_act
+      exp = dummy_tab_exp ).
+
+  endmethod.
+
+  method load_corresponding_w_filter.
+    data:
+      dummy_tab_act      type tt_dummy_corresponding,
+      dummy_tab_exp      type tt_dummy_corresponding,
+      dummy_tab_exp_full type tt_dummy.
+
+    field-symbols <full> like line of dummy_tab_exp_full.
+    field-symbols <exp> like line of dummy_tab_exp.
+
+    get_dummy_data( importing e_dummy_tab = dummy_tab_exp_full ).
+    loop at dummy_tab_exp_full assigning <full>.
+      check <full>-tnumber = '2015'.
+      append initial line to dummy_tab_exp assigning <exp>.
+      move-corresponding <full> to <exp>.
+    endloop.
+
+    o->load_data(
+      exporting
+        i_obj           = 'testdir/testfile_complete'
+        i_strict        = abap_false
+        i_corresponding = abap_true
+        i_where         = 'tnumber = 2015'
       importing
         e_container = dummy_tab_act ).
     cl_abap_unit_assert=>assert_equals(
