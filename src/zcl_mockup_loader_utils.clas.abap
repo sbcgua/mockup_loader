@@ -100,6 +100,16 @@ class ZCL_MOCKUP_LOADER_UTILS definition
   protected section.
   private section.
 
+    class-methods validate_destination_type
+      importing
+        i_corresponding type abap_bool
+        id_src_type type ref to cl_abap_typedescr
+        id_dst_type type ref to cl_abap_typedescr
+      returning
+        value(rd_dst_struc) type ref to cl_abap_structdescr
+      raising
+        zcx_mockup_loader_error .
+
 ENDCLASS.
 
 
@@ -345,13 +355,9 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
 
 
   method filter_table.
-    data dy_type2      type ref to cl_abap_typedescr.
-    data dy_struc      type ref to cl_abap_structdescr.
-    data dy_stru2      type ref to cl_abap_structdescr.
-    data dy_table      type ref to cl_abap_tabledescr.
-    data dy_tabl2      type ref to cl_abap_tabledescr.
 
-    field-symbols <container_tab> type any table.
+    data ld_dst_type type ref to cl_abap_typedescr.
+    data ld_dst_struc type ref to cl_abap_structdescr.
 
     if boolc( i_filter is supplied ) = boolc( i_where is supplied ). " XOR
       zcx_mockup_loader_error=>raise( msg = 'i_where or i_filter must be supplied' code = 'OO' ). "#EC NOTEXT
@@ -366,46 +372,83 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
 
     clear e_container.
 
-    " Check proper type
-    dy_type2 = cl_abap_typedescr=>describe_by_data( e_container ).
-    case dy_type2->kind.
-      when cl_abap_typedescr=>kind_table. " Table
-        dy_tabl2 ?= dy_type2.
-        dy_stru2 ?= dy_tabl2->get_table_line_type( ).
-        assign e_container to <container_tab>.
-      when cl_abap_typedescr=>kind_struct. " Structure
-        dy_stru2 ?= dy_type2.
-      when others. " Not a table or structure ?
-        zcx_mockup_loader_error=>raise( msg = 'Table or structure containers only' code = 'WT' ). "#EC NOTEXT
-    endcase.
+    ld_dst_type  = cl_abap_typedescr=>describe_by_data( e_container ).
+    ld_dst_struc = validate_destination_type(
+      i_corresponding = i_corresponding
+      id_src_type     = cl_abap_typedescr=>describe_by_data( i_tab )
+      id_dst_type     = ld_dst_type ).
 
-    " Check tables have same line time
-    dy_table ?= cl_abap_typedescr=>describe_by_data( i_tab ).
-    dy_struc ?= dy_table->get_table_line_type( ).
-    if dy_struc->absolute_name <> dy_stru2->absolute_name.
-      zcx_mockup_loader_error=>raise( msg = 'Src and dst line types are not similar' code = 'LT' ). "#EC NOTEXT
+    " Copy data
+    data lv_fit type abap_bool.
+    data lr_buffer type ref to data.
+    field-symbols <container_tab> type any table.
+    field-symbols <record> type any.
+    field-symbols <buf> type any.
+
+    if i_corresponding = abap_true.
+      create data lr_buffer type handle ld_dst_struc.
+      assign lr_buffer->* to <buf>.
     endif.
 
-    " create line container
-    data ld_record type ref to data.
-    field-symbols <record> type any.
-    create data ld_record type handle dy_struc.
-    assign ld_record->* to <record>.
+    if ld_dst_type->kind = cl_abap_typedescr=>kind_table.
+      assign e_container to <container_tab>.
+    endif.
 
-    data lv_fit type abap_bool.
     loop at i_tab assigning <record>.
       lv_fit = does_line_fit_filter(
         i_line   = <record>
         i_filter = lt_filter ).
       if lv_fit = abap_true.
-        if dy_type2->kind = cl_abap_typedescr=>kind_struct. " Structure requested
-          e_container = <record>.
-          exit. " Only first line goes to structure and then exits
-        else. " Table
-          insert <record> into table <container_tab>.
+        if i_corresponding = abap_true.
+          if ld_dst_type->kind = cl_abap_typedescr=>kind_struct. " Structure requested
+            move-corresponding <record> to e_container.
+            exit. " Only first line goes to structure and then exits
+          else. " Table
+            move-corresponding <record> to <buf>.
+            insert <buf> into table <container_tab>.
+          endif.
+        else.
+          if ld_dst_type->kind = cl_abap_typedescr=>kind_struct. " Structure requested
+            e_container = <record>.
+            exit. " Only first line goes to structure and then exits
+          else. " Table
+            insert <record> into table <container_tab>.
+          endif.
         endif.
       endif.
     endloop.
+
+  endmethod.
+
+
+  method validate_destination_type.
+
+    data ld_src_struc type ref to cl_abap_structdescr.
+    data ld_dst_struc type ref to cl_abap_structdescr.
+    data ld_src_table type ref to cl_abap_tabledescr.
+    data ld_dst_table type ref to cl_abap_tabledescr.
+
+    " Check proper type
+    case id_dst_type->kind.
+      when cl_abap_typedescr=>kind_table. " Table
+        ld_dst_table ?= id_dst_type.
+        ld_dst_struc ?= ld_dst_table->get_table_line_type( ).
+      when cl_abap_typedescr=>kind_struct. " Structure
+        ld_dst_struc ?= id_dst_type.
+      when others. " Not a table or structure ?
+        zcx_mockup_loader_error=>raise( msg = 'Table or structure containers only' code = 'WT' ). "#EC NOTEXT
+    endcase.
+
+    if i_corresponding = abap_false.
+      " Check tables have same line time
+      ld_src_table ?= id_src_type.
+      ld_src_struc ?= ld_src_table->get_table_line_type( ).
+      if ld_src_struc->absolute_name <> ld_dst_struc->absolute_name.
+        zcx_mockup_loader_error=>raise( msg = 'Src and dst line types are not similar' code = 'LT' ). "#EC NOTEXT
+      endif.
+    endif.
+
+    rd_dst_struc = ld_dst_struc.
 
   endmethod.
 ENDCLASS.

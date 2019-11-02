@@ -860,6 +860,7 @@ class ltcl_test_mockup_utils implementation.
       exporting
         i_filter    = lt_filter
         i_tab       = dummy_tab_src
+        i_corresponding = abap_true
       importing
         e_container = lt_act ).
 
@@ -871,6 +872,7 @@ class ltcl_test_mockup_utils implementation.
       exporting
         i_filter    = lt_filter
         i_tab       = dummy_tab_src
+        i_corresponding = abap_true
       importing
         e_container = ls_act ).
 
