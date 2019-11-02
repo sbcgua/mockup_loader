@@ -144,6 +144,8 @@ define assert_excode.
   cl_abap_unit_assert=>assert_equals( exp = &1 act = lo_ex->code ).
 end-of-definition.
 
+class zcl_mockup_loader_stub_factory definition local friends ltcl_mockup_stub_factory_test.
+
 class ltcl_mockup_stub_factory_test implementation.
 
   method main_test_stub.

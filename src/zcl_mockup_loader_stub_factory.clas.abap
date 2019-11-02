@@ -34,6 +34,14 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
     methods generate_stub
       returning
         value(r_stub) type ref to object .
+  protected section.
+
+    data mv_interface_name type seoclsname .
+    data mt_config type zcl_mockup_loader_stub_base=>tt_mock_config .
+    data mo_ml type ref to zcl_mockup_loader .
+    data md_if_desc type ref to cl_abap_objectdescr .
+    data mo_proxy_target type ref to object .
+
     class-methods build_config
       importing
         !id_if_desc type ref to cl_abap_objectdescr
@@ -42,13 +50,6 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         value(r_config) type zcl_mockup_loader_stub_base=>ty_mock_config
       raising
         zcx_mockup_loader_error .
-  protected section.
-
-    data mv_interface_name type seoclsname .
-    data mt_config type zcl_mockup_loader_stub_base=>tt_mock_config .
-    data mo_ml type ref to zcl_mockup_loader .
-    data md_if_desc type ref to cl_abap_objectdescr .
-    data mo_proxy_target type ref to object .
 
   private section.
     data mt_src type string_table.
