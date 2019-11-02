@@ -457,6 +457,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         exporting
           i_data     = i_rawdata
           i_strict   = i_strict
+          i_corresponding = i_corresponding
           i_has_head = abap_true " assume head always, maybe change later
         importing
           e_container = <temp_tab> ).

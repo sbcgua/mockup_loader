@@ -895,7 +895,22 @@ class ltcl_test_mockup_loader implementation.
       importing
         e_container = dummy_tab_act ).
     cl_abap_unit_assert=>assert_equals(
-      act = dummy_tab_exp
+      act = dummy_tab_act
+      exp = dummy_tab_exp ).
+
+    delete dummy_tab_exp where tchar <> 'Trololo3'.
+    clear dummy_tab_act.
+
+    o->load_data(
+      exporting
+        i_obj           = 'testdir/testfile_complete'
+        i_strict        = abap_false
+        i_corresponding = abap_true
+        i_where         = 'tchar = Trololo3'
+      importing
+        e_container = dummy_tab_act ).
+    cl_abap_unit_assert=>assert_equals(
+      act = dummy_tab_act
       exp = dummy_tab_exp ).
 
   endmethod.
