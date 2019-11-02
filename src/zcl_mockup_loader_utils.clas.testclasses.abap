@@ -111,6 +111,7 @@ class ltcl_test_mockup_utils definition for testing
     methods filter_table for testing.
     methods filter_table_neg for testing.
     methods filter_table_corresponding for testing raising zcx_mockup_loader_error.
+    methods filter_full_copy for testing raising zcx_mockup_loader_error.
     methods does_line_fit_filter for testing.
 
     methods build_filter_with_value for testing.
@@ -879,6 +880,51 @@ class ltcl_test_mockup_utils implementation.
     cl_abap_unit_assert=>assert_equals(
       act = ls_act
       exp = ls_exp ).
+
+  endmethod.
+
+  method filter_full_copy.
+
+    data:
+      dummy_tab_src type tt_dummy,
+      lt_act        type tt_dummy,
+      lt_exp        type tt_dummy,
+      lt_act_corr   type tt_dummy_corresponding,
+      lt_exp_corr   type tt_dummy_corresponding,
+      lt_filter     type zcl_mockup_loader_utils=>tt_filter. " empty
+
+    field-symbols <src> like line of dummy_tab_src.
+    field-symbols <exp> like line of lt_exp_corr.
+    get_dummy_data( importing e_dummy_tab = dummy_tab_src ).
+    lt_exp = dummy_tab_src.
+    loop at dummy_tab_src assigning <src>.
+      append initial line to lt_exp_corr assigning <exp>.
+      move-corresponding <src> to <exp>.
+    endloop.
+
+    zcl_mockup_loader_utils=>filter_table(
+      exporting
+        i_filter        = lt_filter
+        i_tab           = dummy_tab_src
+        i_corresponding = abap_false
+      importing
+        e_container = lt_act ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
+      exp = lt_exp ).
+
+    zcl_mockup_loader_utils=>filter_table(
+      exporting
+        i_filter        = lt_filter
+        i_tab           = dummy_tab_src
+        i_corresponding = abap_true
+      importing
+        e_container = lt_act_corr ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act_corr
+      exp = lt_exp_corr ).
 
   endmethod.
 

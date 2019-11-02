@@ -379,7 +379,8 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
       id_dst_type     = ld_dst_type ).
 
     " Copy data
-    data lv_fit type abap_bool.
+    data lv_fit type abap_bool value abap_true. " true for corresponding
+    data lv_filter_empty type abap_bool.
     data lr_buffer type ref to data.
     field-symbols <container_tab> type any table.
     field-symbols <record> type any.
@@ -394,10 +395,14 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
       assign e_container to <container_tab>.
     endif.
 
+    lv_filter_empty = boolc( lines( lt_filter ) = 0 ).
+
     loop at i_tab assigning <record>.
-      lv_fit = does_line_fit_filter(
-        i_line   = <record>
-        i_filter = lt_filter ).
+      if lv_filter_empty = abap_false.
+        lv_fit = does_line_fit_filter(
+          i_line   = <record>
+          i_filter = lt_filter ).
+      endif.
       if lv_fit = abap_true.
         if i_corresponding = abap_true.
           if ld_dst_type->kind = cl_abap_typedescr=>kind_struct. " Structure requested
