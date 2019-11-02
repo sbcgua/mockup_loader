@@ -118,6 +118,7 @@ class ZCL_MOCKUP_LOADER definition
       importing
         !i_rawdata type string
         !i_strict type abap_bool default abap_true
+        !i_corresponding type abap_bool default abap_false
         !i_deep type abap_bool default abap_false
         !i_where type any optional
       exporting
@@ -591,6 +592,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       exporting
         i_rawdata   = l_rawdata
         i_strict    = i_strict
+        i_corresponding = i_corresponding
         i_deep      = i_deep
         i_where     = i_where
       importing
