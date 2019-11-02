@@ -268,9 +268,9 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
           loop at <method>-parameters assigning <param>.
             l_param_kind = <param>-parm_kind.
             translate l_param_kind using 'IEEICCRR'. " Inporting -> exporting, etc
-            _src( |    ls_param-name = '{ <param>-name }'.| ).
-            _src( |    ls_param-kind = '{ l_param_kind }'.| ).
-            _src( |    get reference of { <param>-name } into ls_param-value.| ).
+            _src( |    ls_param-name = '{ <param>-name }'.| ) ##NO_TEXT.
+            _src( |    ls_param-kind = '{ l_param_kind }'.| ) ##NO_TEXT.
+            _src( |    get reference of { <param>-name } into ls_param-value.| ) ##NO_TEXT.
             _src( '    insert ls_param into table lt_params.' ). "#EC NOTEXT
           endloop.
 
@@ -281,12 +281,12 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
           _src( '    data lr_data type ref to data.' ).          "#EC NOTEXT
           _src( '    lr_data = get_mock_data(' ).                "#EC NOTEXT
           if <conf>-sift_param is not initial.
-            _src( |      i_sift_value  = { <conf>-sift_param }| ).
+            _src( |      i_sift_value  = { <conf>-sift_param }| ) ##NO_TEXT.
           endif.
-          _src( |      i_method_name = '{ <method>-name }' ).| ).
+          _src( |      i_method_name = '{ <method>-name }' ).| ) ##NO_TEXT.
           _src( '    field-symbols <container> type any.' ).      "#EC NOTEXT
           _src( '    assign lr_data->* to <container>.' ).        "#EC NOTEXT
-          _src( |    { <conf>-output_param } = <container>.| ).
+          _src( |    { <conf>-output_param } = <container>.| )   ##NO_TEXT.
         endif.
       endif.
       _src( '  endmethod.' ).                                   "#EC NOTEXT
