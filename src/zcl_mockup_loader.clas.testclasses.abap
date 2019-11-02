@@ -944,6 +944,34 @@ class ltcl_test_mockup_loader implementation.
       act = dummy_tab_act
       exp = dummy_tab_exp ).
 
+    data lt_filter type zcl_mockup_loader_utils=>tt_filter.
+    data lt_range type range of ty_dummy-tnumber.
+
+    " Filter table
+    field-symbols <f> like line of lt_filter.
+    append initial line to lt_filter assigning <f>.
+    <f>-name = 'TNUMBER'.
+    <f>-type = 'R'.
+    get reference of lt_range into <f>-valref.
+    field-symbols <r> like line of lt_range.
+    append initial line to lt_range assigning <r>.
+    <r>-sign   = 'I'.
+    <r>-option = 'EQ'.
+    <r>-low    = '2015'.
+
+    clear dummy_tab_act.
+    o->load_data(
+      exporting
+        i_obj           = 'testdir/testfile_complete'
+        i_strict        = abap_false
+        i_corresponding = abap_true
+        i_where         = lt_filter
+      importing
+        e_container = dummy_tab_act ).
+    cl_abap_unit_assert=>assert_equals(
+      act = dummy_tab_act
+      exp = dummy_tab_exp ).
+
   endmethod.
 
 endclass.

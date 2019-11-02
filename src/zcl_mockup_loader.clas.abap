@@ -187,6 +187,43 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         zcx_mockup_loader_error=>raise( msg = 'Table or structure containers only' code = 'DT' ). "#EC NOTEXT
     endcase.
 
+    if i_corresponding = abap_true and lines( it_filter ) > 0.
+
+      data lt_components type cl_abap_structdescr=>component_table.
+      data lt_components_to_add type cl_abap_structdescr=>component_table.
+      data ld_value type ref to cl_abap_typedescr.
+      data ld_range_tab type ref to cl_abap_tabledescr.
+      data ld_range_line type ref to cl_abap_structdescr.
+
+      lt_components = lo_struc_descr->get_components( ).
+      sort lt_components by name.
+
+      field-symbols <f> like line of it_filter.
+      field-symbols <addcomp> like line of lt_components_to_add.
+
+      loop at it_filter assigning <f>.
+        read table lt_components transporting no fields
+          binary search
+          with key name = <f>-name.
+        if sy-subrc is initial.
+          continue. " found, no need to add
+        endif.
+        ld_value = cl_abap_typedescr=>describe_by_data_ref( <f>-valref ).
+        if <f>-type = zcl_mockup_loader_utils=>c_filter_type-range.
+          ld_range_tab ?= ld_value.
+          ld_range_line ?= ld_range_tab->get_table_line_type( ).
+          ld_value = ld_range_line->get_component_type( 'LOW' ).
+        endif.
+        append initial line to lt_components_to_add assigning <addcomp>.
+        <addcomp>-name = to_upper( <f>-name ).
+        <addcomp>-type ?= ld_value.
+      endloop.
+
+      append lines of lt_components_to_add to lt_components.
+      lo_struc_descr = cl_abap_structdescr=>get( lt_components ).
+
+    endif.
+
     ro_table_descr = cl_abap_tabledescr=>create( lo_struc_descr ).
 
   endmethod.
@@ -471,7 +508,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       endif.
 
       lo_parser = zcl_text2tab_parser=>create(
-        i_pattern       = <container>
+        i_pattern       = <temp_tab>
         i_amount_format = mv_amt_format
         i_date_format   = mv_date_format
         i_deep_provider = lo_deep_provider
@@ -489,21 +526,13 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       zcx_mockup_loader_error=>raise( msg = lx_dp->get_text( ) code = 'XE' ).
     endtry.
 
-    " Build filter hash if supplied
-    if i_where is not initial.
-      zcl_mockup_loader_utils=>filter_table(
-        exporting
-          i_where     = lt_filter
-          i_tab       = <temp_tab>
-        importing
-          e_container = <container> ).
-    else. " Copy all
-      if lo_type_descr->kind = 'S'. " Structure
-        read table <temp_tab> into <container> index 1.
-      else. " Table
-        <container> = <temp_tab>.
-      endif.
-    endif.
+    zcl_mockup_loader_utils=>filter_table(
+      exporting
+        i_where     = lt_filter
+        i_tab       = <temp_tab>
+        i_corresponding = i_corresponding
+      importing
+        e_container = <container> ).
 
   endmethod.
 
