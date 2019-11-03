@@ -67,6 +67,17 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       raising
         zcx_mockup_loader_error .
 
+    class-methods validate_connect_and_get_types
+      importing
+        id_if_desc type ref to cl_abap_objectdescr
+        !i_config type zcl_mockup_loader_stub_base=>ty_mock_config
+      exporting
+        ed_sift_type type ref to cl_abap_typedescr
+        ed_output_type type ref to cl_abap_typedescr
+        es_output_param type abap_parmdescr
+      raising
+        zcx_mockup_loader_error .
+
     class-methods build_field_only_struc_type
       importing
         id_output_type type ref to cl_abap_typedescr
@@ -83,89 +94,30 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
 
   method build_config.
-    data ld_type type ref to cl_abap_typedescr.
+    data ld_output_type type ref to cl_abap_typedescr.
     data ld_sift_type type ref to cl_abap_typedescr.
+    data ls_output_param type abap_parmdescr.
 
-    " Config basic checks
-    if i_config-method_name is initial.
-      zcx_mockup_loader_error=>raise(
-        msg  = 'Specify method_name'
-        code = 'MM' ). "#EC NOTEXT
-    elseif i_config-mock_name is initial.
-      zcx_mockup_loader_error=>raise(
-        msg  = 'Specify mock_name'
-        code = 'MK' ). "#EC NOTEXT
-    elseif boolc( i_config-sift_param is initial ) <> boolc( i_config-mock_tab_key is initial ). " XOR
-      zcx_mockup_loader_error=>raise(
-        msg  = 'Specify both i_sift_param and i_mock_tab_key'
-        code = 'MS' ). "#EC NOTEXT
-    endif.
-
-    " find method, check if exists
-    field-symbols <method> like line of md_if_desc->methods.
-    read table id_if_desc->methods assigning <method> with key name = i_config-method_name.
-    if <method> is not assigned.
-      zcx_mockup_loader_error=>raise(
-        msg  = |Method { i_config-method_name } not found|
-        code = 'MF' ). "#EC NOTEXT
-    endif.
-
-    " check if sift param
-    field-symbols <param> like line of <method>-parameters.
-    if i_config-sift_param is not initial.
-      ld_sift_type = validate_sift_param(
+    validate_connect_and_get_types(
+      exporting
+        i_config   = i_config
         id_if_desc = id_if_desc
-        iv_method_name = i_config-method_name
-        iv_param_name = i_config-sift_param ).
-    endif.
+      importing
+        ed_sift_type    = ld_sift_type
+        es_output_param = ls_output_param
+        ed_output_type  = ld_output_type ).
 
     r_config = i_config.
+    r_config-output_param = ls_output_param-name.
+    r_config-output_pkind = ls_output_param-parm_kind.
 
-    " Check output param
-    if r_config-output_param is initial.
-      read table <method>-parameters with key parm_kind = 'R' assigning <param>. " returning
-      if sy-subrc is not initial.
-        zcx_mockup_loader_error=>raise(
-          msg  = 'Method has no returning params and output_param was not specified'
-          code = 'MR' ). "#EC NOTEXT
-      endif.
-      r_config-output_param = <param>-name.
+    if i_config-field_only is initial.
+      r_config-output_type ?= ld_output_type.
     else.
-      read table <method>-parameters with key name = r_config-output_param assigning <param>.
-      if sy-subrc is not initial.
-        zcx_mockup_loader_error=>raise(
-          msg  = |Param { r_config-output_param } not found|
-          code = 'PF' ). "#EC NOTEXT
-      endif.
-    endif.
-
-    if <param>-parm_kind = 'I'.
-      zcx_mockup_loader_error=>raise(
-        msg  = |Param { r_config-output_param } is importing|
-        code = 'PI' ). "#EC NOTEXT
-    endif.
-    r_config-output_pkind = <param>-parm_kind.
-
-    ld_type = id_if_desc->get_method_parameter_type(
-      p_method_name    = <method>-name
-      p_parameter_name = <param>-name ).
-    if r_config-field_only is initial.
-      if not ld_type->kind co 'ST'. " Table or structure
-        zcx_mockup_loader_error=>raise(
-          msg  = |Param { r_config-output_param } must be table or structure|
-          code = 'PT' ). "#EC NOTEXT
-      endif.
-      r_config-output_type ?= ld_type.
-    else.
-      if ld_type->kind <> cl_abap_typedescr=>kind_elem. " Elementary
-        zcx_mockup_loader_error=>raise(
-          msg  = |Field only param { r_config-output_param } must be elementary|
-          code = 'PL' ). "#EC NOTEXT
-      endif.
       r_config-output_type ?= build_field_only_struc_type(
-        id_output_type = ld_type
-        id_sift_type = ld_sift_type
-        i_config = r_config ).
+        id_output_type = ld_output_type
+        id_sift_type   = ld_sift_type
+        i_config       = r_config ).
     endif.
 
   endmethod.
@@ -184,8 +136,8 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     if i_config-sift_param is not initial.
       assert id_sift_type is bound.
       append initial line to lt_components assigning <c>.
-        <c>-name = i_config-mock_tab_key.
-        <c>-type ?= id_sift_type.
+      <c>-name = i_config-mock_tab_key.
+      <c>-type ?= id_sift_type.
     endif.
 
     rd_type = cl_abap_structdescr=>get( lt_components ).
@@ -349,6 +301,84 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
         it_config       = mt_config
         io_proxy_target = mo_proxy_target
         io_ml           = mo_ml.
+
+  endmethod.
+
+
+  method validate_connect_and_get_types.
+
+    " Config basic checks
+    if i_config-method_name is initial.
+      zcx_mockup_loader_error=>raise(
+        msg  = 'Specify method_name'
+        code = 'MM' ). "#EC NOTEXT
+    elseif i_config-mock_name is initial.
+      zcx_mockup_loader_error=>raise(
+        msg  = 'Specify mock_name'
+        code = 'MK' ). "#EC NOTEXT
+    elseif boolc( i_config-sift_param is initial ) <> boolc( i_config-mock_tab_key is initial ). " XOR
+      zcx_mockup_loader_error=>raise(
+        msg  = 'Specify both i_sift_param and i_mock_tab_key'
+        code = 'MS' ). "#EC NOTEXT
+    endif.
+
+    " find method, check if exists
+    field-symbols <method> like line of id_if_desc->methods.
+    read table id_if_desc->methods assigning <method> with key name = i_config-method_name.
+    if <method> is not assigned.
+      zcx_mockup_loader_error=>raise(
+        msg  = |Method { i_config-method_name } not found|
+        code = 'MF' ). "#EC NOTEXT
+    endif.
+
+    " check if sift param
+    if i_config-sift_param is not initial.
+      ed_sift_type = validate_sift_param(
+        id_if_desc     = id_if_desc
+        iv_method_name = i_config-method_name
+        iv_param_name  = i_config-sift_param ).
+    endif.
+
+    " Check output param
+    if i_config-output_param is initial.
+      read table <method>-parameters with key parm_kind = 'R' into es_output_param. " returning
+      if sy-subrc is not initial.
+        zcx_mockup_loader_error=>raise(
+          msg  = 'Method has no returning params and output_param was not specified'
+          code = 'MR' ). "#EC NOTEXT
+      endif.
+    else.
+      read table <method>-parameters with key name = i_config-output_param into es_output_param.
+      if sy-subrc is not initial.
+        zcx_mockup_loader_error=>raise(
+          msg  = |Param { i_config-output_param } not found|
+          code = 'PF' ). "#EC NOTEXT
+      endif.
+    endif.
+
+    if es_output_param-parm_kind = 'I'.
+      zcx_mockup_loader_error=>raise(
+        msg  = |Param { i_config-output_param } is importing|
+        code = 'PI' ). "#EC NOTEXT
+    endif.
+
+    ed_output_type = id_if_desc->get_method_parameter_type(
+      p_method_name    = <method>-name
+      p_parameter_name = es_output_param-name ).
+
+    if i_config-field_only is initial.
+      if not ed_output_type->kind co 'ST'. " Table or structure
+        zcx_mockup_loader_error=>raise(
+          msg  = |Param { es_output_param-name } must be table or structure|
+          code = 'PT' ). "#EC NOTEXT
+      endif.
+    else.
+      if ed_output_type->kind <> cl_abap_typedescr=>kind_elem. " Elementary
+        zcx_mockup_loader_error=>raise(
+          msg  = |Field only param { es_output_param-name } must be elementary|
+          code = 'PL' ). "#EC NOTEXT
+      endif.
+    endif.
 
   endmethod.
 
