@@ -47,6 +47,8 @@ class lcl_test_proxy_target implementation.
   endmethod.
   method zif_mockup_loader_stub_dummy~tab_return.
   endmethod.
+  method zif_mockup_loader_stub_dummy~tab_return_extract_by_date.
+  endmethod.
   method zif_mockup_loader_stub_dummy~tab_return_w_struc_param.
   endmethod.
   method zif_mockup_loader_stub_dummy~tab_export.
@@ -346,6 +348,19 @@ class ltcl_mockup_stub_factory_test implementation.
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'PL'.
+
+    try. " field only + corresponding
+      clear: lo_ex, ls_conf.
+      ls_conf-method_name  = 'TAB_RETURN_EXTRACT_BY_DATE'.
+      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      ls_conf-corresponding = abap_true.
+      ls_conf-field_only   = 'PRICE'.
+      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+        id_if_desc = ld_if
+        i_config   = ls_conf ).
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'PC'.
 
   endmethod.
 

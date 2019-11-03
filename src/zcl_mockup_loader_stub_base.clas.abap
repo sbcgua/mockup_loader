@@ -10,6 +10,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         method_name     type abap_methname,
         mock_name       type string,
         load_strict     type abap_bool,
+        corresponding   type abap_bool,
         sift_param      type string,
         mock_tab_key    type abap_compname,
         output_param    type abap_parmname,
@@ -74,7 +75,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
       exporting
         i_obj    = <conf>-mock_name
         i_strict = <conf>-load_strict
-        i_corresponding = boolc( <conf>-field_only is not initial )
+        i_corresponding = boolc( <conf>-field_only is not initial or <conf>-corresponding = abap_true )
         i_where  = lt_filter
       importing
         e_container = r_data ).
