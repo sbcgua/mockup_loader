@@ -131,6 +131,7 @@ class ltcl_test_mockup_utils definition for testing
     methods conv_string_to_filter     for testing raising zcx_mockup_loader_error .
     methods conv_where_to_filter      for testing raising zcx_mockup_loader_error .
     methods conv_nc_struc_to_filter   for testing raising zcx_mockup_loader_error .
+    methods conv_range_to_filter      for testing raising zcx_mockup_loader_error .
 
 endclass.       "lcl_test_mockup_loader
 
@@ -220,7 +221,7 @@ class ltcl_test_mockup_utils implementation.
       l_filter = zcl_mockup_loader_utils=>build_filter( i_where = l_tywhere ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
-    assert_excode 'CE'.
+    assert_excode 'RT'.
 
     " Filter is not range
     l_tywhere-name = 'TNUMBER'.
@@ -925,6 +926,42 @@ class ltcl_test_mockup_utils implementation.
     cl_abap_unit_assert=>assert_equals(
       act = lt_act_corr
       exp = lt_exp_corr ).
+
+  endmethod.
+
+  method conv_range_to_filter.
+
+    data ls_filter_act type zcl_mockup_loader_utils=>ty_filter.
+    data ls_filter_exp type zcl_mockup_loader_utils=>ty_filter.
+
+    data lr_i type range of numc4.
+    field-symbols <r> like line of lr_i.
+    append initial line to lr_i assigning <r>.
+    <r>-option = 'EQ'.
+
+    ls_filter_exp-name = 'ABC'.
+    ls_filter_exp-type = zcl_mockup_loader_utils=>c_filter_type-range.
+    get reference of lr_i into ls_filter_exp-valref.
+
+    ls_filter_act = zcl_mockup_loader_utils=>conv_range_to_filter(
+      i_where = 'abc'
+      i_range = lr_i ).
+
+    assert_filter_equals(
+      i_act = ls_filter_act
+      i_exp = ls_filter_exp ).
+
+    " Negative
+    data lx type ref to zcx_mockup_loader_error.
+    data lt_dummy_tab type string_table.
+    try .
+      ls_filter_act = zcl_mockup_loader_utils=>conv_range_to_filter(
+        i_where = 'abc'
+        i_range = lt_dummy_tab ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'ER' ).
+    endtry.
 
   endmethod.
 

@@ -49,6 +49,8 @@ class lcl_test_proxy_target implementation.
   endmethod.
   method zif_mockup_loader_stub_dummy~tab_return.
   endmethod.
+  method zif_mockup_loader_stub_dummy~tab_return_by_range.
+  endmethod.
   method zif_mockup_loader_stub_dummy~tab_return_extract_by_date.
   endmethod.
   method zif_mockup_loader_stub_dummy~tab_return_w_struc_param.

@@ -58,7 +58,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       importing
         iv_src_line type string.
 
-    class-methods validate_sift_param
+    class-methods validate_sift_and_get_type
       importing
         id_if_desc type ref to cl_abap_objectdescr
         iv_method_name type abap_methname
@@ -339,7 +339,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
     " check if sift param
     if i_config-sift_param is not initial.
-      ed_sift_type = validate_sift_param(
+      ed_sift_type = validate_sift_and_get_type(
         id_if_desc     = id_if_desc
         iv_method_name = i_config-method_name
         iv_param_name  = i_config-sift_param ).
@@ -389,9 +389,10 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
   endmethod.
 
 
-  method validate_sift_param.
+  method validate_sift_and_get_type.
 
     data ld_type type ref to cl_abap_typedescr.
+    data ld_struc type ref to cl_abap_structdescr.
 
     data lv_part1 type abap_parmname.
     data lv_part2 type abap_parmname.
@@ -421,7 +422,6 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
           code = 'PE' ). "#EC NOTEXT
       endif.
 
-      data ld_struc type ref to cl_abap_structdescr.
       ld_struc ?= ld_type.
 
       ld_struc->get_component_type(
@@ -441,9 +441,22 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     endif.
 
     if ld_type->kind <> cl_abap_typedescr=>kind_elem.
-      zcx_mockup_loader_error=>raise(
-        msg  = |Param { lv_final_param } must be elementary|
-        code = 'PE' ). "#EC NOTEXT
+      if ld_type->kind = cl_abap_typedescr=>kind_table.
+        if zcl_mockup_loader_utils=>is_range( ld_type ) = abap_false.
+          zcx_mockup_loader_error=>raise(
+            msg  = |Param { lv_final_param } must be elementary or range|
+            code = 'PE' ). "#EC NOTEXT
+        endif.
+
+        data ld_table type ref to cl_abap_tabledescr.
+        ld_table ?= ld_type.
+        ld_struc ?= ld_table->get_table_line_type( ).
+        ld_type   = ld_struc->get_component_type( 'LOW' ).
+      else.
+        zcx_mockup_loader_error=>raise(
+          msg  = |Param { lv_final_param } must be elementary or range|
+          code = 'PE' ). "#EC NOTEXT
+      endif.
     endif.
     rd_sift_type = ld_type.
 

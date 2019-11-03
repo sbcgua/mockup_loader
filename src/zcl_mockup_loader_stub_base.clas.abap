@@ -31,7 +31,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
     methods get_mock_data
       importing
         i_method_name type abap_methname
-        i_sift_value  type simple optional
+        i_sift_value  type any optional
       returning value(r_data) type ref to data
       raising zcx_mockup_loader_error.
 
@@ -62,11 +62,21 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
     endif.
 
     " if sift, build filter
+    data ls_filter type zcl_mockup_loader_utils=>ty_filter.
     if <conf>-sift_param is not initial.
-      data lt_filter type zcl_mockup_loader_utils=>tt_filter.
-      lt_filter = zcl_mockup_loader_utils=>build_filter(
-        i_where        = <conf>-mock_tab_key
-        i_single_value = i_sift_value ).
+      data ld_type type ref to cl_abap_typedescr.
+      ld_type = cl_abap_typedescr=>describe_by_data( i_sift_value ).
+      if ld_type->kind = ld_type->kind_elem.
+        ls_filter = zcl_mockup_loader_utils=>conv_single_val_to_filter(
+          i_where = <conf>-mock_tab_key
+          i_value = i_sift_value ).
+      elseif ld_type->kind = ld_type->kind_table.
+        ls_filter = zcl_mockup_loader_utils=>conv_range_to_filter(
+          i_where = <conf>-mock_tab_key
+          i_range = i_sift_value ).
+      else.
+        zcx_mockup_loader_error=>raise( msg = 'Unexpected sift param type' code = 'US' ).
+      endif.
     endif.
 
     " create data container and load mock
@@ -76,7 +86,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
         i_obj    = <conf>-mock_name
         i_strict = <conf>-load_strict
         i_corresponding = boolc( <conf>-field_only is not initial or <conf>-corresponding = abap_true )
-        i_where  = lt_filter
+        i_where  = ls_filter
       importing
         e_container = r_data ).
 
