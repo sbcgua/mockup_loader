@@ -8,6 +8,10 @@ Legend
 + : added
 - : removed
 
+v2.1.3, 2019-11-??
+------------------
+! load_raw_x deprecated, use load_blob instead
+
 v2.1.2, 2019-11-03
 ------------------
 + support for loading corresponding fields (i_corresponding = abap_true)
