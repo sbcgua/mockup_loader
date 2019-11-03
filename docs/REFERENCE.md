@@ -291,7 +291,7 @@ load_mockup_no_strict 'BKPF' lt_bkpf.
 
 ### LOAD_RAW
 
-**May be depreciated in future**
+**May be depreciated in future, use `load_blob` instead**
 
 ```abap
 importing
@@ -307,7 +307,18 @@ Optionally, **I_EXT** - file extension - can be specified explicitly. Defaulted 
 
 ### LOAD_RAW_X
 
-**May succeed LOAD_RAW in future**
+**depreciated, use `load_blob` instead**
+
+```abap
+importing
+  i_obj_path type string
+returning
+  r_content type xstring
+```
+
+Same as `LOAD_RAW` except that the path should be completely specified, with the extension, and the data `xstring` is returned and not exported.
+
+### LOAD_BLOB
 
 ```abap
 importing
