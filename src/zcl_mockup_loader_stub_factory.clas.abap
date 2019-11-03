@@ -16,6 +16,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         !i_method_name type abap_methname
         !i_mock_name type string
         !i_load_strict type abap_bool default abap_false
+        !i_corresponding type abap_bool default abap_false
         !i_sift_param type string optional
         !i_mock_tab_key type abap_compname optional
         !i_field_only type abap_parmname optional

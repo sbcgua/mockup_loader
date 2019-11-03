@@ -13,6 +13,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods filtering for testing raising zcx_mockup_loader_error.
     methods filtering_w_struc_param for testing raising zcx_mockup_loader_error.
     methods returning_value for testing raising zcx_mockup_loader_error.
+    methods corresponding for testing raising zcx_mockup_loader_error.
 
     methods get_ml
       returning
@@ -111,7 +112,7 @@ class lcl_test_base implementation.
         importing
           e_container = lt_exp ).
 
-      delete lt_exp index 2.
+      delete lt_exp where connid <> '1000'.
       data lt_res type flighttab.
       lt_res = li_if->tab_return( i_connid = '1000' ).
       cl_abap_unit_assert=>assert_equals( act = lt_res exp = lt_exp ).
@@ -483,7 +484,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ml      = get_ml( ).
     factory = get_factory( ml ).
     lt_exp  = get_sflights( ml ).
-    delete lt_exp index 2.
+    delete lt_exp where connid <> '1000'.
 
     factory->connect_method(
       i_sift_param      = 'I_CONNID'
@@ -508,7 +509,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ml      = get_ml( ).
     factory = get_factory( ml ).
     lt_exp  = get_sflights( ml ).
-    delete lt_exp index 2.
+    delete lt_exp where connid <> '1000'.
 
     factory->connect_method(
       i_sift_param      = 'I_PARAMS-CONNID'
@@ -555,6 +556,39 @@ class ltcl_mockup_stub_factory_test implementation.
     cl_abap_unit_assert=>assert_equals(
       act = stub->return_value( i_connid = '9999' ) " Missing record, return initial
       exp = '' ).
+
+  endmethod.
+
+  method corresponding.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data lt_exp_base type flighttab.
+    data lt_exp type zif_mockup_loader_stub_dummy=>tt_sflight_extract.
+    data lt_act type zif_mockup_loader_stub_dummy=>tt_sflight_extract.
+    field-symbols <base> like line of lt_exp_base.
+    field-symbols <exp> like line of lt_exp.
+
+    ml          = get_ml( ).
+    factory     = get_factory( ml ).
+    lt_exp_base = get_sflights( ml ).
+    delete lt_exp_base where fldate <> '20150101'.
+    loop at lt_exp_base assigning <base>.
+      append initial line to lt_exp assigning <exp>.
+      move-corresponding <base> to <exp>.
+    endloop.
+
+    factory->connect_method(
+      i_sift_param      = 'i_fldate'
+      i_mock_tab_key    = 'fldate'
+      i_method_name     = 'tab_return_extract_by_date'
+      i_corresponding   = abap_true
+      i_mock_name       = 'EXAMPLE/sflight' ).
+
+    stub ?= factory->generate_stub( ).
+    lt_act = stub->tab_return_extract_by_date( i_fldate = '20150101' ).
+    cl_abap_unit_assert=>assert_equals( act = lt_act exp = lt_exp ).
 
   endmethod.
 

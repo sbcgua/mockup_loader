@@ -7,6 +7,13 @@ interface zif_mockup_loader_stub_dummy
       connid type s_conn_id,
     end of ty_params.
 
+  types:
+    begin of ty_sflight_extract,
+      connid type sflight-connid,
+      price type sflight-price,
+    end of ty_sflight_extract,
+    tt_sflight_extract type standard table of ty_sflight_extract with default key.
+
   methods tab_return
     importing
       !i_connid type s_conn_id
@@ -18,6 +25,12 @@ interface zif_mockup_loader_stub_dummy
       !i_params type ty_params
     returning
       value(r_tab) type flighttab .
+
+  methods tab_return_extract_by_date
+    importing
+      !i_fldate type sflight-fldate
+    returning
+      value(r_tab) type tt_sflight_extract .
 
   methods tab_export
     importing
