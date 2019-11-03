@@ -21,7 +21,7 @@
      <RELID>MI</RELID>
      <OBJID>ZMOCKUP_LOADER_EXAMPLE</OBJID>
      <NAME>mimetype</NAME>
-     <VALUE>ZIP</VALUE>
+     <VALUE>application/zip</VALUE>
     </WWWPARAMS>
    </PARAMS>
   </asx:values>

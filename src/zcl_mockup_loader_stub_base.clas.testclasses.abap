@@ -58,7 +58,7 @@ class ltcl_mockup_stub_base_test implementation.
 
       lr_act = lo->get_mock_data( i_method_name = 'METHOD_SIFTED' i_sift_value = '1000' ).
       assign lr_act->* to <act>.
-      delete lt_exp index 2.
+      delete lt_exp where connid <> '1000'.
       cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
 
       lr_act = lo->get_mock_data( i_method_name = 'METHOD_MISSING' i_sift_value = '1000' ).

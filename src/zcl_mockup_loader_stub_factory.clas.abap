@@ -16,6 +16,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         !i_method_name type abap_methname
         !i_mock_name type string
         !i_load_strict type abap_bool default abap_false
+        !i_corresponding type abap_bool default abap_false
         !i_sift_param type string optional
         !i_mock_tab_key type abap_compname optional
         !i_field_only type abap_parmname optional
@@ -147,13 +148,14 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
   method connect_method.
     data ls_config like line of mt_config.
-    ls_config-method_name  = to_upper( i_method_name ).
-    ls_config-mock_name    = i_mock_name.
-    ls_config-load_strict  = i_load_strict.
-    ls_config-sift_param   = to_upper( i_sift_param ).
-    ls_config-mock_tab_key = to_upper( i_mock_tab_key ).
-    ls_config-output_param = to_upper( i_output_param ).
-    ls_config-field_only   = to_upper( i_field_only ).
+    ls_config-method_name   = to_upper( i_method_name ).
+    ls_config-mock_name     = i_mock_name.
+    ls_config-load_strict   = i_load_strict.
+    ls_config-corresponding = i_corresponding.
+    ls_config-sift_param    = to_upper( i_sift_param ).
+    ls_config-mock_tab_key  = to_upper( i_mock_tab_key ).
+    ls_config-output_param  = to_upper( i_output_param ).
+    ls_config-field_only    = to_upper( i_field_only ).
 
     read table mt_config with key method_name = ls_config-method_name transporting no fields.
     if sy-subrc is initial.
@@ -320,6 +322,10 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       zcx_mockup_loader_error=>raise(
         msg  = 'Specify both i_sift_param and i_mock_tab_key'
         code = 'MS' ). "#EC NOTEXT
+    elseif i_config-corresponding = abap_true and i_config-field_only is not initial.
+      zcx_mockup_loader_error=>raise(
+        msg  = 'Cannot combine field_only and corresponding'
+        code = 'PC' ). "#EC NOTEXT
     endif.
 
     " find method, check if exists
