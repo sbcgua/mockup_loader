@@ -14,7 +14,9 @@ class ltcl_mockup_stub_factory_test definition final
     methods filtering_w_struc_param for testing raising zcx_mockup_loader_error.
     methods returning_value for testing raising zcx_mockup_loader_error.
     methods corresponding for testing raising zcx_mockup_loader_error.
+    methods filter_by_range_param for testing raising zcx_mockup_loader_error.
 
+    " HELPERS
     methods get_ml
       returning
         value(ro_ml) type ref to zcl_mockup_loader
@@ -607,4 +609,36 @@ class ltcl_mockup_stub_factory_test implementation.
 
   endmethod.
 
+
+  method filter_by_range_param.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data lt_exp type flighttab.
+    data lt_act type flighttab.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    lt_exp  = get_sflights( ml ).
+    delete lt_exp where connid <> '1000'.
+
+    data lr_range type zif_mockup_loader_stub_dummy=>ty_connid_range.
+    field-symbols <r> like line of lr_range.
+    append initial line to lr_range assigning <r>.
+    <r>-sign   = 'I'.
+    <r>-option = 'EQ'.
+    <r>-low    = '1000'.
+
+    factory->connect_method(
+      i_sift_param      = 'ir_connid'
+      i_mock_tab_key    = 'connid'
+      i_method_name     = 'tab_return_by_range'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+
+    stub ?= factory->generate_stub( ).
+    lt_act = stub->tab_return_by_range( ir_connid = lr_range ).
+    cl_abap_unit_assert=>assert_equals( act = lt_act exp = lt_exp ).
+
+  endmethod.
 endclass.
