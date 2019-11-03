@@ -118,6 +118,7 @@ class ZCL_MOCKUP_LOADER definition
       importing
         !i_rawdata type string
         !i_strict type abap_bool default abap_true
+        !i_corresponding type abap_bool default abap_false
         !i_deep type abap_bool default abap_false
         !i_where type any optional
       exporting
@@ -138,7 +139,15 @@ class ZCL_MOCKUP_LOADER definition
       changing
         c_src_type      type char4
         c_src_path      type string.
-
+    class-methods build_table_type
+      importing
+        io_type_descr   type ref to cl_abap_typedescr
+        it_filter       type zcl_mockup_loader_utils=>tt_filter
+        i_corresponding type abap_bool default abap_false
+      returning
+        value(ro_table_descr) type ref to cl_abap_tabledescr
+      raising
+        zcx_mockup_loader_error .
 ENDCLASS.
 
 
@@ -163,6 +172,63 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   endmethod.
 
 
+  method build_table_type.
+
+    data lo_table_descr type ref to cl_abap_tabledescr.
+    data lo_struc_descr type ref to cl_abap_structdescr.
+
+    case io_type_descr->kind.
+      when 'T'. " Table
+        lo_table_descr ?= io_type_descr.
+        lo_struc_descr ?= lo_table_descr->get_table_line_type( ).
+      when 'S'. " Structure
+        lo_struc_descr ?= io_type_descr.
+      when others. " Not a table or structure ?
+        zcx_mockup_loader_error=>raise( msg = 'Table or structure containers only' code = 'DT' ). "#EC NOTEXT
+    endcase.
+
+    if i_corresponding = abap_true and lines( it_filter ) > 0.
+
+      data lt_components type cl_abap_structdescr=>component_table.
+      data lt_components_to_add type cl_abap_structdescr=>component_table.
+      data ld_value type ref to cl_abap_typedescr.
+      data ld_range_tab type ref to cl_abap_tabledescr.
+      data ld_range_line type ref to cl_abap_structdescr.
+
+      lt_components = lo_struc_descr->get_components( ).
+      sort lt_components by name.
+
+      field-symbols <f> like line of it_filter.
+      field-symbols <addcomp> like line of lt_components_to_add.
+
+      loop at it_filter assigning <f>.
+        read table lt_components transporting no fields
+          binary search
+          with key name = <f>-name.
+        if sy-subrc is initial.
+          continue. " found, no need to add
+        endif.
+        ld_value = cl_abap_typedescr=>describe_by_data_ref( <f>-valref ).
+        if <f>-type = zcl_mockup_loader_utils=>c_filter_type-range.
+          ld_range_tab ?= ld_value.
+          ld_range_line ?= ld_range_tab->get_table_line_type( ).
+          ld_value = ld_range_line->get_component_type( 'LOW' ).
+        endif.
+        append initial line to lt_components_to_add assigning <addcomp>.
+        <addcomp>-name = to_upper( <f>-name ).
+        <addcomp>-type ?= ld_value.
+      endloop.
+
+      append lines of lt_components_to_add to lt_components.
+      lo_struc_descr = cl_abap_structdescr=>get( lt_components ).
+
+    endif.
+
+    ro_table_descr = cl_abap_tabledescr=>create( lo_struc_descr ).
+
+  endmethod.
+
+
   method check_version_fits.
 
     r_fits = zcl_text2tab_utils=>check_version_fits(
@@ -174,7 +240,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
   method constructor.
 
-    data lv_required_text2tab_ver type string value 'v2.3.0'.
+    data lv_required_text2tab_ver type string value 'v2.3.2'.
     if zcl_text2tab_parser=>check_version_fits( lv_required_text2tab_ver ) = abap_false.
       zcx_mockup_loader_error=>raise(
         msg  = |text2tab version ({ zif_text2tab_constants=>version
@@ -401,14 +467,14 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
   method parse_data.
     data:
-          lx_dp          type ref to zcx_text2tab_error,
-          lo_type_descr  type ref to cl_abap_typedescr,
-          lo_table_descr type ref to cl_abap_tabledescr,
-          lo_struc_descr type ref to cl_abap_structdescr,
-          ld_temp_tab    type ref to data.
+      lx_dp          type ref to zcx_text2tab_error,
+      lo_type_descr  type ref to cl_abap_typedescr,
+      lt_filter      type zcl_mockup_loader_utils=>tt_filter,
+      lo_table_descr type ref to cl_abap_tabledescr,
+      ld_temp_tab    type ref to data.
     field-symbols:
-          <container>     type any,
-          <temp_tab>      type standard table.
+      <container>     type any,
+      <temp_tab>      type standard table.
 
     " Handle data reference container (use exporting value ???)
     lo_type_descr = cl_abap_typedescr=>describe_by_data( e_container ).
@@ -420,20 +486,16 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     endif.
     clear <container>.
 
-    " Identify container type and create temp container
-    case lo_type_descr->kind.
-      when 'T'. " Table
-        lo_table_descr ?= lo_type_descr.
-        lo_struc_descr ?= lo_table_descr->get_table_line_type( ).
-      when 'S'. " Structure
-        lo_struc_descr ?= lo_type_descr.
-      when others. " Not a table or structure ?
-        zcx_mockup_loader_error=>raise( msg = 'Table or structure containers only' code = 'DT' ). "#EC NOTEXT
-    endcase.
+    " Build filter
+    if i_where is not initial.
+      lt_filter = zcl_mockup_loader_utils=>build_filter( i_where ).
+    endif.
 
-    lo_table_descr ?= cl_abap_tabledescr=>create(
-      p_line_type  = lo_struc_descr
-      p_table_kind = cl_abap_tabledescr=>tablekind_std ).
+    " Identify container type and create temp container
+    lo_table_descr = build_table_type(
+      i_corresponding = i_corresponding
+      it_filter       = lt_filter
+      io_type_descr   = lo_type_descr ).
     create data ld_temp_tab type handle lo_table_descr.
     assign ld_temp_tab->* to <temp_tab>.
 
@@ -446,7 +508,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       endif.
 
       lo_parser = zcl_text2tab_parser=>create(
-        i_pattern       = <container>
+        i_pattern       = <temp_tab>
         i_amount_format = mv_amt_format
         i_date_format   = mv_date_format
         i_deep_provider = lo_deep_provider
@@ -456,6 +518,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         exporting
           i_data     = i_rawdata
           i_strict   = i_strict
+          i_corresponding = i_corresponding
           i_has_head = abap_true " assume head always, maybe change later
         importing
           e_container = <temp_tab> ).
@@ -463,21 +526,13 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       zcx_mockup_loader_error=>raise( msg = lx_dp->get_text( ) code = 'XE' ).
     endtry.
 
-    " Build filter hash if supplied
-    if i_where is not initial.
-      zcl_mockup_loader_utils=>filter_table(
-        exporting
-          i_where     = i_where
-          i_tab       = <temp_tab>
-        importing
-          e_container = <container> ).
-    else. " Copy all
-      if lo_type_descr->kind = 'S'. " Structure
-        read table <temp_tab> into <container> index 1.
-      else. " Table
-        <container> = <temp_tab>.
-      endif.
-    endif.
+    zcl_mockup_loader_utils=>filter_table(
+      exporting
+        i_where     = lt_filter
+        i_tab       = <temp_tab>
+        i_corresponding = i_corresponding
+      importing
+        e_container = <container> ).
 
   endmethod.
 
@@ -591,6 +646,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       exporting
         i_rawdata   = l_rawdata
         i_strict    = i_strict
+        i_corresponding = i_corresponding
         i_deep      = i_deep
         i_where     = i_where
       importing

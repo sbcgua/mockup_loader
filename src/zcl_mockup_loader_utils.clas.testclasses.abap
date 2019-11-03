@@ -81,6 +81,15 @@ class ltcl_test_mockup_utils definition for testing
       end of ty_dummy,
       tt_dummy type table of ty_dummy with default key.
 
+    types:
+      begin of ty_dummy_corresponding,
+        tdate    type datum,
+        tchar    type c length 8,
+        tnumber  type numc04,
+        _another type i,
+      end of ty_dummy_corresponding,
+      tt_dummy_corresponding type standard table of ty_dummy_corresponding with default key.
+
 * ================
   private section.
 
@@ -101,6 +110,8 @@ class ltcl_test_mockup_utils definition for testing
 
     methods filter_table for testing.
     methods filter_table_neg for testing.
+    methods filter_table_corresponding for testing raising zcx_mockup_loader_error.
+    methods filter_full_copy for testing raising zcx_mockup_loader_error.
     methods does_line_fit_filter for testing.
 
     methods build_filter_with_value for testing.
@@ -814,6 +825,106 @@ class ltcl_test_mockup_utils implementation.
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'WS' ).
     endtry.
+
+  endmethod.
+
+  method filter_table_corresponding.
+
+    data:
+      dummy_tab_src type tt_dummy,
+      lv_filter_val type string,
+      lt_act        type tt_dummy_corresponding,
+      lt_exp        type tt_dummy_corresponding,
+      ls_act        type ty_dummy_corresponding,
+      ls_exp        type ty_dummy_corresponding,
+      lt_filter     type zcl_mockup_loader_utils=>tt_filter.
+
+    field-symbols <src> like line of dummy_tab_src.
+    field-symbols <exp> like line of lt_exp.
+    get_dummy_data( importing e_dummy_tab = dummy_tab_src ).
+    loop at dummy_tab_src assigning <src>.
+      check <src>-tnumber = '2015'.
+      append initial line to lt_exp assigning <exp>.
+      move-corresponding <src> to <exp>.
+    endloop.
+    read table lt_exp into ls_exp index 1.
+
+    " Filter table
+    field-symbols <f> like line of lt_filter.
+    append initial line to lt_filter assigning <f>.
+    <f>-name = 'TNUMBER'.
+    <f>-type = 'V'.
+    get reference of lv_filter_val into <f>-valref.
+    lv_filter_val = '2015'.
+
+    zcl_mockup_loader_utils=>filter_table(
+      exporting
+        i_filter    = lt_filter
+        i_tab       = dummy_tab_src
+        i_corresponding = abap_true
+      importing
+        e_container = lt_act ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
+      exp = lt_exp ).
+
+    zcl_mockup_loader_utils=>filter_table(
+      exporting
+        i_filter    = lt_filter
+        i_tab       = dummy_tab_src
+        i_corresponding = abap_true
+      importing
+        e_container = ls_act ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = ls_act
+      exp = ls_exp ).
+
+  endmethod.
+
+  method filter_full_copy.
+
+    data:
+      dummy_tab_src type tt_dummy,
+      lt_act        type tt_dummy,
+      lt_exp        type tt_dummy,
+      lt_act_corr   type tt_dummy_corresponding,
+      lt_exp_corr   type tt_dummy_corresponding,
+      lt_filter     type zcl_mockup_loader_utils=>tt_filter. " empty
+
+    field-symbols <src> like line of dummy_tab_src.
+    field-symbols <exp> like line of lt_exp_corr.
+    get_dummy_data( importing e_dummy_tab = dummy_tab_src ).
+    lt_exp = dummy_tab_src.
+    loop at dummy_tab_src assigning <src>.
+      append initial line to lt_exp_corr assigning <exp>.
+      move-corresponding <src> to <exp>.
+    endloop.
+
+    zcl_mockup_loader_utils=>filter_table(
+      exporting
+        i_filter        = lt_filter
+        i_tab           = dummy_tab_src
+        i_corresponding = abap_false
+      importing
+        e_container = lt_act ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
+      exp = lt_exp ).
+
+    zcl_mockup_loader_utils=>filter_table(
+      exporting
+        i_filter        = lt_filter
+        i_tab           = dummy_tab_src
+        i_corresponding = abap_true
+      importing
+        e_container = lt_act_corr ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act_corr
+      exp = lt_exp_corr ).
 
   endmethod.
 

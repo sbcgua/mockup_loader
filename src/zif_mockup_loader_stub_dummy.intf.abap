@@ -57,4 +57,10 @@ interface zif_mockup_loader_stub_dummy
       !i_p2 type i optional
     returning value(r_val) type string .
 
+  methods return_value
+    importing
+      !i_connid type s_conn_id
+    returning
+      value(r_val) type sflight-price .
+
 endinterface.

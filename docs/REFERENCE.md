@@ -575,6 +575,7 @@ The test double related code was saved but moved to a separate package [mockup_l
     i_sift_param   type abap_parmname optional
     i_mock_tab_key type abap_compname optional
     i_output_param type abap_parmname optional
+    i_field_only   type abap_parmname optional
   returning
     r_instance type ref to zcl_mockup_loader_stub_factory
 ```
@@ -586,7 +587,29 @@ Activates stub for the given method, connects it to the specified mockup path, o
 - **i_sift_param**   - importing parameter of the interface to take filter value from. Structured addressing also supported, e.g. `IS_PARAMS-CONNID`
 - **i_mock_tab_key** - key field in the mock data to use for the filter
 - **i_output_param** - parameter of the interface to save data to. Exporting, changing and returning are supported. If empty - the returning parameter is assumed and searched in the method definition. Parameter must be a table or a structure (as all load targets)
+- **i_field_only**   - return just specified field of the first metching record. e.g. Document type of a document selected by number. See example below.
 - **returning value** is the instance of stub factory, for chaining
+
+Example of **i_field_only** usage. The below code will find the **first** record in the prepared data in which field `CONNID` matches input parameter `I_CONNID` and return `PRICE` field of this method.
+
+```abap
+*** stubbing target method interface ***
+
+  methods GET_PRICE
+    important
+      i_connid type s_conn_id
+    returning
+      value(r_price) type sflight-price
+
+*** connecting stub ***
+
+  lo_factory->connect_method(
+    i_method          = 'GET_PRICE'
+    i_sift_param      = 'I_CONNID'
+    i_mock_tab_key    = 'CONNID'
+    i_field_only      = 'PRICE'    " <<< return price only
+    i_mock_name       = 'EXAMPLE/sflight' ).
+```
 
 ### FORWARD_METHOD
 

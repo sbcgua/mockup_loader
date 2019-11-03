@@ -16,6 +16,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         output_pkind    type abap_parmkind,
         output_type     type ref to cl_abap_datadescr,
         as_proxy        type abap_bool,
+        field_only      type abap_parmname,
       end of ty_mock_config .
     types:
       tt_mock_config type standard table of ty_mock_config with key method_name .
@@ -73,9 +74,22 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
       exporting
         i_obj    = <conf>-mock_name
         i_strict = <conf>-load_strict
+        i_corresponding = boolc( <conf>-field_only is not initial )
         i_where  = lt_filter
       importing
         e_container = r_data ).
+
+    if <conf>-field_only is not initial.
+      field-symbols <data> type any.
+      field-symbols <field> type any.
+      assign r_data->* to <data>.
+      assign component <conf>-field_only of structure <data> to <field>.
+      data lr_field type ref to data.
+      create data lr_field like <field>.
+      assign lr_field->* to <data>.
+      <data> = <field>.
+      r_data = lr_field. " smoking upside down in the sky ...
+    endif.
 
   endmethod.
 ENDCLASS.

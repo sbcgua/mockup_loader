@@ -133,7 +133,7 @@
     "method_length": {
       "enabled": true,
       "exclude": [],
-      "statements": 130
+      "statements": 140
     },
     "method_parameter_names": {
       "enabled": true,
