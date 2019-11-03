@@ -14,9 +14,18 @@ interface zif_mockup_loader_stub_dummy
     end of ty_sflight_extract,
     tt_sflight_extract type standard table of ty_sflight_extract with default key.
 
+  types:
+    ty_connid_range type range of sflight-connid.
+
   methods tab_return
     importing
       !i_connid type s_conn_id
+    returning
+      value(r_tab) type flighttab .
+
+  methods tab_return_by_range
+    importing
+      !ir_connid type ty_connid_range
     returning
       value(r_tab) type flighttab .
 

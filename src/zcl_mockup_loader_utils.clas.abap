@@ -81,6 +81,15 @@ class ZCL_MOCKUP_LOADER_UTILS definition
         value(r_filter) type ty_filter
       raising
         zcx_mockup_loader_error .
+    class-methods conv_range_to_filter
+      importing
+        !i_where type csequence
+        !i_range type any table
+      returning
+        value(r_filter) type ty_filter
+      raising
+        zcx_mockup_loader_error .
+
     class-methods conv_string_to_filter
       importing
         !i_where type clike
@@ -96,6 +105,12 @@ class ZCL_MOCKUP_LOADER_UTILS definition
       raising
         zcx_mockup_loader_error
         cx_sy_move_cast_error .
+
+    class-methods is_range
+      importing
+        !id_type type ref to cl_abap_typedescr
+      returning
+        value(rv_yes) type abap_bool.
 
   protected section.
   private section.
@@ -235,8 +250,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
           code = 'WS' ).   "#EC NOTEXT
       endif.
 
-      dy_table ?= l_component-type.
-      if dy_table->key ne g_range_key. " Not range-like structure ?
+      if abap_false = is_range( l_component-type ). " Not range-like structure ?
         zcx_mockup_loader_error=>raise(
           msg  = |I_WHERE must be a structure of ranges|
           code = 'WS' ).   "#EC NOTEXT
@@ -248,6 +262,25 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
       get reference of <tab> into l_filter-valref.
       append l_filter to rt_filter.
     endloop.
+  endmethod.
+
+
+  method conv_range_to_filter.
+    data dy_data type ref to cl_abap_datadescr.
+    dy_data ?= cl_abap_typedescr=>describe_by_data( i_range ).
+
+    if abap_false = is_range( dy_data ).
+      zcx_mockup_loader_error=>raise( msg  = 'I_RANGE must be a range' code = 'ER' ). "#EC NOTEXT
+    endif.
+
+    field-symbols <value> type any.
+    create data r_filter-valref type handle dy_data.
+    assign r_filter-valref->* to <value>.
+
+    r_filter-type = c_filter_type-range.
+    r_filter-name = to_upper( i_where ).
+    <value>       = i_range.
+
   endmethod.
 
 
@@ -306,13 +339,11 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
 
 
   method conv_where_to_filter.
-    data dy_table      type ref to cl_abap_tabledescr.
 
     r_filter-name   = to_upper( i_where-name ).
     r_filter-valref = i_where-range.
     r_filter-type   = c_filter_type-range.
-    dy_table ?= cl_abap_typedescr=>describe_by_data_ref( r_filter-valref ). " Assume table, cast_error otherwise
-    if dy_table->key ne g_range_key. " Not range ?
+    if abap_false = is_range( cl_abap_typedescr=>describe_by_data_ref( r_filter-valref ) ).
       zcx_mockup_loader_error=>raise( msg = |I_WHERE-RANGE must be a range table| code = 'RT' ).   "#EC NOTEXT
     endif.
   endmethod.
@@ -422,6 +453,21 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
         endif.
       endif.
     endloop.
+
+  endmethod.
+
+
+  method is_range.
+
+    if id_type->kind <> id_type->kind_table.
+      return. " false
+    endif.
+
+    data ld_table type ref to cl_abap_tabledescr.
+    ld_table ?= id_type.
+    if ld_table->key = g_range_key. " mmm ?
+      rv_yes = abap_true.
+    endif.
 
   endmethod.
 

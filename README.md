@@ -133,7 +133,9 @@ It creates an instance object which implements the given interface where one or 
     i_mock_name       = 'EXAMPLE/sflight' ). " <MOCK PATH>
   ...
 ```
-This will result in the data set where key field `CONNID` will be equal to `I_CONNID` parameter actually passed to interface call. Structured addressing also supported, e.g. `IS_PARAMS-CONNID`.
+This will result in the data set where key field `CONNID` will be equal to `I_CONNID` parameter actually passed to interface call. 
+- Structured addressing also supported, e.g. `IS_PARAMS-CONNID`.
+- ranges also supported - `I_CONNID` above can be a range parameter
 
 `Returning`, `exporting` and `changing` parameters are supported. For more information see [REFERENCE.md](docs/REFERENCE.md).
 

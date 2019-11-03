@@ -595,7 +595,7 @@ Activates stub for the given method, connects it to the specified mockup path, o
 - **i_method_name**  - interface method to stub
 - **i_mock_name**    - mock path (in-zip) to load data from
 - **i_load_strict**  - if the mockdata should be loaded strictly (see `load_data` method for more info)
-- **i_sift_param**   - importing parameter of the interface to take filter value from. Structured addressing also supported, e.g. `IS_PARAMS-CONNID`
+- **i_sift_param**   - importing parameter of the interface to take filter value from. Structured addressing also supported, e.g. `IS_PARAMS-CONNID`. **Range** parameters are also supported.
 - **i_mock_tab_key** - key field in the mock data to use for the filter
 - **i_output_param** - parameter of the interface to save data to. Exporting, changing and returning are supported. If empty - the returning parameter is assumed and searched in the method definition. Parameter must be a table or a structure (as all load targets)
 - **i_field_only**   - return just specified field of the first metching record. e.g. Document type of a document selected by number. See example below.
