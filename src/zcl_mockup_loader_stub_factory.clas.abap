@@ -285,6 +285,10 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
             _src( |      i_sift_value  = { <conf>-sift_param }| ) ##NO_TEXT.
           endif.
           _src( |      i_method_name = '{ <method>-name }' ).| ) ##NO_TEXT.
+          _src( '    if lr_data is initial.' ).                   "#EC NOTEXT
+          _src( |      clear { <conf>-output_param }.| ).         "#EC NOTEXT
+          _src( '      return.' ).                                "#EC NOTEXT
+          _src( '    endif.' ).                                   "#EC NOTEXT
           _src( '    field-symbols <container> type any.' ).      "#EC NOTEXT
           _src( '    assign lr_data->* to <container>.' ).        "#EC NOTEXT
           _src( |    { <conf>-output_param } = <container>.| )   ##NO_TEXT.

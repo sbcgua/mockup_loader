@@ -1,10 +1,17 @@
+class lcl_mockup_loader_stub_final definition deferred.
 class ltcl_mockup_stub_base_test definition final
   for testing
   duration short
   risk level harmless.
 
   private section.
-    methods get_mock_data for testing.
+    data mo_ml type ref to zcl_mockup_loader.
+    data mo_stub_cut type ref to lcl_mockup_loader_stub_final.
+    data mt_flights type flighttab.
+
+    methods setup raising zcx_mockup_loader_error.
+    methods get_mock_data for testing raising zcx_mockup_loader_error.
+    methods disable_control for testing raising zcx_mockup_loader_error.
 endclass.
 
 class lcl_mockup_loader_stub_final definition final
@@ -16,16 +23,10 @@ endclass.
 
 class ltcl_mockup_stub_base_test implementation.
 
-  method get_mock_data.
+  method setup.
 
-    data lo type ref to lcl_mockup_loader_stub_final.
-    data lo_ml type ref to zcl_mockup_loader.
     data lt_config type lcl_mockup_loader_stub_final=>tt_mock_config.
-    data lo_ex type ref to zcx_mockup_loader_error.
     data ls_conf like line of lt_config.
-    data lt_exp type flighttab.
-    data lr_act type ref to data.
-    field-symbols <act> type flighttab.
 
     ls_conf-method_name  = 'METHOD_SIMPLE'.
     ls_conf-mock_name    = 'EXAMPLE/sflight'.
@@ -37,36 +38,98 @@ class ltcl_mockup_stub_base_test implementation.
     ls_conf-sift_param   = 'I_CONNID'.
     append ls_conf to lt_config.
 
-    try.
-      lo_ml  = zcl_mockup_loader=>create(
-        i_type = 'MIME'
-        i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
-      create object lo
-        exporting
-          it_config = lt_config
-          io_ml = lo_ml.
-      lo_ml->load_data(
-        exporting
-          i_obj    = 'EXAMPLE/sflight'
-          i_strict = abap_false
-        importing
-          e_container = lt_exp ).
+    mo_ml = zcl_mockup_loader=>create(
+      i_type = 'MIME'
+      i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
 
-      lr_act = lo->get_mock_data( i_method_name = 'METHOD_SIMPLE' i_sift_value = '1000' ).
-      assign lr_act->* to <act>.
-      cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
+    mo_ml->load_data(
+      exporting
+        i_obj    = 'EXAMPLE/sflight'
+        i_strict = abap_false
+      importing
+        e_container = mt_flights ).
 
-      lr_act = lo->get_mock_data( i_method_name = 'METHOD_SIFTED' i_sift_value = '1000' ).
-      assign lr_act->* to <act>.
-      delete lt_exp where connid <> '1000'.
-      cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
+    create object mo_stub_cut
+      exporting
+        it_config = lt_config
+        io_ml     = mo_ml.
 
-      lr_act = lo->get_mock_data( i_method_name = 'METHOD_MISSING' i_sift_value = '1000' ).
-      cl_abap_unit_assert=>assert_initial( lr_act ).
+  endmethod.
 
-    catch zcx_mockup_loader_error into lo_ex.
-      cl_abap_unit_assert=>fail( ).
-    endtry.
+  method get_mock_data.
+
+    data lt_exp type flighttab.
+    data lr_act type ref to data.
+    field-symbols <act> type flighttab.
+
+    lt_exp = mt_flights.
+
+    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIMPLE' i_sift_value = '1000' ).
+    assign lr_act->* to <act>.
+    cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
+
+    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIFTED' i_sift_value = '1000' ).
+    assign lr_act->* to <act>.
+    delete lt_exp where connid <> '1000'.
+    cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
+
+    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_MISSING' i_sift_value = '1000' ).
+    cl_abap_unit_assert=>assert_initial( lr_act ).
+
+
+  endmethod.
+
+  method disable_control.
+
+    data lt_exp type flighttab.
+    data lr_act type ref to data.
+    field-symbols <act> type flighttab.
+    data li_control type ref to zif_mockup_loader_stub_control.
+
+    li_control ?= mo_stub_cut.
+
+    " First default call
+    lt_exp = mt_flights.
+    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIMPLE' i_sift_value = '1000' ).
+    assign lr_act->* to <act>.
+    cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
+
+    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIFTED' i_sift_value = '1000' ).
+    assign lr_act->* to <act>.
+    delete lt_exp where connid <> '1000'.
+    cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
+
+    " Disable all
+    li_control->disable( ).
+    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIMPLE' i_sift_value = '1000' ).
+    cl_abap_unit_assert=>assert_initial( act = lr_act ).
+
+    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIFTED' i_sift_value = '1000' ).
+    cl_abap_unit_assert=>assert_initial( act = lr_act ).
+
+    " Enable all
+    li_control->enable( ).
+    lt_exp = mt_flights.
+    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIMPLE' i_sift_value = '1000' ).
+    assign lr_act->* to <act>.
+    cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
+
+    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIFTED' i_sift_value = '1000' ).
+    assign lr_act->* to <act>.
+    delete lt_exp where connid <> '1000'.
+    cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
+
+    " Disable one
+    li_control->disable( 'METHOD_SIMPLE' ).
+    lt_exp = mt_flights.
+    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIMPLE' i_sift_value = '1000' ).
+    cl_abap_unit_assert=>assert_initial( act = lr_act ).
+
+    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIFTED' i_sift_value = '1000' ).
+    assign lr_act->* to <act>.
+    delete lt_exp where connid <> '1000'.
+    cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
+
 
   endmethod.
 

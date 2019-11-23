@@ -18,9 +18,12 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         output_type     type ref to cl_abap_datadescr,
         as_proxy        type abap_bool,
         field_only      type abap_parmname,
+        is_disabled     type abap_bool,
       end of ty_mock_config .
     types:
       tt_mock_config type standard table of ty_mock_config with key method_name .
+
+    interfaces ZIF_MOCKUP_LOADER_STUB_CONTROL.
 
     methods constructor
       importing
@@ -34,6 +37,11 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         i_sift_value  type any optional
       returning value(r_data) type ref to data
       raising zcx_mockup_loader_error.
+
+    methods set_disabled
+      importing
+        i_method   type abap_methname
+        i_disabled type abap_bool.
 
     data mt_config type tt_mock_config.
     data mo_ml      type ref to zcl_mockup_loader.
@@ -57,7 +65,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
     " find config
     field-symbols <conf> like line of mt_config.
     read table mt_config with key method_name = i_method_name assigning <conf>.
-    if <conf> is not assigned.
+    if <conf> is not assigned or <conf>-is_disabled = abap_true.
       return.
     endif.
 
@@ -102,5 +110,37 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
       r_data = lr_field. " smoking upside down in the sky ...
     endif.
 
+  endmethod.
+
+
+  method set_disabled.
+
+    field-symbols <conf> like line of mt_config.
+
+    if i_method is not initial.
+      read table mt_config assigning <conf> with key method_name = i_method.
+      if sy-subrc = 0.
+        <conf>-is_disabled = i_disabled.
+      endif.
+    else.
+      loop at mt_config assigning <conf>.
+        <conf>-is_disabled = i_disabled.
+      endloop.
+    endif.
+
+  endmethod.
+
+
+  method zif_mockup_loader_stub_control~disable.
+    set_disabled(
+      i_method = i_method
+      i_disabled = abap_true ).
+  endmethod.
+
+
+  method zif_mockup_loader_stub_control~enable.
+    set_disabled(
+      i_method = i_method
+      i_disabled = abap_false ).
   endmethod.
 ENDCLASS.

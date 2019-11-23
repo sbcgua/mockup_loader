@@ -15,6 +15,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods returning_value for testing raising zcx_mockup_loader_error.
     methods corresponding for testing raising zcx_mockup_loader_error.
     methods filter_by_range_param for testing raising zcx_mockup_loader_error.
+    methods controls for testing raising zcx_mockup_loader_error.
 
     " HELPERS
     methods get_ml
@@ -643,4 +644,51 @@ class ltcl_mockup_stub_factory_test implementation.
     cl_abap_unit_assert=>assert_equals( act = lt_act exp = lt_exp ).
 
   endmethod.
+
+  method controls.
+
+    data lo_dc type ref to zcl_mockup_loader_stub_factory.
+    data li_if type ref to zif_mockup_loader_stub_dummy.
+    data lo_ml type ref to zcl_mockup_loader.
+    data lt_exp type flighttab.
+    data lo_ex type ref to zcx_mockup_loader_error.
+    data li_control type ref to zif_mockup_loader_stub_control.
+
+    lo_ml  = zcl_mockup_loader=>create(
+      i_type = 'MIME'
+      i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
+
+    create object lo_dc
+      exporting
+        io_ml_instance = lo_ml
+        i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+
+    lo_dc->connect_method(
+      i_method_name     = 'TAB_RETURN'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+
+    lo_dc->connect_method(
+      i_method_name  = 'TAB_EXPORT'
+      i_mock_name    = 'EXAMPLE/sflight'
+      i_output_param = 'E_TAB' ).
+
+    lo_dc->connect_method(
+      i_method_name  = 'TAB_CHANGE'
+      i_mock_name    = 'EXAMPLE/sflight'
+      i_output_param = 'C_TAB' ).
+
+    li_if ?= lo_dc->generate_stub( ).
+    li_control ?= li_if.
+    li_control->disable( ).
+
+    data lt_res type flighttab.
+    lt_res = li_if->tab_return( i_connid = '1000' ).
+    cl_abap_unit_assert=>assert_initial( act = lt_res ).
+    li_if->tab_export( exporting i_connid = '1000' importing e_tab = lt_res ).
+    cl_abap_unit_assert=>assert_initial( act = lt_res ).
+    li_if->tab_change( exporting i_connid = '1000' changing c_tab = lt_res ).
+    cl_abap_unit_assert=>assert_initial( act = lt_res ).
+
+  endmethod.
+
 endclass.
