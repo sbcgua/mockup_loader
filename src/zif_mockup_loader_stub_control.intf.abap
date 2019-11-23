@@ -9,4 +9,10 @@ interface ZIF_MOCKUP_LOADER_STUB_CONTROL
     importing
       i_method type abap_methname optional.
 
+  methods get_call_count
+    importing
+      i_method type abap_methname
+    returning
+      value(rv_call_count) type i.
+
 endinterface.

@@ -19,6 +19,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         as_proxy        type abap_bool,
         field_only      type abap_parmname,
         is_disabled     type abap_bool,
+        call_count      type i,
       end of ty_mock_config .
     types:
       tt_mock_config type standard table of ty_mock_config with key method_name .
@@ -42,6 +43,16 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
       importing
         i_method   type abap_methname
         i_disabled type abap_bool.
+
+    methods is_disabled
+      importing
+        i_method   type abap_methname
+      returning
+        value(rv_disabled) type abap_bool.
+
+    methods increment_call_count
+      importing
+        i_method   type abap_methname.
 
     data mt_config type tt_mock_config.
     data mo_ml      type ref to zcl_mockup_loader.
@@ -113,6 +124,24 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
   endmethod.
 
 
+  method increment_call_count.
+    field-symbols <conf> like line of mt_config.
+    read table mt_config assigning <conf> with key method_name = i_method.
+    if sy-subrc = 0.
+      <conf>-call_count = <conf>-call_count + 1.
+    endif.
+  endmethod.
+
+
+  method is_disabled.
+    field-symbols <conf> like line of mt_config.
+    read table mt_config with key method_name = i_method assigning <conf>.
+    if <conf> is assigned.
+      rv_disabled = <conf>-is_disabled.
+    endif.
+  endmethod.
+
+
   method set_disabled.
 
     field-symbols <conf> like line of mt_config.
@@ -142,5 +171,14 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
     set_disabled(
       i_method = i_method
       i_disabled = abap_false ).
+  endmethod.
+
+
+  method zif_mockup_loader_stub_control~get_call_count.
+    field-symbols <conf> like line of mt_config.
+    read table mt_config assigning <conf> with key method_name = i_method.
+    if sy-subrc = 0.
+      rv_call_count = <conf>-call_count.
+    endif.
   endmethod.
 ENDCLASS.

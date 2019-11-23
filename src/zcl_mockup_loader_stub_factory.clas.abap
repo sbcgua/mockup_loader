@@ -260,8 +260,14 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       _src( |  method { mv_interface_name }~{ <method>-name }.| ).
       if <conf> is assigned.
         if <conf>-as_proxy = abap_true.
+
           field-symbols <param> like line of <method>-parameters.
           data l_param_kind type char1.
+
+          _src( |    if is_disabled( '{ <method>-name }' ) = abap_true.| ). "#EC NOTEXT
+          _src( '      return.' ).                                "#EC NOTEXT
+          _src( '    endif.' ).                                   "#EC NOTEXT
+          _src( |    increment_call_count( '{ <method>-name }' ).| ). "#EC NOTEXT
 
           _src( '    data lt_params type abap_parmbind_tab.' ). "#EC NOTEXT
           _src( '    data ls_param like line of lt_params.' ).  "#EC NOTEXT
@@ -279,16 +285,18 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
           _src( |      parameter-table lt_params.| ).            "#EC NOTEXT
 
         else.
-          _src( '    data lr_data type ref to data.' ).          "#EC NOTEXT
-          _src( '    lr_data = get_mock_data(' ).                "#EC NOTEXT
-          if <conf>-sift_param is not initial.
-            _src( |      i_sift_value  = { <conf>-sift_param }| ) ##NO_TEXT.
-          endif.
-          _src( |      i_method_name = '{ <method>-name }' ).| ) ##NO_TEXT.
-          _src( '    if lr_data is initial.' ).                   "#EC NOTEXT
+          _src( |    if is_disabled( '{ <method>-name }' ) = abap_true.| ). "#EC NOTEXT
           _src( |      clear { <conf>-output_param }.| ).         "#EC NOTEXT
           _src( '      return.' ).                                "#EC NOTEXT
           _src( '    endif.' ).                                   "#EC NOTEXT
+          _src( |    increment_call_count( '{ <method>-name }' ).| ). "#EC NOTEXT
+
+          _src( '    data lr_data type ref to data.' ).          "#EC NOTEXT
+          _src( '    lr_data = get_mock_data(' ).                "#EC NOTEXT
+          if <conf>-sift_param is not initial.
+            _src( |      i_sift_value = { <conf>-sift_param }| ) ##NO_TEXT.
+          endif.
+          _src( |      i_method_name = '{ <method>-name }' ).| ) ##NO_TEXT.
           _src( '    field-symbols <container> type any.' ).      "#EC NOTEXT
           _src( '    assign lr_data->* to <container>.' ).        "#EC NOTEXT
           _src( |    { <conf>-output_param } = <container>.| )   ##NO_TEXT.

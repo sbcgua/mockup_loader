@@ -653,6 +653,9 @@ class ltcl_mockup_stub_factory_test implementation.
     data lt_exp type flighttab.
     data lo_ex type ref to zcx_mockup_loader_error.
     data li_control type ref to zif_mockup_loader_stub_control.
+    data lo_proxy_target type ref to lcl_test_proxy_target.
+
+    create object lo_proxy_target.
 
     lo_ml  = zcl_mockup_loader=>create(
       i_type = 'MIME'
@@ -660,7 +663,8 @@ class ltcl_mockup_stub_factory_test implementation.
 
     create object lo_dc
       exporting
-        io_ml_instance = lo_ml
+        io_ml_instance   = lo_ml
+        io_proxy_target  = lo_proxy_target
         i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
 
     lo_dc->connect_method(
@@ -677,17 +681,60 @@ class ltcl_mockup_stub_factory_test implementation.
       i_mock_name    = 'EXAMPLE/sflight'
       i_output_param = 'C_TAB' ).
 
+    lo_dc->forward_method( 'PROXY_TEST' ).
+
     li_if ?= lo_dc->generate_stub( ).
     li_control ?= li_if.
+
+    data l_act type string.
+    data lt_res type flighttab.
+    data ls_dummy_res like line of lt_res.
+    ls_dummy_res-carrid = 1.
+
+    lo_ml->load_data(
+      exporting
+        i_obj    = 'EXAMPLE/sflight'
+        i_strict = abap_false
+      importing
+        e_container = lt_exp ).
+
+    " Calls before disable
+    l_act = li_if->proxy_test( i_p1 = 'Hello' i_p2 = 123 ).
+    cl_abap_unit_assert=>assert_equals( act = l_act exp = 'Hello 123' ).
+
+    lt_res = li_if->tab_return( i_connid = '1000' ).
+    cl_abap_unit_assert=>assert_equals( act = lt_res exp = lt_exp ).
+
     li_control->disable( ).
 
-    data lt_res type flighttab.
+    " Calls after disable
     lt_res = li_if->tab_return( i_connid = '1000' ).
     cl_abap_unit_assert=>assert_initial( act = lt_res ).
+
+    append ls_dummy_res to lt_res.
     li_if->tab_export( exporting i_connid = '1000' importing e_tab = lt_res ).
     cl_abap_unit_assert=>assert_initial( act = lt_res ).
+
+    append ls_dummy_res to lt_res.
     li_if->tab_change( exporting i_connid = '1000' changing c_tab = lt_res ).
     cl_abap_unit_assert=>assert_initial( act = lt_res ).
+
+    l_act = li_if->proxy_test( i_p1 = 'Hello' i_p2 = 123 ).
+    cl_abap_unit_assert=>assert_initial( l_act ).
+
+    " Call counts
+    cl_abap_unit_assert=>assert_equals(
+      act = li_control->get_call_count( 'TAB_RETURN' )
+      exp = 1 ).
+    cl_abap_unit_assert=>assert_equals(
+      act = li_control->get_call_count( 'TAB_EXPORT' )
+      exp = 0 ).
+    cl_abap_unit_assert=>assert_equals(
+      act = li_control->get_call_count( 'TAB_CHANGE' )
+      exp = 0 ).
+    cl_abap_unit_assert=>assert_equals(
+      act = li_control->get_call_count( 'PROXY_TEST' )
+      exp = 1 ).
 
   endmethod.
 

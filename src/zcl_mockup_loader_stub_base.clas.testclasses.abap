@@ -11,7 +11,8 @@ class ltcl_mockup_stub_base_test definition final
 
     methods setup raising zcx_mockup_loader_error.
     methods get_mock_data for testing raising zcx_mockup_loader_error.
-    methods disable_control for testing raising zcx_mockup_loader_error.
+    methods control_disable for testing raising zcx_mockup_loader_error.
+    methods control_call_count for testing raising zcx_mockup_loader_error.
 endclass.
 
 class lcl_mockup_loader_stub_final definition final
@@ -79,7 +80,7 @@ class ltcl_mockup_stub_base_test implementation.
 
   endmethod.
 
-  method disable_control.
+  method control_disable.
 
     data lt_exp type flighttab.
     data lr_act type ref to data.
@@ -130,7 +131,24 @@ class ltcl_mockup_stub_base_test implementation.
     delete lt_exp where connid <> '1000'.
     cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
 
-
   endmethod.
 
+  method control_call_count.
+
+    data lt_exp type flighttab.
+    data lr_act type ref to data.
+    field-symbols <act> type flighttab.
+    data li_control type ref to zif_mockup_loader_stub_control.
+
+    li_control ?= mo_stub_cut.
+    cl_abap_unit_assert=>assert_equals(
+      act = li_control->get_call_count( 'METHOD_SIMPLE' )
+      exp = 0 ).
+
+    mo_stub_cut->increment_call_count( 'METHOD_SIMPLE' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = li_control->get_call_count( 'METHOD_SIMPLE' )
+      exp = 1 ).
+
+  endmethod.
 endclass.
