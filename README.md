@@ -4,7 +4,7 @@
 
 ![logo](docs/logo80.png)
 
-*Version: 2.1.3 ([history of changes](/changelog.txt))*
+*Version: 2.1.5 ([history of changes](/changelog.txt))*
 
 Mockup loader is a tool to simplify data preparation for SAP ABAP unit tests. Create unit test data in Excel, easily convert it into MIME object that travels with ABAP package, easily consume the data from your unit test code. The tool was created with the following high level goals in mind:
 - simplify **communication process between a developer and a business analyst** (from client side in particular)
@@ -144,6 +144,13 @@ In addition, forwarding calls to another object (implementing same interface) is
 Finally, it is possible to return just one field of the first matching record e.g. Document type of a document selected by number. For this specify the field to return in `I_FIELD_ONLY` param. See [REFERENCE.md](docs/REFERENCE.md).
 
 ![accessor pattern](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/sbcgua/mockup_loader/master/docs/mockup-stub.puml)
+
+#### Stub control
+
+Generated stub instance implements `ZIF_MOCKUP_LOADER_STUB_CONTROL` interface, which allows:
+- temporarily enable/disable separate or all stubbed methods, which might be useful for some specific testing situations
+- accessing to call counters (method was called X times)
+- in plans: potentially, caching call parameters
 
 ### Deep data loading
 

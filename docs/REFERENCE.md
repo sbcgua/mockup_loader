@@ -565,6 +565,13 @@ Stubbing was implemented in 2 ways. Initially it was implemented to utilize popu
 
 The test double related code was saved but moved to a separate package [mockup_loader_stub_double](https://github.com/sbcgua/mockup_loader_stub_double). It is a lightweight 'addon' that just redefines a couple of factory methods but works in similar way. Feel free to use it if you prefer test double framework. See the [repo](https://github.com/sbcgua/mockup_loader_stub_double) for details.
 
+### Stub control interface
+
+Generated stub instance implements `ZIF_MOCKUP_LOADER_STUB_CONTROL` interface. It contains the folloing possibilities.
+
+- `enable` and `disable` methods to temporarily stop loading mock data for all or spefic method (if `i_method` param is supplied).
+- `get_call_count( i_method )` to get hot many time the stubbed method was called
+
 ### CONSTRUCTOR
 
 ```abap
