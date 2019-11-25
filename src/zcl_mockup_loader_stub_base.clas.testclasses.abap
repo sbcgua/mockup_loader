@@ -82,54 +82,44 @@ class ltcl_mockup_stub_base_test implementation.
 
   method control_disable.
 
-    data lt_exp type flighttab.
-    data lr_act type ref to data.
-    field-symbols <act> type flighttab.
     data li_control type ref to zif_mockup_loader_stub_control.
+    data ls_control like line of mo_stub_cut->mt_control.
 
-    li_control ?= mo_stub_cut.
-
-    " First default call
-    lt_exp = mt_flights.
-    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIMPLE' i_sift_value = '1000' ).
-    assign lr_act->* to <act>.
-    cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
-
-    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIFTED' i_sift_value = '1000' ).
-    assign lr_act->* to <act>.
-    delete lt_exp where connid <> '1000'.
-    cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
+    cl_abap_unit_assert=>assert_equals( act = lines( mo_stub_cut->mt_control ) exp = 0 ).
 
     " Disable all
+    li_control ?= mo_stub_cut.
     li_control->disable( ).
-    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIMPLE' i_sift_value = '1000' ).
-    cl_abap_unit_assert=>assert_initial( act = lr_act ).
 
-    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIFTED' i_sift_value = '1000' ).
-    cl_abap_unit_assert=>assert_initial( act = lr_act ).
+    cl_abap_unit_assert=>assert_equals( act = lines( mo_stub_cut->mt_control ) exp = 2 ).
+    read table mo_stub_cut->mt_control into ls_control with key method_name = 'METHOD_SIMPLE'.
+    cl_abap_unit_assert=>assert_subrc( ).
+    cl_abap_unit_assert=>assert_equals( act = ls_control-is_disabled exp = abap_true ).
+    read table mo_stub_cut->mt_control into ls_control with key method_name = 'METHOD_SIFTED'.
+    cl_abap_unit_assert=>assert_subrc( ).
+    cl_abap_unit_assert=>assert_equals( act = ls_control-is_disabled exp = abap_true ).
 
     " Enable all
     li_control->enable( ).
-    lt_exp = mt_flights.
-    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIMPLE' i_sift_value = '1000' ).
-    assign lr_act->* to <act>.
-    cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
 
-    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIFTED' i_sift_value = '1000' ).
-    assign lr_act->* to <act>.
-    delete lt_exp where connid <> '1000'.
-    cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
+    cl_abap_unit_assert=>assert_equals( act = lines( mo_stub_cut->mt_control ) exp = 2 ).
+    read table mo_stub_cut->mt_control into ls_control with key method_name = 'METHOD_SIMPLE'.
+    cl_abap_unit_assert=>assert_subrc( ).
+    cl_abap_unit_assert=>assert_equals( act = ls_control-is_disabled exp = abap_false ).
+    read table mo_stub_cut->mt_control into ls_control with key method_name = 'METHOD_SIFTED'.
+    cl_abap_unit_assert=>assert_subrc( ).
+    cl_abap_unit_assert=>assert_equals( act = ls_control-is_disabled exp = abap_false ).
 
     " Disable one
     li_control->disable( 'METHOD_SIMPLE' ).
-    lt_exp = mt_flights.
-    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIMPLE' i_sift_value = '1000' ).
-    cl_abap_unit_assert=>assert_initial( act = lr_act ).
 
-    lr_act = mo_stub_cut->get_mock_data( i_method_name = 'METHOD_SIFTED' i_sift_value = '1000' ).
-    assign lr_act->* to <act>.
-    delete lt_exp where connid <> '1000'.
-    cl_abap_unit_assert=>assert_equals( act = <act> exp = lt_exp ).
+    cl_abap_unit_assert=>assert_equals( act = lines( mo_stub_cut->mt_control ) exp = 2 ).
+    read table mo_stub_cut->mt_control into ls_control with key method_name = 'METHOD_SIMPLE'.
+    cl_abap_unit_assert=>assert_subrc( ).
+    cl_abap_unit_assert=>assert_equals( act = ls_control-is_disabled exp = abap_true ).
+    read table mo_stub_cut->mt_control into ls_control with key method_name = 'METHOD_SIFTED'.
+    cl_abap_unit_assert=>assert_subrc( ).
+    cl_abap_unit_assert=>assert_equals( act = ls_control-is_disabled exp = abap_false ).
 
   endmethod.
 

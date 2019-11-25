@@ -705,6 +705,8 @@ class ltcl_mockup_stub_factory_test implementation.
     lt_res = li_if->tab_return( i_connid = '1000' ).
     cl_abap_unit_assert=>assert_equals( act = lt_res exp = lt_exp ).
 
+    li_if->return_value( '1000' ). " for counter check
+
     li_control->disable( ).
 
     " Calls after disable
@@ -734,6 +736,9 @@ class ltcl_mockup_stub_factory_test implementation.
       exp = 0 ).
     cl_abap_unit_assert=>assert_equals(
       act = li_control->get_call_count( 'PROXY_TEST' )
+      exp = 1 ).
+    cl_abap_unit_assert=>assert_equals(
+      act = li_control->get_call_count( 'RETURN_VALUE' )
       exp = 1 ).
 
   endmethod.

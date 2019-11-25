@@ -18,11 +18,18 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         output_type     type ref to cl_abap_datadescr,
         as_proxy        type abap_bool,
         field_only      type abap_parmname,
-        is_disabled     type abap_bool,
-        call_count      type i,
       end of ty_mock_config .
     types:
       tt_mock_config type standard table of ty_mock_config with key method_name .
+
+    types:
+      begin of ty_control,
+        method_name     type abap_methname,
+        is_disabled     type abap_bool,
+        call_count      type i,
+      end of ty_control .
+    types:
+      tt_control type standard table of ty_control with key method_name .
 
     interfaces ZIF_MOCKUP_LOADER_STUB_CONTROL.
 
@@ -39,11 +46,6 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
       returning value(r_data) type ref to data
       raising zcx_mockup_loader_error.
 
-    methods set_disabled
-      importing
-        i_method   type abap_methname
-        i_disabled type abap_bool.
-
     methods is_disabled
       importing
         i_method   type abap_methname
@@ -55,9 +57,21 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         i_method   type abap_methname.
 
     data mt_config type tt_mock_config.
+    data mt_control type tt_control.
     data mo_ml      type ref to zcl_mockup_loader.
     data mo_proxy_target type ref to object .
   private section.
+
+    methods set_disabled
+      importing
+        i_method   type abap_methname
+        i_disabled type abap_bool.
+
+    methods get_control_for_method
+      importing
+        i_method   type abap_methname
+      returning
+        value(rv_ref) type ref to ty_control.
 ENDCLASS.
 
 
@@ -72,11 +86,24 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
   endmethod.
 
 
+  method get_control_for_method.
+
+    field-symbols <ctl> like line of mt_control.
+    read table mt_control assigning <ctl> with key method_name = i_method.
+    if sy-subrc <> 0.
+      append initial line to mt_control assigning <ctl>.
+      <ctl>-method_name = i_method.
+    endif.
+    get reference of <ctl> into rv_ref.
+
+  endmethod.
+
+
   method get_mock_data.
     " find config
     field-symbols <conf> like line of mt_config.
     read table mt_config with key method_name = i_method_name assigning <conf>.
-    if <conf> is not assigned or <conf>-is_disabled = abap_true.
+    if <conf> is not assigned.
       return.
     endif.
 
@@ -125,35 +152,31 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
 
 
   method increment_call_count.
-    field-symbols <conf> like line of mt_config.
-    read table mt_config assigning <conf> with key method_name = i_method.
-    if sy-subrc = 0.
-      <conf>-call_count = <conf>-call_count + 1.
-    endif.
+    data lr_control type ref to ty_control.
+    lr_control = get_control_for_method( i_method ).
+    lr_control->call_count = lr_control->call_count + 1.
   endmethod.
 
 
   method is_disabled.
-    field-symbols <conf> like line of mt_config.
-    read table mt_config with key method_name = i_method assigning <conf>.
-    if <conf> is assigned.
-      rv_disabled = <conf>-is_disabled.
-    endif.
+    data lr_control type ref to ty_control.
+    lr_control = get_control_for_method( i_method ).
+    rv_disabled = lr_control->is_disabled.
   endmethod.
 
 
   method set_disabled.
 
+    data lr_control type ref to ty_control.
     field-symbols <conf> like line of mt_config.
 
     if i_method is not initial.
-      read table mt_config assigning <conf> with key method_name = i_method.
-      if sy-subrc = 0.
-        <conf>-is_disabled = i_disabled.
-      endif.
+      lr_control = get_control_for_method( i_method ).
+      lr_control->is_disabled = i_disabled.
     else.
       loop at mt_config assigning <conf>.
-        <conf>-is_disabled = i_disabled.
+        lr_control = get_control_for_method( <conf>-method_name ).
+        lr_control->is_disabled = i_disabled.
       endloop.
     endif.
 
@@ -175,10 +198,8 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
 
 
   method zif_mockup_loader_stub_control~get_call_count.
-    field-symbols <conf> like line of mt_config.
-    read table mt_config assigning <conf> with key method_name = i_method.
-    if sy-subrc = 0.
-      rv_call_count = <conf>-call_count.
-    endif.
+    data lr_control type ref to ty_control.
+    lr_control = get_control_for_method( i_method ).
+    rv_call_count = lr_control->call_count.
   endmethod.
 ENDCLASS.
