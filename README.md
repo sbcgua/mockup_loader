@@ -321,7 +321,7 @@ N.B.
 
 You may have a lot of data prepared in Excel files. Many files, many sheets in each. Although Ctrl+C in Excel actually copies TAB-delimited text, which greatly simplifies the matter for minor cases, it is boring and time consuming to copy all the test cases to text. Here are special tools to simplify this workflow. Briefly: they take directory of excel files with mockup data and convert them into format compatible with mockup loader.
 
-- [mockup compiler](https://github.com/sbcgua/mockup_compiler) - ABAP implementation, requires [abap2xlsx](https://github.com/ivanfemia/abap2xlsx) installed.
+- [mockup compiler](https://github.com/sbcgua/mockup_compiler) - ABAP implementation.
 
   ![compile zip slug](docs/compiler.png)
 
