@@ -131,7 +131,7 @@
       "exclude": []
     },
     "method_length": {
-      "enabled": true,
+      "enabled": false,
       "exclude": [],
       "statements": 140
     },
