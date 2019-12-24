@@ -18,6 +18,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         output_type     type ref to cl_abap_datadescr,
         as_proxy        type abap_bool,
         field_only      type abap_parmname,
+        const_value     type string,
       end of ty_mock_config .
     types:
       tt_mock_config type standard table of ty_mock_config with key method_name .

@@ -16,6 +16,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods corresponding for testing raising zcx_mockup_loader_error.
     methods filter_by_range_param for testing raising zcx_mockup_loader_error.
     methods controls for testing raising zcx_mockup_loader_error.
+    methods const_value for testing raising zcx_mockup_loader_error.
 
     " HELPERS
     methods get_ml
@@ -740,6 +741,49 @@ class ltcl_mockup_stub_factory_test implementation.
     cl_abap_unit_assert=>assert_equals(
       act = li_control->get_call_count( 'RETURN_VALUE' )
       exp = 1 ).
+
+  endmethod.
+
+  method const_value.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data lv_act type sflight-price.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+
+    factory->connect_method(
+      i_method_name = 'return_value'
+      i_const_value = '12.34' ).
+
+    stub ?= factory->generate_stub( ).
+    lv_act = stub->return_value( i_connid = '1000' ).
+    cl_abap_unit_assert=>assert_equals( act = lv_act exp = '12.34' ).
+
+    " NEGATIVES
+    data lx type ref to zcx_mockup_loader_error.
+    factory = get_factory( ml ).
+
+    try .
+      factory->connect_method(
+        i_method_name = 'return_value'
+        i_mock_name   = 'non-empty'
+        i_const_value = '12.34' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'CV' ).
+    endtry.
+
+    try .
+      factory->connect_method(
+        i_method_name = 'tab_return'
+        i_const_value = '12.34' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'CE' ).
+    endtry.
 
   endmethod.
 

@@ -14,13 +14,14 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
     methods connect_method
       importing
         !i_method_name type abap_methname
-        !i_mock_name type string
+        !i_mock_name type string optional
         !i_load_strict type abap_bool default abap_false
         !i_corresponding type abap_bool default abap_false
         !i_sift_param type string optional
         !i_mock_tab_key type abap_compname optional
         !i_field_only type abap_parmname optional
         !i_output_param type abap_parmname optional
+        !i_const_value type string optional
       returning
         value(r_instance) type ref to zcl_mockup_loader_stub_factory
       raising
@@ -112,13 +113,13 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     r_config-output_param = ls_output_param-name.
     r_config-output_pkind = ls_output_param-parm_kind.
 
-    if i_config-field_only is initial.
-      r_config-output_type ?= ld_output_type.
-    else.
+    if i_config-field_only is not initial.
       r_config-output_type ?= build_field_only_struc_type(
         id_output_type = ld_output_type
         id_sift_type   = ld_sift_type
         i_config       = r_config ).
+    else.
+      r_config-output_type ?= ld_output_type.
     endif.
 
   endmethod.
@@ -156,6 +157,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     ls_config-mock_tab_key  = to_upper( i_mock_tab_key ).
     ls_config-output_param  = to_upper( i_output_param ).
     ls_config-field_only    = to_upper( i_field_only ).
+    ls_config-const_value   = i_const_value.
 
     read table mt_config with key method_name = ls_config-method_name transporting no fields.
     if sy-subrc is initial.
@@ -288,6 +290,10 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
           _src( |    call method mo_proxy_target->('{ mv_interface_name }~{ <method>-name }')| ). "#EC NOTEXT
           _src( |      parameter-table lt_params.| ).            "#EC NOTEXT
 
+        elseif <conf>-const_value is not initial.
+
+          _src( |    { <conf>-output_param } = '{ <conf>-const_value }'.| )   ##NO_TEXT.
+
         else.
 
           _src( '    data lr_data type ref to data.' ).          "#EC NOTEXT
@@ -326,10 +332,14 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       zcx_mockup_loader_error=>raise(
         msg  = 'Specify method_name'
         code = 'MM' ). "#EC NOTEXT
-    elseif i_config-mock_name is initial.
+    elseif i_config-mock_name is initial and i_config-const_value is initial.
       zcx_mockup_loader_error=>raise(
         msg  = 'Specify mock_name'
         code = 'MK' ). "#EC NOTEXT
+    elseif i_config-mock_name is not initial and i_config-const_value is not initial.
+      zcx_mockup_loader_error=>raise(
+        msg  = 'Either mock or const value is allowed'
+        code = 'CV' ). "#EC NOTEXT
     elseif boolc( i_config-sift_param is initial ) <> boolc( i_config-mock_tab_key is initial ). " XOR
       zcx_mockup_loader_error=>raise(
         msg  = 'Specify both i_sift_param and i_mock_tab_key'
@@ -384,17 +394,23 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       p_method_name    = <method>-name
       p_parameter_name = es_output_param-name ).
 
-    if i_config-field_only is initial.
-      if not ed_output_type->kind co 'ST'. " Table or structure
-        zcx_mockup_loader_error=>raise(
-          msg  = |Param { es_output_param-name } must be table or structure|
-          code = 'PT' ). "#EC NOTEXT
-      endif.
-    else.
+    if i_config-field_only is not initial.
       if ed_output_type->kind <> cl_abap_typedescr=>kind_elem. " Elementary
         zcx_mockup_loader_error=>raise(
           msg  = |Field only param { es_output_param-name } must be elementary|
           code = 'PL' ). "#EC NOTEXT
+      endif.
+    elseif i_config-const_value is not initial.
+      if ed_output_type->kind <> cl_abap_typedescr=>kind_elem. " Elementary
+        zcx_mockup_loader_error=>raise(
+          msg  = |Const value result { es_output_param-name } must be elementary|
+          code = 'CE' ). "#EC NOTEXT
+      endif.
+    else.
+      if not ed_output_type->kind co 'ST'. " Table or structure
+        zcx_mockup_loader_error=>raise(
+          msg  = |Param { es_output_param-name } must be table or structure|
+          code = 'PT' ). "#EC NOTEXT
       endif.
     endif.
 
