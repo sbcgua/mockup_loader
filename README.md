@@ -141,7 +141,9 @@ This will result in the data set where key field `CONNID` will be equal to `I_CO
 
 In addition, forwarding calls to another object (implementing same interface) is supported. For example if some of accessor methods must be connected to mocks and some others were implemented manually in a supporting test (or real production) class. See [REFERENCE.md](docs/REFERENCE.md).
 
-Finally, it is possible to return just one field of the first matching record e.g. Document type of a document selected by number. For this specify the field to return in `I_FIELD_ONLY` param. See [REFERENCE.md](docs/REFERENCE.md).
+It is possible to return just one field of the first matching record e.g. Document type of a document selected by number. For this specify the field to return in `I_FIELD_ONLY` param. See [REFERENCE.md](docs/REFERENCE.md).
+
+And finally a feature that is not related to mocks - passing `I_CONST_VALUE` would return this value instead of loading data from text mock.
 
 ![accessor pattern](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/sbcgua/mockup_loader/master/docs/mockup-stub.puml)
 

@@ -594,6 +594,7 @@ Generated stub instance implements `ZIF_MOCKUP_LOADER_STUB_CONTROL` interface. I
     i_mock_tab_key type abap_compname optional
     i_output_param type abap_parmname optional
     i_field_only   type abap_parmname optional
+    i_const_value  type string optional
   returning
     r_instance type ref to zcl_mockup_loader_stub_factory
 ```
@@ -606,6 +607,7 @@ Activates stub for the given method, connects it to the specified mockup path, o
 - **i_mock_tab_key** - key field in the mock data to use for the filter
 - **i_output_param** - parameter of the interface to save data to. Exporting, changing and returning are supported. If empty - the returning parameter is assumed and searched in the method definition. Parameter must be a table or a structure (as all load targets)
 - **i_field_only**   - return just specified field of the first metching record. e.g. Document type of a document selected by number. See example below.
+- **i_const_value**  - return this value as the output. Does not load any mocks just returns an elementary value (returing type must be convertible from string)
 - **returning value** is the instance of stub factory, for chaining
 
 Example of **i_field_only** usage. The below code will find the **first** record in the prepared data in which field `CONNID` matches input parameter `I_CONNID` and return `PRICE` field of this method.
