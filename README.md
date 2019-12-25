@@ -1,10 +1,11 @@
 [![Build Status](https://travis-ci.com/sbcgua/mockup_loader.svg?branch=master)](https://travis-ci.com/sbcgua/mockup_loader)
+![Version](https://img.shields.io/github/v/tag/sbcgua/mockup_loader.svg)
 
 # Mockup Loader for ABAP unit testing
 
 ![logo](docs/logo80.png)
 
-*Version: 2.1.5 ([history of changes](/changelog.txt))*
+*[history of changes](/changelog.txt)*
 
 Mockup loader is a tool to simplify data preparation for SAP ABAP unit tests. Create unit test data in Excel, easily convert it into MIME object that travels with ABAP package, easily consume the data from your unit test code. The tool was created with the following high level goals in mind:
 - simplify **communication process between a developer and a business analyst** (from client side in particular)
