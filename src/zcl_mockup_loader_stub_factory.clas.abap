@@ -318,7 +318,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
           loop at <method>-parameters assigning <param>.
             l_param_kind = <param>-parm_kind.
-            translate l_param_kind using 'IEEICCRR'. " Inporting -> exporting, etc
+            translate l_param_kind using 'IEEICCRR'. " Importing -> exporting, etc
             _src( |    ls_param-name = '{ <param>-name }'.| ) ##NO_TEXT.
             _src( |    ls_param-kind = '{ l_param_kind }'.| ) ##NO_TEXT.
             _src( |    get reference of { <param>-name } into ls_param-value.| ) ##NO_TEXT.
