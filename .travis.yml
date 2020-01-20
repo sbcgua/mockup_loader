@@ -4,7 +4,7 @@ node_js:
 notifications:
   email: false
 before_script:
-  - npm install -g abaplint
+  - npm install -g abaplint@2.19
   - abaplint -v
 script:
   - abaplint
