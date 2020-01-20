@@ -149,6 +149,22 @@ And finally a feature that is not related to mocks - passing `I_CONST_VALUE` wou
 
 ![accessor pattern](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/sbcgua/mockup_loader/master/docs/mockup-stub.puml)
 
+#### String connectors
+
+Available since v2.1.6.
+
+The above `connect_method/proxy` configuration can be also done with a single string. See [REFERENCE.md](docs/REFERENCE.md) for details.
+
+```abap
+  ...
+  lo_factory->connect( 'tab_return -> EXAMPLE/sflight' ).
+  lo_factory->connect( 'tab_return -> EXAMPLE/sflight [connid = i_connid]' ).
+  lo_factory->connect( 'tab_return -> EXAMPLE/sflight(this_field_only) [connid = i_connid]' ).
+  lo_factory->connect( 'tab_return -> ~EXAMPLE/sflight [connid = i_connid]' ). " corresponding only
+  lo_factory->connect( 'tab_return -> =exact_value' ).
+  lo_factory->connect( 'tab_return -> *' ). " proxy
+```
+
 #### Stub control
 
 Generated stub instance implements `ZIF_MOCKUP_LOADER_STUB_CONTROL` interface, which allows:

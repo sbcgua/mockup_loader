@@ -8,6 +8,10 @@ Legend
 + : added
 - : removed
 
+v2.1.6, 2020-01-??
+------------------
++ connect stub with string descriptors
+
 v2.1.5, 2019-12-24
 ------------------
 + control interface ZIF_MOCKUP_LOADER_STUB_CONTROL->get_call_count()

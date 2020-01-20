@@ -660,6 +660,39 @@ lo_factory->forward_method( " Pass through, call lcl_custom_accessor->get_x
     i_method    = 'GET_X' ).
 ```
 
+### CONNECT
+
+```abap
+  importing
+    i_connect_string type string
+  returning
+    r_instance type ref to zcl_mockup_loader_stub_factory
+```
+
+A more readable alternative of `connect_method` and `connect_proxy`. Allows to connect replace them with a single properly formatted string that defines connections. For example, connect `get_my_data` method to `mock_path` mock file:
+
+```abap
+lo_factory->connect( 'get_my_data -> mock_path' ).
+```
+
+Supports:
+- `'get_my_data -> my_mock'` - map `get_my_data` method to `my_mock`
+- `'get_my_data -> my_mock [field = i_param]'` - filter data where `field` of an item = `i_param` passed to the method
+- `'get_my_data -> ~my_mock'` - copy only corresponding fields, for the case when target structure/table is **SMALLER** than the source. So `non-strict` reading in a opposite sense
+- `'get_my_data -> TEST_SUITE/~my_mock'` - this also works as 'corresponding' (deeper filename starts with ~)
+- `'get_my_data -> ~my_mock [field = i_param]'` - importantly, if the `field` is **NOT** in the target structure **you still CAN use it** for filtering.
+- `'get_my_data -> *'` - forward the method
+- `'get_my_data -> my_mock(single_field) [field = i_param]'` - return one specific field of the first filtered item
+- `'get_my_data -> =value'` - return constant single value (or amount)
+
+Addressing structured method parameters also works: `'get_my_data -> mock_path [a = i_struc-field]'`
+
+The string is case insensitive (except the file path - zip is case sensitive !!!) so you can specify most of parameters using the case you prefer. Also spaces are trimmed. The following strings would give the same result:
+- `'get_my_data -> mock_path [a = i_a]'`
+- `'GET_MY_DATA -> mock_path [A = I_A]'`
+- `'get_my_data->mock_path[a=i_a]'`
+
+
 ### GENERATE_STUB
 
 ```abap
