@@ -17,6 +17,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods filter_by_range_param for testing raising zcx_mockup_loader_error.
     methods controls for testing raising zcx_mockup_loader_error.
     methods const_value for testing raising zcx_mockup_loader_error.
+    methods for_badi for testing raising zcx_mockup_loader_error.
 
     " HELPERS
     methods get_ml
@@ -71,6 +72,8 @@ class lcl_test_proxy_target implementation.
   endmethod.
 endclass.
 
+constants c_dummy_interace_name type classname value 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+
 class lcl_test_base definition final.
   public section.
     class-methods main_test
@@ -93,7 +96,7 @@ class lcl_test_base implementation.
       create object lo_dc type (iv_factory_classname)
         exporting
           io_ml_instance = lo_ml
-          i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+          i_interface_name = c_dummy_interace_name.
 
       lo_dc->connect_method(
         i_sift_param      = 'I_CONNID'
@@ -180,7 +183,7 @@ class ltcl_mockup_stub_factory_test implementation.
       create object lo_dc
         exporting
           io_ml_instance = lo_ml
-          i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+          i_interface_name = c_dummy_interace_name.
 
       lo_dc->connect_method(
         i_method_name     = 'TAB_RETURN'
@@ -200,7 +203,7 @@ class ltcl_mockup_stub_factory_test implementation.
     data ls_conf_act type zcl_mockup_loader_stub_base=>ty_mock_config.
     data lo_ex type ref to zcx_mockup_loader_error.
 
-    ld_if ?= cl_abap_typedescr=>describe_by_name( 'ZIF_MOCKUP_LOADER_STUB_DUMMY' ).
+    ld_if ?= cl_abap_typedescr=>describe_by_name( c_dummy_interace_name ).
 
     try.
       clear: lo_ex, ls_conf.
@@ -397,7 +400,7 @@ class ltcl_mockup_stub_factory_test implementation.
         exporting
           io_ml_instance   = lo_ml
           io_proxy_target  = lo_ml
-          i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+          i_interface_name = c_dummy_interace_name.
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'II'.
@@ -417,7 +420,7 @@ class ltcl_mockup_stub_factory_test implementation.
       create object lo
         exporting
           io_ml_instance   = lo_ml
-          i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+          i_interface_name = c_dummy_interace_name.
       lo->forward_method( 'PROXY_TEST' ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
@@ -429,7 +432,7 @@ class ltcl_mockup_stub_factory_test implementation.
         exporting
           io_ml_instance   = lo_ml
           io_proxy_target  = lo_proxy_target
-          i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+          i_interface_name = c_dummy_interace_name.
       lo->forward_method( 'PROXY_TEST_XXX' ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
@@ -459,7 +462,7 @@ class ltcl_mockup_stub_factory_test implementation.
         exporting
           io_ml_instance   = lo_ml
           io_proxy_target  = lo_proxy_target
-          i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+          i_interface_name = c_dummy_interace_name.
       lo->forward_method( 'PROXY_TEST' ).
       li_if ?= lo->generate_stub( ).
       l_act = li_if->proxy_test( i_p1 = 'Hello' i_p2 = 123 ).
@@ -482,7 +485,7 @@ class ltcl_mockup_stub_factory_test implementation.
     create object ro_factory
       exporting
         io_ml_instance   = io_ml " get_ml( )
-        i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+        i_interface_name = c_dummy_interace_name.
   endmethod.
 
   method get_sflights.
@@ -666,7 +669,7 @@ class ltcl_mockup_stub_factory_test implementation.
       exporting
         io_ml_instance   = lo_ml
         io_proxy_target  = lo_proxy_target
-        i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+        i_interface_name = c_dummy_interace_name.
 
     lo_dc->connect_method(
       i_method_name     = 'TAB_RETURN'
@@ -784,6 +787,64 @@ class ltcl_mockup_stub_factory_test implementation.
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'CE' ).
     endtry.
+
+  endmethod.
+
+  method for_badi.
+
+    data lo_ml type ref to zcl_mockup_loader.
+    data lo_dc type ref to zcl_mockup_loader_stub_factory.
+    data li_if type ref to zif_mockup_loader_stub_dummy.
+    data lo_stub type ref to object.
+
+    lo_ml  = zcl_mockup_loader=>create(
+      i_type = 'MIME'
+      i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
+
+    create object lo_dc
+      exporting
+        io_ml_instance = lo_ml
+        i_interface_name = c_dummy_interace_name.
+
+*    lo_dc->connect_method(
+*      i_sift_param      = 'I_CONNID'
+*      i_mock_tab_key    = 'CONNID'
+*      i_method_name     = 'TAB_RETURN'
+*      i_mock_name       = 'EXAMPLE/sflight' ).
+
+    li_if ?= lo_dc->generate_stub( i_for_badi = abap_true ).
+
+    data lo_badi type ref to cl_badi_base.
+    lo_badi ?= li_if. " Check inheritance
+
+    field-symbols <imp> type ref to object.
+    field-symbols <imps> type table.
+    field-symbols <intf_name> type classname.
+    lo_stub ?= li_if.
+
+    assign lo_stub->('IMP') to <imp>.
+    cl_abap_unit_assert=>assert_subrc( ).
+    assign lo_stub->('IMPS') to <imps>.
+    cl_abap_unit_assert=>assert_subrc( ).
+    assign lo_stub->('INTF_NAME') to <intf_name>.
+    cl_abap_unit_assert=>assert_subrc( ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = <imp>
+      exp = lo_stub ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( <imps> )
+      exp = 1 ).
+
+    read table <imps> index 1 assigning <imp>.
+    cl_abap_unit_assert=>assert_equals(
+      act = <imp>
+      exp = lo_stub ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = <intf_name>
+      exp = c_dummy_interace_name ).
 
   endmethod.
 

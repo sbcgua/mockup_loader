@@ -34,6 +34,8 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       raising
         zcx_mockup_loader_error .
     methods generate_stub
+      importing
+        i_for_badi type abap_bool default abap_false
       returning
         value(r_stub) type ref to object .
   protected section.
