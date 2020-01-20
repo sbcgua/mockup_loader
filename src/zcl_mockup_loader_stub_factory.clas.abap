@@ -33,6 +33,13 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         value(r_instance) type ref to zcl_mockup_loader_stub_factory
       raising
         zcx_mockup_loader_error .
+    methods connect
+      importing
+        i_connect_string type string
+      returning
+        value(r_instance) type ref to zcl_mockup_loader_stub_factory
+      raising
+        zcx_mockup_loader_error .
     methods generate_stub
       returning
         value(r_stub) type ref to object .
@@ -87,6 +94,14 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         i_config type zcl_mockup_loader_stub_base=>ty_mock_config
       returning
         value(rd_type) type ref to cl_abap_structdescr.
+
+    class-methods parse_connect_string
+      importing
+        i_connect_string type string
+      returning
+        value(rs_parsed) type zcl_mockup_loader_stub_base=>ty_mock_config
+      raising
+        zcx_mockup_loader_error .
 
 ENDCLASS.
 
@@ -143,6 +158,29 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     endif.
 
     rd_type = cl_abap_structdescr=>get( lt_components ).
+
+  endmethod.
+
+
+  method connect.
+
+    data ls_params type zcl_mockup_loader_stub_base=>ty_mock_config.
+
+    ls_params = parse_connect_string( i_connect_string ).
+
+    if ls_params-mock_name = '*'. " Proxy
+      me->forward_method(
+        i_method_name = ls_params-method_name ).
+    else.
+      me->connect_method(
+        i_sift_param      = ls_params-sift_param
+        i_mock_tab_key    = ls_params-mock_tab_key
+        i_field_only      = ls_params-field_only
+        i_method_name     = ls_params-method_name
+        i_corresponding   = ls_params-corresponding
+        i_const_value     = ls_params-const_value
+        i_mock_name       = ls_params-mock_name ).
+    endif.
 
   endmethod.
 
@@ -321,6 +359,60 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
         it_config       = mt_config
         io_proxy_target = mo_proxy_target
         io_ml           = mo_ml.
+
+  endmethod.
+
+
+  method parse_connect_string.
+    " for mock          `METHOD -> file`
+    " for mock w/params `METHOD -> file [param = key]`
+    " for proxy         `METHOD -> *`
+    " for corresponding `METHOD -> ~file`
+    " for single field  `METHOD -> file(field_name)`
+    " for fixed value   `METHOD -> =value`
+
+    data l_pair type string.
+    data l_filter type string.
+    data lv_len type i.
+
+    split i_connect_string at '[' into l_pair l_filter.
+    if l_filter is not initial.
+      lv_len = strlen( l_filter ).
+      if substring( val = l_filter off = lv_len - 1 ) <> ']'.
+        zcx_mockup_loader_error=>raise( msg = 'incorrect connect string format' code = 'SF' ).
+      endif.
+      l_filter = substring( val = l_filter len = lv_len - 1 ).
+    endif.
+
+    split l_pair at '->' into rs_parsed-method_name rs_parsed-mock_name.
+    split l_filter at '=' into rs_parsed-mock_tab_key rs_parsed-sift_param.
+
+    split rs_parsed-mock_name at '(' into rs_parsed-mock_name rs_parsed-field_only.
+    if rs_parsed-field_only is not initial.
+      lv_len = strlen( rs_parsed-field_only ).
+      if substring( val = rs_parsed-field_only off = lv_len - 1 ) <> ')'.
+        zcx_mockup_loader_error=>raise( msg = 'incorrect connect string format' code = 'SF' ).
+      endif.
+      rs_parsed-field_only = substring( val = rs_parsed-field_only len = lv_len - 1 ).
+    endif.
+
+    condense rs_parsed-method_name.
+    condense rs_parsed-mock_name.
+    condense rs_parsed-sift_param.
+    condense rs_parsed-mock_tab_key.
+
+    if rs_parsed-mock_name cp '*/~*'.
+      rs_parsed-mock_name = replace( val = rs_parsed-mock_name sub = '/~' with = '/' ).
+      rs_parsed-corresponding = abap_true.
+    elseif rs_parsed-mock_name cp '~*'.
+      rs_parsed-mock_name = replace( val = rs_parsed-mock_name sub = '~' with = '' ).
+      rs_parsed-corresponding = abap_true.
+    elseif rs_parsed-mock_name+0(1) = '='.
+      rs_parsed-const_value = rs_parsed-mock_name.
+      clear rs_parsed-mock_name.
+      shift rs_parsed-const_value left by 1 places.
+      condense rs_parsed-const_value.
+    endif.
 
   endmethod.
 

@@ -9,7 +9,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods build_config for testing.
     methods instantiation for testing.
     methods forward_method for testing.
-    methods proxy_forwarding for testing.
+    methods proxy_forwarding for testing raising zcx_mockup_loader_error.
     methods filtering for testing raising zcx_mockup_loader_error.
     methods filtering_w_struc_param for testing raising zcx_mockup_loader_error.
     methods returning_value for testing raising zcx_mockup_loader_error.
@@ -17,6 +17,9 @@ class ltcl_mockup_stub_factory_test definition final
     methods filter_by_range_param for testing raising zcx_mockup_loader_error.
     methods controls for testing raising zcx_mockup_loader_error.
     methods const_value for testing raising zcx_mockup_loader_error.
+    methods connect_string_positive for testing raising zcx_mockup_loader_error.
+    methods parse_string_negative for testing.
+    methods parse_string_positive for testing raising zcx_mockup_loader_error.
 
     " HELPERS
     methods get_ml
@@ -27,6 +30,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods get_factory
       importing
         io_ml type ref to zcl_mockup_loader
+        io_proxy type ref to zif_mockup_loader_stub_dummy optional
       returning
         value(ro_factory) type ref to zcl_mockup_loader_stub_factory
       raising zcx_mockup_loader_error.
@@ -43,9 +47,13 @@ endclass.
 class lcl_test_proxy_target definition.
   public section.
     interfaces zif_mockup_loader_stub_dummy.
+    class-methods create returning value(ro_instance) type ref to lcl_test_proxy_target.
 endclass.
 
 class lcl_test_proxy_target implementation.
+  method create.
+    create object ro_instance.
+  endmethod.
   method zif_mockup_loader_stub_dummy~proxy_test.
     r_val = |{ i_p1 } { i_p2 }|.
   endmethod.
@@ -389,10 +397,8 @@ class ltcl_mockup_stub_factory_test implementation.
     endtry.
     assert_excode 'IF'.
 
-    data lo_proxy_target type ref to lcl_test_proxy_target.
     try. " wrong proxy target
       clear: lo_ex.
-      create object lo_proxy_target.
       create object lo
         exporting
           io_ml_instance   = lo_ml
@@ -409,8 +415,6 @@ class ltcl_mockup_stub_factory_test implementation.
     data lo type ref to zcl_mockup_loader_stub_factory.
     data lo_ex type ref to zcx_mockup_loader_error.
     data lo_ml type ref to zcl_mockup_loader.
-    data lo_proxy_target type ref to lcl_test_proxy_target.
-    create object lo_proxy_target.
 
     try. " no proxy during creation
       clear: lo_ex.
@@ -428,7 +432,7 @@ class ltcl_mockup_stub_factory_test implementation.
       create object lo
         exporting
           io_ml_instance   = lo_ml
-          io_proxy_target  = lo_proxy_target
+          io_proxy_target  = lcl_test_proxy_target=>create( )
           i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
       lo->forward_method( 'PROXY_TEST_XXX' ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -447,26 +451,19 @@ class ltcl_mockup_stub_factory_test implementation.
 
   method proxy_forwarding.
     data lo type ref to zcl_mockup_loader_stub_factory.
-    data lo_ex type ref to zcx_mockup_loader_error.
     data lo_ml type ref to zcl_mockup_loader.
-    data lo_proxy_target type ref to lcl_test_proxy_target.
     data li_if type ref to zif_mockup_loader_stub_dummy.
     data l_act type string.
-    create object lo_proxy_target.
 
-    try. " missing method
-      create object lo
-        exporting
-          io_ml_instance   = lo_ml
-          io_proxy_target  = lo_proxy_target
-          i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
-      lo->forward_method( 'PROXY_TEST' ).
-      li_if ?= lo->generate_stub( ).
-      l_act = li_if->proxy_test( i_p1 = 'Hello' i_p2 = 123 ).
-      cl_abap_unit_assert=>assert_equals( act = l_act exp = 'Hello 123' ).
-    catch zcx_mockup_loader_error into lo_ex.
-      cl_abap_unit_assert=>fail( ).
-    endtry.
+    create object lo
+      exporting
+        io_ml_instance   = lo_ml
+        io_proxy_target  = lcl_test_proxy_target=>create( )
+        i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+    lo->forward_method( 'PROXY_TEST' ).
+    li_if ?= lo->generate_stub( ).
+    l_act = li_if->proxy_test( i_p1 = 'Hello' i_p2 = 123 ).
+    cl_abap_unit_assert=>assert_equals( act = l_act exp = 'Hello 123' ).
 
   endmethod.
 
@@ -482,7 +479,8 @@ class ltcl_mockup_stub_factory_test implementation.
     create object ro_factory
       exporting
         io_ml_instance   = io_ml " get_ml( )
-        i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+        i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'
+        io_proxy_target  = io_proxy.
   endmethod.
 
   method get_sflights.
@@ -654,9 +652,6 @@ class ltcl_mockup_stub_factory_test implementation.
     data lt_exp type flighttab.
     data lo_ex type ref to zcx_mockup_loader_error.
     data li_control type ref to zif_mockup_loader_stub_control.
-    data lo_proxy_target type ref to lcl_test_proxy_target.
-
-    create object lo_proxy_target.
 
     lo_ml  = zcl_mockup_loader=>create(
       i_type = 'MIME'
@@ -665,7 +660,7 @@ class ltcl_mockup_stub_factory_test implementation.
     create object lo_dc
       exporting
         io_ml_instance   = lo_ml
-        io_proxy_target  = lo_proxy_target
+        io_proxy_target  = lcl_test_proxy_target=>create( )
         i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
 
     lo_dc->connect_method(
@@ -784,6 +779,152 @@ class ltcl_mockup_stub_factory_test implementation.
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'CE' ).
     endtry.
+
+  endmethod.
+
+  method connect_string_positive.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data ml type ref to zcl_mockup_loader.
+    data ls_config like line of factory->mt_config.
+
+    ml      = get_ml( ).
+    factory = get_factory(
+      io_ml    = ml
+      io_proxy = lcl_test_proxy_target=>create( ) ).
+
+    factory->connect( 'tab_return -> mock_dummy' ).
+    factory->connect( 'proxy_test -> *' ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( factory->mt_config )
+      exp = 2 ).
+
+    read table factory->mt_config index 1 into ls_config.
+    cl_abap_unit_assert=>assert_equals(
+      act = ls_config-method_name
+      exp = 'TAB_RETURN' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = ls_config-mock_name
+      exp = 'mock_dummy' ).
+
+    read table factory->mt_config index 2 into ls_config.
+    cl_abap_unit_assert=>assert_equals(
+      act = ls_config-method_name
+      exp = 'PROXY_TEST' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = ls_config-as_proxy
+      exp = abap_true ).
+
+  endmethod.
+
+  method parse_string_negative.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try .
+      zcl_mockup_loader_stub_factory=>parse_connect_string( 'tab_return -> mock_dummy (field' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'SF' ).
+    endtry.
+
+    try .
+      zcl_mockup_loader_stub_factory=>parse_connect_string( 'tab_return -> mock_dummy [filter' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'SF' ).
+    endtry.
+
+  endmethod.
+
+  method parse_string_positive.
+
+    data ls_exp type zcl_mockup_loader_stub_base=>ty_mock_config.
+
+    clear ls_exp.
+    ls_exp-method_name   = 'methodX'.
+    ls_exp-mock_name     = 'mock_path'.
+    ls_exp-corresponding = ''.
+    ls_exp-sift_param    = ''.
+    ls_exp-mock_tab_key  = ''.
+    ls_exp-field_only    = ''.
+    ls_exp-const_value   = ''.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> mock_path' )
+      exp = ls_exp ).
+
+    clear ls_exp.
+    ls_exp-method_name   = 'methodX'.
+    ls_exp-mock_name     = 'mock_path~txt'.
+    ls_exp-corresponding = 'X'.
+    ls_exp-sift_param    = ''.
+    ls_exp-mock_tab_key  = ''.
+    ls_exp-field_only    = ''.
+    ls_exp-const_value   = ''.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> ~mock_path~txt' )
+      exp = ls_exp ).
+
+    clear ls_exp.
+    ls_exp-method_name   = 'methodX'.
+    ls_exp-mock_name     = 'dir/mock_path'.
+    ls_exp-corresponding = 'X'.
+    ls_exp-sift_param    = ''.
+    ls_exp-mock_tab_key  = ''.
+    ls_exp-field_only    = ''.
+    ls_exp-const_value   = ''.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> dir/~mock_path' )
+      exp = ls_exp ).
+
+    clear ls_exp.
+    ls_exp-method_name   = 'methodX'.
+    ls_exp-mock_name     = 'mock_path'.
+    ls_exp-corresponding = ''.
+    ls_exp-sift_param    = ''.
+    ls_exp-mock_tab_key  = ''.
+    ls_exp-field_only    = 'result'.
+    ls_exp-const_value   = ''.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> mock_path (result)' )
+      exp = ls_exp ).
+
+    clear ls_exp.
+    ls_exp-method_name   = 'methodX'.
+    ls_exp-mock_name     = 'mock_path'.
+    ls_exp-corresponding = ''.
+    ls_exp-sift_param    = 'param'.
+    ls_exp-mock_tab_key  = 'field'.
+    ls_exp-field_only    = ''.
+    ls_exp-const_value   = ''.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> mock_path [ field = param ]' )
+      exp = ls_exp ).
+
+    clear ls_exp.
+    ls_exp-method_name   = 'methodX'.
+    ls_exp-mock_name     = ''.
+    ls_exp-corresponding = ''.
+    ls_exp-sift_param    = ''.
+    ls_exp-mock_tab_key  = ''.
+    ls_exp-field_only    = ''.
+    ls_exp-const_value   = 'value'.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> =value' )
+      exp = ls_exp ).
+
+    clear ls_exp.
+    ls_exp-method_name   = 'methodX'.
+    ls_exp-mock_name     = '*'.
+    ls_exp-corresponding = ''.
+    ls_exp-sift_param    = ''.
+    ls_exp-mock_tab_key  = ''.
+    ls_exp-field_only    = ''.
+    ls_exp-const_value   = ''.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> *' )
+      exp = ls_exp ).
 
   endmethod.
 
