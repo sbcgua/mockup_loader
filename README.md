@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.com/sbcgua/mockup_loader.svg?branch=master)](https://travis-ci.com/sbcgua/mockup_loader)
 ![Version](https://img.shields.io/github/v/tag/sbcgua/mockup_loader.svg)
-![Abap package version](https://img.shields.io/endpoint?url=https://shield.abap.space/get-abap-version-shield-json/github/sbcgua/mockup_loader/src/zif_mockup_loader_constants.intf.abap/version)
+![Abap package version](https://img.shields.io/endpoint?url=https://shield.abap.space/version-shield-json/github/sbcgua/mockup_loader/src/zif_mockup_loader_constants.intf.abap/version)
 
 # Mockup Loader for ABAP unit testing
 
