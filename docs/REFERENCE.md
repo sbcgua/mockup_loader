@@ -74,7 +74,7 @@ call method zcl_mockup_loader=>set_params
 ```abap
 importing
   I_OBJ    type STRING
-  I_STRICT type ABAP_BOOL default ABAP_TRUE
+  I_STRICT type ABAP_BOOL default ABAP_FALSE
   I_DEEP   type ABAP_BOOL default ABAP_FALSE
   I_WHERE  type ANY       optional
 exporting
@@ -103,9 +103,11 @@ Loading code (`i_strict = false`, so all fields, missing in the file, are initia
 ```abap
 try.
   call method o_ml->load_data
-    exporting i_obj       = 'TEST1/bseg'
-              i_strict    = abap_false
-    importing e_container = lt_bseg.
+    exporting
+      i_obj       = 'TEST1/bseg'
+      i_strict    = abap_false
+    importing
+      e_container = lt_bseg.
 catch zcx_mockup_loader_error into lo_ex.
   fail( lo_ex->get_text( ) ).
 endtry.
@@ -334,7 +336,7 @@ Same as `LOAD_RAW` except that the path should be completely specified, with the
 ```abap
 importing
   I_OBJ       type STRING
-  I_STRICT    type ABAP_BOOL default ABAP_TRUE
+  I_STRICT    type ABAP_BOOL default ABAP_FALSE
   I_NAME      type CHAR40
   I_TYPE      type CSEQUENCE
   I_TYPE_DESC type ref to CL_ABAP_TYPEDESCR OPTIONAL

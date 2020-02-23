@@ -56,6 +56,7 @@ Hard-coding all of that data was not an option - too much to code, difficult to 
 o_ml->load_data( " Load test data (structure) from mockup
   exporting
     i_obj       = 'TEST1/bkpf'
+    i_strict    = abap_true
   importing
     e_container = ls_bkpf ).
 
