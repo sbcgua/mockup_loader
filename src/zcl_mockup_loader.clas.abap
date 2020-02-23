@@ -75,18 +75,10 @@ class ZCL_MOCKUP_LOADER definition
         !i_required_version type string
       returning
         value(r_fits) type abap_bool .
-    methods load_raw
-      importing
-        !i_obj type string
-        !i_ext type string optional
-      exporting
-        !e_content type xstring
-      raising
-        zcx_mockup_loader_error .
     methods load_and_store
       importing
         !i_obj type string
-        !i_strict type abap_bool default abap_true
+        !i_strict type abap_bool default abap_false
         !i_name type char40
         !i_type type csequence optional
         !i_tabkey type abap_compname optional
@@ -441,26 +433,6 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       i_name     = i_name
       i_data_ref = lr_data
       i_tabkey   = i_tabkey ).
-
-  endmethod.
-
-
-  method load_raw.
-    data l_filename type string.
-
-    if e_content is not supplied.
-      zcx_mockup_loader_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
-    endif.
-
-    if i_ext is initial.
-      l_filename = i_obj && '.txt'.
-    else.
-      l_filename = i_obj && i_ext.
-    endif.
-
-    mo_zip->get(
-      exporting name    = l_filename
-      importing content = e_content ).
 
   endmethod.
 

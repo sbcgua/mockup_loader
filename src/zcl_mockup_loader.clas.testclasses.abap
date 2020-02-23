@@ -145,7 +145,7 @@ class ltcl_test_mockup_loader definition for testing
 
     methods parse_data               for testing.
     methods load_and_store           for testing.
-    methods load_raw                 for testing.
+    methods load_blob                for testing.
     methods load_data_to_ref         for testing.
     methods load_deep                for testing raising zcx_mockup_loader_error.
     methods load_deep_negative       for testing.
@@ -718,7 +718,7 @@ class ltcl_test_mockup_loader implementation.
 **********************************************************************
 * LOAD_RAW - test load only method e.g. for XMLs
 **********************************************************************
-  method load_raw.
+  method load_blob.
     data:
           lo_exr     type ref to cx_root,
           lo_ex      type ref to zcx_mockup_loader_error,
@@ -731,15 +731,12 @@ class ltcl_test_mockup_loader implementation.
 
     try. " .XML
       lo_conv = cl_abap_conv_in_ce=>create( encoding = zif_mockup_loader_constants=>encoding_utf8 ).
-      o->load_raw(
-        exporting
-          i_obj = 'testdir/test_raw'
-          i_ext = '.xml'
-        importing
-          e_content = l_xstr_act ).
+      l_xstr_act = o->load_blob( 'testdir/test_raw.xml' ).
       lo_conv->convert(
-        exporting input = l_xstr_act
-        importing data  = l_str_act ).
+        exporting
+          input = l_xstr_act
+        importing
+          data  = l_str_act ).
     catch cx_root into lo_exr.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
@@ -747,25 +744,19 @@ class ltcl_test_mockup_loader implementation.
     cl_abap_unit_assert=>assert_equals( act = l_str_act exp = l_str_exp ).
 
     try. " .TXT
-      o->load_raw(
-        exporting i_obj = 'testdir/test_raw'
-        importing e_content = l_xstr_act ).
+      l_xstr_act = o->load_blob( 'testdir/test_raw.txt' ).
       lo_conv->convert(
-        exporting input = l_xstr_act
-        importing data  = l_str_act ).
+        exporting
+          input = l_xstr_act
+        importing
+          data  = l_str_act ).
     catch cx_root into lo_exr.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
 
     cl_abap_unit_assert=>assert_equals( act = l_str_act exp = l_str_exp ).
 
-    try. " No container
-      o->load_raw( i_obj = 'testdir/test_raw' ).
-    catch zcx_mockup_loader_error into lo_ex.
-    endtry.
-    assert_excode 'NC'.
-
-  endmethod. "load_raw
+  endmethod.
 
   method load_data_to_ref.
     data:
