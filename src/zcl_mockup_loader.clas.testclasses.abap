@@ -262,20 +262,29 @@ class ltcl_test_mockup_loader implementation.
     " Strict ********************************************************
     try.
       o->load_data(
-        exporting i_obj       = 'testdir/testfile_complete'
-        importing e_container = dummy_tab_act ).
+        exporting
+          i_obj       = 'testdir/testfile_complete'
+          i_strict    = abap_true
+        importing
+          e_container = dummy_tab_act ).
 
       cl_abap_unit_assert=>assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
 
       o->load_data(
-        exporting i_obj       = 'testdir/testfile_complete'
-        importing e_container = dummy_act ).
+        exporting
+          i_obj       = 'testdir/testfile_complete'
+          i_strict    = abap_true
+        importing
+          e_container = dummy_act ).
 
       cl_abap_unit_assert=>assert_equals( act = dummy_act exp = dummy_exp ).
 
       o->load_data( " No MANDT field in file
-        exporting i_obj       = 'testdir/testfile_no_mandt'
-        importing e_container = dummy_tab_act ).
+        exporting
+          i_obj       = 'testdir/testfile_no_mandt'
+          i_strict    = abap_true
+        importing
+          e_container = dummy_tab_act ).
 
       cl_abap_unit_assert=>assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
 
@@ -477,12 +486,18 @@ class ltcl_test_mockup_loader implementation.
 
     try.
       o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_act ).
+        exporting
+          i_rawdata   = l_string
+          i_strict    = abap_true
+        importing
+          e_container = dummy_act ).
 
       o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act ).
+        exporting
+          i_rawdata   = l_string
+          i_strict    = abap_true
+        importing
+          e_container = dummy_tab_act ).
 
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
@@ -494,8 +509,11 @@ class ltcl_test_mockup_loader implementation.
     " Parse to sorted and hashed tables ***************
     try.
       o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_stab ).
+        exporting
+          i_rawdata   = l_string
+          i_strict    = abap_true
+        importing
+          e_container = dummy_stab ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
@@ -504,8 +522,11 @@ class ltcl_test_mockup_loader implementation.
 
     try.
       o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_htab ).
+        exporting
+          i_strict    = abap_true
+          i_rawdata   = l_string
+        importing
+          e_container = dummy_htab ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
@@ -541,8 +562,11 @@ class ltcl_test_mockup_loader implementation.
 
     try.
       o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act ).
+        exporting
+          i_rawdata   = l_string
+          i_strict    = abap_true
+        importing
+          e_container = dummy_tab_act ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'XE'.
@@ -553,8 +577,11 @@ class ltcl_test_mockup_loader implementation.
 
     try.
       o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_val ).
+        exporting
+          i_rawdata   = l_string
+          i_strict    = abap_true
+        importing
+          e_container = dummy_val ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'DT'.
@@ -565,8 +592,11 @@ class ltcl_test_mockup_loader implementation.
 
     try.
       o->parse_data(
-        exporting i_rawdata   = l_string
-        importing e_container = dummy_tab_act ).
+        exporting
+          i_rawdata   = l_string
+          i_strict    = abap_true
+        importing
+          e_container = dummy_tab_act ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'XE'. " parser error

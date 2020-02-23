@@ -12,7 +12,7 @@ interface zif_mockup_loader
   methods load_data
     importing
       !i_obj    type string
-      !i_strict type abap_bool default abap_true
+      !i_strict type abap_bool default abap_false
       !i_corresponding type abap_bool default abap_false
       !i_deep   type abap_bool default abap_false
       !i_where  type any optional

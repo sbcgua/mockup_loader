@@ -117,7 +117,7 @@ class ZCL_MOCKUP_LOADER definition
     methods parse_data
       importing
         !i_rawdata type string
-        !i_strict type abap_bool default abap_true
+        !i_strict type abap_bool
         !i_corresponding type abap_bool default abap_false
         !i_deep type abap_bool default abap_false
         !i_where type any optional
