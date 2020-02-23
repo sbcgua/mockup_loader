@@ -42,7 +42,6 @@ class ZCL_MOCKUP_LOADER definition
 
     interfaces zif_mockup_loader.
     aliases:
-      load_raw_x for zif_mockup_loader~load_raw_x,
       load_blob for zif_mockup_loader~load_blob,
       load_data for zif_mockup_loader~load_data.
 
@@ -663,19 +662,6 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         i_where     = i_where
       importing
         e_container = e_container ).
-
-  endmethod.
-
-
-  method zif_mockup_loader~load_raw_x.
-
-    zcx_mockup_loader_error=>raise( msg = 'load_raw_x deprecated, please use load_blob' ). "#EC NOTEXT
-
-    mo_zip->get(
-      exporting
-        name    = i_obj_path
-      importing
-        content = r_content ).
 
   endmethod.
 ENDCLASS.
