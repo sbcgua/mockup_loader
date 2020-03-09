@@ -90,10 +90,13 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
   method get_control_for_method.
 
     field-symbols <ctl> like line of mt_control.
-    read table mt_control assigning <ctl> with key method_name = i_method.
+    data l_method like i_method.
+    l_method = to_upper( i_method ).
+
+    read table mt_control assigning <ctl> with key method_name = l_method.
     if sy-subrc <> 0.
       append initial line to mt_control assigning <ctl>.
-      <ctl>-method_name = i_method.
+      <ctl>-method_name = l_method.
     endif.
     get reference of <ctl> into rv_ref.
 
