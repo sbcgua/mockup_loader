@@ -272,33 +272,44 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
 
   method create_from_sys_settings.
-    types: begin of lt_settings,
-              amt_format  type char2,
-              codepage    type abap_encoding,
-              date_format type char4,
-              comment     type char1,
-            end of lt_settings.
-    types: begin of lt_var,
-              name type rvari_vnam,
-              low  type rvari_val_255,
-            end of lt_var.
-    data: l_variable type lt_var,
-          l_settings type lt_settings.
 
-    " read system settings (amt_format, encoding, date_format, begin_comment)
-    " from table tvarvc
-    select name low from tvarvc into l_variable
+    types:
+      begin of lty_settings,
+        amt_format  type char2,
+        codepage    type abap_encoding,
+        date_format type char4,
+        comment     type char1,
+      end of lty_settings.
+    types:
+      begin of lty_var,
+        name type rvari_vnam,
+        low  type rvari_val_255,
+      end of lty_var.
+
+    data lt_vars type table of lty_var.
+    data l_settings type lty_settings.
+    field-symbols <var> like line of lt_vars.
+
+    select name low
+      into table lt_vars
+      from tvarvc
       where name in ('ZMOCKUP_LOADER_AMT_FORMAT',
         'ZMOCKUP_LOADER_CODEPAGE',
         'ZMOCKUP_LOADER_DATE_FORMAT',
-        'ZMOCKUP_LOADER_COMMENT' ).
+        'ZMOCKUP_LOADER_COMMENT').
 
-      transfer_setting amt_format  'ZMOCKUP_LOADER_AMT_FORMAT'.
-      transfer_setting codepage    'ZMOCKUP_LOADER_CODEPAGE'.
-      transfer_setting date_format 'ZMOCKUP_LOADER_DATE_FORMAT'.
-      transfer_setting comment     'ZMOCKUP_LOADER_COMMENT'.
-
-    endselect.
+    loop at lt_vars assigning <var>.
+      case <var>-name.
+        when 'ZMOCKUP_LOADER_AMT_FORMAT'.
+          l_settings-amt_format  = <var>-low.
+        when 'ZMOCKUP_LOADER_CODEPAGE'.
+          l_settings-codepage    = <var>-low.
+        when 'ZMOCKUP_LOADER_DATE_FORMAT'.
+          l_settings-date_format = <var>-low.
+        when 'ZMOCKUP_LOADER_COMMENT'.
+          l_settings-comment     = <var>-low.
+      endcase.
+    endloop.
 
     ro_instance = create(
       i_path          = i_path
