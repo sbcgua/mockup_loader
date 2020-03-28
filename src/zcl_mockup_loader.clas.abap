@@ -49,11 +49,11 @@ class ZCL_MOCKUP_LOADER definition
     class-methods create
       importing
         !i_path type string
-        !i_type type char4 default 'MIME'
-        !i_amt_format type char2 optional
+        !i_type type zif_mockup_loader=>ty_src_type default 'MIME'
+        !i_amt_format type zif_mockup_loader=>ty_amt_format optional
         !i_encoding type abap_encoding optional
-        !i_date_format type char4 optional
-        !i_begin_comment type char1 optional
+        !i_date_format type zif_mockup_loader=>ty_date_format optional
+        !i_begin_comment type zif_mockup_loader=>ty_comment_char optional
       returning
         value(ro_instance) type ref to zcl_mockup_loader
       raising
@@ -61,7 +61,7 @@ class ZCL_MOCKUP_LOADER definition
     class-methods create_from_sys_settings
       importing
         !i_path type string
-        !i_type type char4 default 'MIME'
+        !i_type type zif_mockup_loader=>ty_src_type default 'MIME'
       returning
         value(ro_instance) type ref to zcl_mockup_loader
       raising
@@ -81,15 +81,15 @@ class ZCL_MOCKUP_LOADER definition
   private section.
 
     data mo_zip type ref to cl_abap_zip .
-    data mv_amt_format type char2 .
+    data mv_amt_format type zif_mockup_loader=>ty_amt_format .
     data mv_encoding type abap_encoding .
-    data mv_date_format type char4 .
-    data mv_begin_comment type char1.
+    data mv_date_format type zif_mockup_loader=>ty_date_format .
+    data mv_begin_comment type zif_mockup_loader=>ty_comment_char.
 
     methods initialize
       importing
         !i_path type string
-        !i_type type char4
+        !i_type type zif_mockup_loader=>ty_src_type
       raising
         zcx_mockup_loader_error .
     methods parse_data
@@ -115,7 +115,7 @@ class ZCL_MOCKUP_LOADER definition
         zcx_mockup_loader_error .
     class-methods redirect_source
       changing
-        c_src_type      type char4
+        c_src_type      type zif_mockup_loader=>ty_src_type
         c_src_path      type string.
     class-methods build_table_type
       importing
@@ -239,7 +239,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       i_date_format = i_date_format
       i_begin_comment = i_begin_comment ).
 
-    data l_src_type type char4.
+    data l_src_type type zif_mockup_loader=>ty_src_type.
     data l_src_path type string.
 
     l_src_type = i_type.
@@ -261,10 +261,10 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
     types:
       begin of lty_settings,
-        amt_format  type char2,
+        amt_format  type zif_mockup_loader=>ty_amt_format,
         codepage    type abap_encoding,
-        date_format type char4,
-        comment     type char1,
+        date_format type zif_mockup_loader=>ty_date_format,
+        comment     type zif_mockup_loader=>ty_comment_char,
       end of lty_settings.
     types:
       begin of lty_var,
@@ -496,9 +496,9 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   method redirect_source.
 
     data:
-      l_redirect_type type char4,
-      l_redirect_mime type char128,
-      l_redirect_file type char128.
+      l_redirect_type type zif_mockup_loader=>ty_src_type,
+      l_redirect_mime type c length 128,
+      l_redirect_file type c length 128.
 
     " Get re-direction settings from session memory
     get parameter id 'ZMOCKUP_LOADER_STYPE' field l_redirect_type.

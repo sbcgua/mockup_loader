@@ -129,7 +129,7 @@ class ltcl_test definition for testing duration short
     types:
       begin of ty_testcase, " test case structure
         testid   type i,
-        type     type char1,
+        type     type c length 1,
         connid   type sflight-connid,
         result   type sflight-price,
         msg      type string,
@@ -178,7 +178,8 @@ class ltcl_test implementation.
         importing e_container = lt_testcases ).
 
       " Load and store flights table
-      o_ml->load_and_store(
+      zcl_mockup_loader_store=>load_and_store(
+        io_ml    = o_ml
         i_obj    = 'EXAMPLE/sflight'
         i_name   = 'SFLIGHT'
         i_strict = abap_false

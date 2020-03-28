@@ -5,17 +5,20 @@ class ZCL_MOCKUP_LOADER_UTILS definition
 
   public section.
 
+    types:
+      ty_filter_type type c length 1.
+
     constants:
       begin of c_filter_type,
-        value type c length 1 value 'V',
-        range type c length 1 value 'R',
+        value type ty_filter_type value 'V',
+        range type ty_filter_type value 'R',
       end of c_filter_type.
 
     types:
       begin of ty_filter,
         name   type string,
         valref type ref to data,
-        type   type char1,
+        type   type ty_filter_type,
       end of ty_filter .
     types:
       tt_filter type standard table of ty_filter with key name .
@@ -213,7 +216,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
     data l_dummy_filter type ty_filter.
     data dy_tab  type ref to cl_abap_tabledescr.
     data dy_type type ref to cl_abap_typedescr.
-    data l_dummy_range type range of char1.
+    data l_dummy_range type range of ty_filter_type.
 
     dy_type = cl_abap_typedescr=>describe_by_data( l_dummy_where ).
     g_ty_where_abs_name = dy_type->absolute_name.

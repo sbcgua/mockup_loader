@@ -56,7 +56,7 @@ interface zif_mockup_loader_stub_dummy
     importing
       !i_connid type s_conn_id
     returning
-      value(r_tab) type char1 .
+      value(r_tab) type sflight-carrid .
 
   methods wrong_sift
     importing

@@ -95,12 +95,12 @@ class ltcl_test_mockup_loader definition for testing
       begin of ty_dummy,
         mandt    type mandt,
         tdate    type datum,
-        tchar    type char08,
+        tchar    type c length 8,
         traw     type thraw1,
         tstring  type string,
         talpha   type veri_alpha,
         tdecimal type dmbtr,
-        tnumber  type numc04,
+        tnumber  type n length 4,
         tinteger type i,
       end of ty_dummy,
       tt_dummy type table of ty_dummy with default key.
@@ -181,7 +181,7 @@ class ltcl_test_mockup_loader implementation.
 * Setup methods
 **********************************************************************
   method class_setup.
-    data l_type_tmp type char4.
+    data l_type_tmp type zif_mockup_loader=>ty_src_type.
     get parameter id 'ZMOCKUP_LOADER_STYPE' field l_type_tmp.
     if l_type_tmp is not initial.
       cl_abap_unit_assert=>fail(
@@ -360,13 +360,13 @@ class ltcl_test_mockup_loader implementation.
 
     data:
       lx_ut      type ref to cx_aunit_fail,
-      l_mime_bak type char40,
-      l_file_bak type char40.
+      l_mime_bak type c length 40,
+      l_file_bak type c length 40.
 
     data:
       lo_ex      type ref to zcx_mockup_loader_error,
-      l_type     type char4,
-      l_path     type char40.
+      l_type     type zif_mockup_loader=>ty_src_type,
+      l_path     type c length 40.
 
     " "DANGEROUS" TEST AS MODIFIES SET/GET PARAMS
     define _bak_params.
@@ -466,7 +466,7 @@ class ltcl_test_mockup_loader implementation.
 **********************************************************************
   method parse_data.
     data:
-          dummy_val      type char40,
+          dummy_val      type c length 40,
           dummy_act      type ty_dummy,
           dummy_tab_act  type tt_dummy,
           dummy_htab     type hashed table of ty_dummy with unique key tdate,

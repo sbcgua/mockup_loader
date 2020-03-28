@@ -6,6 +6,9 @@ class ZCX_MOCKUP_LOADER_ERROR definition
 
 public section.
 
+  types:
+    ty_rc type c length 2.
+
   interfaces IF_T100_MESSAGE .
 
   constants:
@@ -19,7 +22,7 @@ public section.
     end of ZCX_MOCKUP_LOADER_ERROR .
   data METHNAME type STRING read-only .
   data MSG type STRING read-only .
-  data CODE type CHAR2 read-only .
+  data CODE type ty_rc read-only .
 
   methods CONSTRUCTOR
     importing
@@ -27,11 +30,11 @@ public section.
       !PREVIOUS like PREVIOUS optional
       !METHNAME type STRING optional
       !MSG type STRING optional
-      !CODE type CHAR2 optional .
+      !CODE type ty_rc optional .
   class-methods RAISE
     importing
       !MSG type STRING
-      !CODE type CHAR2 optional
+      !CODE type ty_rc optional
     raising
       ZCX_MOCKUP_LOADER_ERROR .
 protected section.

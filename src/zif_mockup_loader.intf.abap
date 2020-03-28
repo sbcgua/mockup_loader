@@ -1,6 +1,12 @@
 interface zif_mockup_loader
   public .
 
+  types:
+    ty_src_type     type c length 4,
+    ty_date_format  type c length 4,
+    ty_amt_format   type c length 2,
+    ty_comment_char type c length 1.
+
   methods load_blob
     importing
       !i_obj_path type string
@@ -23,9 +29,9 @@ interface zif_mockup_loader
 
   methods set_params
     importing
-      !i_amt_format type char2 optional
+      !i_amt_format type ty_amt_format optional
       !i_encoding type abap_encoding optional
-      !i_date_format type char4 optional
-      !i_begin_comment type char1 optional .
+      !i_date_format type ty_date_format optional
+      !i_begin_comment type ty_comment_char optional .
 
 endinterface.

@@ -8,8 +8,10 @@ class ZCL_MOCKUP_LOADER_STORE definition
   public section.
 
     types:
+      ty_store_tag type c length 40.
+    types:
       begin of ty_store,
-        name    type char40,
+        name    type ty_store_tag,
         tabkey  type abap_compname,
         data    type ref to data,
       end of ty_store .
@@ -22,10 +24,10 @@ class ZCL_MOCKUP_LOADER_STORE definition
     class-methods free_instance .
     methods purge
       importing
-        !i_name type char40 .
+        !i_name type ty_store_tag .
     class-methods retrieve
       importing
-        !i_name type char40
+        !i_name type ty_store_tag
         !i_sift type clike optional
         !i_where type any optional
       exporting
@@ -35,7 +37,7 @@ class ZCL_MOCKUP_LOADER_STORE definition
     type-pools abap .
     methods store
       importing
-        !i_name type char40
+        !i_name type ty_store_tag
         !i_data type any
         !i_tabkey type abap_compname optional
       raising
@@ -45,7 +47,7 @@ class ZCL_MOCKUP_LOADER_STORE definition
         !io_ml type ref to zcl_mockup_loader
         !i_obj type string
         !i_strict type abap_bool default abap_false
-        !i_name type char40
+        !i_name type ty_store_tag
         !i_type type csequence optional
         !i_tabkey type abap_compname optional
         !i_type_desc type ref to cl_abap_typedescr optional
@@ -61,14 +63,14 @@ class ZCL_MOCKUP_LOADER_STORE definition
     type-pools abap .
     methods _store
       importing
-        !i_name type char40
+        !i_name type ty_store_tag
         !i_data_ref type ref to data
         !i_tabkey type abap_compname optional
       raising
         zcx_mockup_loader_error .
     methods _retrieve
       importing
-        !i_name type char40
+        !i_name type ty_store_tag
         !i_sift type clike optional
         !i_where type any optional
       exporting

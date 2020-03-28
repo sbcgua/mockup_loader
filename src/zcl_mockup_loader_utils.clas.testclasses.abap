@@ -71,12 +71,12 @@ class ltcl_test_mockup_utils definition for testing
       begin of ty_dummy,
         mandt    type mandt,
         tdate    type datum,
-        tchar    type char08,
+        tchar    type c length 8,
         traw     type thraw1,
         tstring  type string,
         talpha   type veri_alpha,
         tdecimal type dmbtr,
-        tnumber  type numc04,
+        tnumber  type n length 4,
         tinteger type i,
       end of ty_dummy,
       tt_dummy type table of ty_dummy with default key.
@@ -85,7 +85,7 @@ class ltcl_test_mockup_utils definition for testing
       begin of ty_dummy_corresponding,
         tdate    type datum,
         tchar    type c length 8,
-        tnumber  type numc04,
+        tnumber  type n length 4,
         _another type i,
       end of ty_dummy_corresponding,
       tt_dummy_corresponding type standard table of ty_dummy_corresponding with default key.
@@ -172,19 +172,19 @@ class ltcl_test_mockup_utils implementation.
           l_tywhere      type zcl_mockup_loader_utils=>ty_where,
 
           begin of l_where_err1,
-            tnumber  type range of numc04,
+            tnumber  type range of ty_dummy-tnumber,
             tdate    type range of datum,
             tother   type tt_dummy,
           end of l_where_err1,
 
           begin of l_where_err2,
-            tnumber  type range of numc04,
+            tnumber  type range of ty_dummy-tnumber,
             tdate    type range of datum,
             tother   type c,
           end of l_where_err2,
 
           begin of l_where,
-            tnumber  type range of numc04,
+            tnumber  type range of ty_dummy-tnumber,
             tdate    type range of datum,
             tother   type range of c,
           end of l_where,
@@ -496,7 +496,7 @@ class ltcl_test_mockup_utils implementation.
 
     data:
           begin of l_where,
-            tnumber  type range of numc04,
+            tnumber  type range of ty_dummy-tnumber,
             tdate    type range of datum,
           end of l_where,
 
@@ -730,7 +730,7 @@ class ltcl_test_mockup_utils implementation.
     data ls_filter_act type zcl_mockup_loader_utils=>ty_filter.
     data ls_filter_exp type zcl_mockup_loader_utils=>ty_filter.
 
-    data lr_i type range of numc4.
+    data lr_i type range of ty_dummy-tnumber.
     field-symbols <r> like line of lr_i.
     append initial line to lr_i assigning <r>.
     <r>-option = 'EQ'.
@@ -766,7 +766,7 @@ class ltcl_test_mockup_utils implementation.
 
     data:
       begin of ls_where,
-        num  type range of numc4,
+        num  type range of ty_dummy-tnumber,
         char type range of c,
       end of ls_where.
 
@@ -805,11 +805,11 @@ class ltcl_test_mockup_utils implementation.
     data:
       lx type ref to zcx_mockup_loader_error,
       begin of ls_where_err1,
-        number  type range of numc04,
+        number  type range of ty_dummy-tnumber,
         other   type tt_dummy,
       end of ls_where_err1,
       begin of ls_where_err2,
-        number  type range of numc04,
+        number  type range of ty_dummy-tnumber,
         tother   type c,
       end of ls_where_err2.
 
@@ -934,7 +934,7 @@ class ltcl_test_mockup_utils implementation.
     data ls_filter_act type zcl_mockup_loader_utils=>ty_filter.
     data ls_filter_exp type zcl_mockup_loader_utils=>ty_filter.
 
-    data lr_i type range of numc4.
+    data lr_i type range of ty_dummy-tnumber.
     field-symbols <r> like line of lr_i.
     append initial line to lr_i assigning <r>.
     <r>-option = 'EQ'.

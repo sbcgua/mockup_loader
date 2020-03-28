@@ -311,7 +311,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
         if <conf>-as_proxy = abap_true.
 
           field-symbols <param> like line of <method>-parameters.
-          data l_param_kind type char1.
+          data l_param_kind like <param>-parm_kind.
 
           _src( '    data lt_params type abap_parmbind_tab.' ). "#EC NOTEXT
           _src( '    data ls_param like line of lt_params.' ).  "#EC NOTEXT
