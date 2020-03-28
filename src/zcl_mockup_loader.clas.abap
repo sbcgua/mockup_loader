@@ -76,16 +76,7 @@ class ZCL_MOCKUP_LOADER definition
         !i_required_version type string
       returning
         value(r_fits) type abap_bool .
-    methods load_and_store
-      importing
-        !i_obj type string
-        !i_strict type abap_bool default abap_false
-        !i_name type char40
-        !i_type type csequence optional
-        !i_tabkey type abap_compname optional
-        !i_type_desc type ref to cl_abap_typedescr optional
-      raising
-        zcx_mockup_loader_error .
+
   protected section.
   private section.
 
@@ -398,51 +389,6 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   endmethod.
 
 
-  method load_and_store.
-    data:
-          lo_type  type ref to cl_abap_typedescr,
-          lo_dtype type ref to cl_abap_datadescr,
-          lr_data  type ref to data.
-
-    field-symbols <data> type data.
-
-    if boolc( i_type is supplied ) = boolc( i_type_desc is supplied ).
-      zcx_mockup_loader_error=>raise( msg = 'Supply one of i_type or i_type_desc' code = 'TD' ). "#EC NOTEXT
-    endif.
-
-    if i_type is supplied.
-      cl_abap_typedescr=>describe_by_name(
-        exporting  p_name      = i_type
-        receiving  p_descr_ref = lo_type
-        exceptions others      = 4 ).
-    else.
-      lo_type = i_type_desc.
-    endif.
-
-    if sy-subrc is not initial.
-      zcx_mockup_loader_error=>raise( msg = |Type { i_type } not found|  code = 'WT' ). "#EC NOTEXT
-    endif.
-
-    " Create container to load zip data to
-    lo_dtype ?= lo_type.
-    create data lr_data type handle lo_dtype.
-
-    " Load from zip and store
-    me->load_data(
-      exporting
-        i_obj       = i_obj
-        i_strict    = i_strict
-      importing
-        e_container = lr_data ).
-
-    zcl_mockup_loader_store=>get_instance( )->_store(
-      i_name     = i_name
-      i_data_ref = lr_data
-      i_tabkey   = i_tabkey ).
-
-  endmethod.
-
-
   method parse_data.
     data:
       lx_dp          type ref to zcx_text2tab_error,
@@ -577,35 +523,6 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   endmethod.
 
 
-  method SET_PARAMS.
-
-    if i_amt_format is initial or i_amt_format+1(1) is initial. " Empty param or decimal separator
-      me->mv_amt_format = ' ,'. " Defaults
-    else.
-      me->mv_amt_format = i_amt_format.
-    endif.
-
-    if i_encoding is initial.
-      me->mv_encoding = zif_mockup_loader_constants=>encoding_utf16.
-    else.
-      me->mv_encoding = i_encoding.
-    endif.
-
-    if i_date_format is initial
-      or not i_date_format+3(1) co ' ./-'
-      or not ( i_date_format+0(3) = 'DMY'
-        or i_date_format+0(3)     = 'MDY'
-        or i_date_format+0(3)     = 'YMD' ).
-      me->mv_date_format = 'DMY.'. " DD.MM.YYYY
-    else.
-      me->mv_date_format = i_date_format.
-    endif.
-
-    me->mv_begin_comment = i_begin_comment.
-
-  endmethod.
-
-
   method zif_mockup_loader~load_blob.
 
     mo_zip->get(
@@ -640,6 +557,35 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         i_where     = i_where
       importing
         e_container = e_container ).
+
+  endmethod.
+
+
+  method SET_PARAMS.
+
+    if i_amt_format is initial or i_amt_format+1(1) is initial. " Empty param or decimal separator
+      me->mv_amt_format = ' ,'. " Defaults
+    else.
+      me->mv_amt_format = i_amt_format.
+    endif.
+
+    if i_encoding is initial.
+      me->mv_encoding = zif_mockup_loader_constants=>encoding_utf16.
+    else.
+      me->mv_encoding = i_encoding.
+    endif.
+
+    if i_date_format is initial
+      or not i_date_format+3(1) co ' ./-'
+      or not ( i_date_format+0(3) = 'DMY'
+        or i_date_format+0(3)     = 'MDY'
+        or i_date_format+0(3)     = 'YMD' ).
+      me->mv_date_format = 'DMY.'. " DD.MM.YYYY
+    else.
+      me->mv_date_format = i_date_format.
+    endif.
+
+    me->mv_begin_comment = i_begin_comment.
 
   endmethod.
 ENDCLASS.

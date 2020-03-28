@@ -80,6 +80,7 @@ class ltcl_test_mockup_store definition for testing
     methods retrieve_types            for testing.
     methods store_retrieve_with_key   for testing.
     methods store_retrieve_with_where for testing.
+    methods load_and_store            for testing raising zcx_mockup_loader_error.
 
     methods get_dummy_data
       exporting
@@ -432,5 +433,86 @@ class ltcl_test_mockup_store implementation.
     assert_excode 'TO'.
 
   endmethod. "store_retrieve_with_where
+
+**********************************************************************
+* LOAD AND STORE at once
+**********************************************************************
+  method load_and_store.
+    data:
+          lo_type_desc   type ref to cl_abap_typedescr,
+          dummy_tab_exp  type tt_dummy,
+          dummy_tab_act  type tt_dummy,
+          lo_ml          type ref to zcl_mockup_loader,
+          lo_ex          type ref to zcx_mockup_loader_error.
+
+    lo_ml = zcl_mockup_loader=>create(
+      i_type       = 'MIME'
+      i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
+      i_amt_format = ''
+      i_encoding   = zif_mockup_loader_constants=>encoding_utf8 ).
+
+    get_dummy_data( importing e_dummy_tab   = dummy_tab_exp ).
+
+    lo_type_desc = cl_abap_typedescr=>describe_by_name( 'LTCL_TEST_MOCKUP_STORE=>TT_DUMMY' ).
+
+    " Positive test ************************************
+    try.
+      o->load_and_store(
+        io_ml       = lo_ml
+        i_obj       = 'testdir/testfile_complete'
+        i_name      = 'TAB'
+        i_type      = 'LTCL_TEST_MOCKUP_STORE=>TT_DUMMY' ).
+
+      zcl_mockup_loader_store=>retrieve(
+        exporting i_name   = 'TAB'
+        importing e_data   = dummy_tab_act ).
+      cl_abap_unit_assert=>assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
+
+      o->load_and_store(
+        io_ml       = lo_ml
+        i_obj       = 'testdir/testfile_complete'
+        i_name      = 'TAB'
+        i_type_desc = lo_type_desc ).
+      clear dummy_tab_act.
+      zcl_mockup_loader_store=>retrieve(
+        exporting i_name   = 'TAB'
+        importing e_data   = dummy_tab_act ).
+      cl_abap_unit_assert=>assert_equals( act = dummy_tab_act  exp = dummy_tab_exp ).
+
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
+    endtry.
+
+
+    " Negative: type that not exists ********************
+    clear lo_ex.
+    try.
+      o->load_and_store(
+        io_ml       = lo_ml
+        i_obj       = 'testdir/testfile_complete'
+        i_name      = 'TAB'
+        i_type      = '************' ).
+
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'WT'.
+
+    " Negative: one type descriptor only ****************
+    clear lo_ex.
+    try.
+      o->load_and_store(
+        io_ml       = lo_ml
+        i_obj       = 'testdir/testfile_complete'
+        i_name      = 'TAB'
+        i_type_desc = lo_type_desc
+        i_type      = '************' ).
+
+    catch zcx_mockup_loader_error into lo_ex.
+    endtry.
+    assert_excode 'TD'.
+
+
+  endmethod.       "load_and_store
+
 
 endclass.

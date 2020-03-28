@@ -40,6 +40,18 @@ class ZCL_MOCKUP_LOADER_STORE definition
         !i_tabkey type abap_compname optional
       raising
         zcx_mockup_loader_error .
+    class-methods load_and_store
+      importing
+        !io_ml type ref to zcl_mockup_loader
+        !i_obj type string
+        !i_strict type abap_bool default abap_false
+        !i_name type char40
+        !i_type type csequence optional
+        !i_tabkey type abap_compname optional
+        !i_type_desc type ref to cl_abap_typedescr optional
+      raising
+        zcx_mockup_loader_error .
+
   protected section.
   private section.
 
@@ -82,6 +94,51 @@ CLASS ZCL_MOCKUP_LOADER_STORE IMPLEMENTATION.
       create object go_instance.
     endif.
     ro_instance = go_instance.
+  endmethod.
+
+
+  method load_and_store.
+    data:
+          lo_type  type ref to cl_abap_typedescr,
+          lo_dtype type ref to cl_abap_datadescr,
+          lr_data  type ref to data.
+
+    field-symbols <data> type data.
+
+    if boolc( i_type is supplied ) = boolc( i_type_desc is supplied ).
+      zcx_mockup_loader_error=>raise( msg = 'Supply one of i_type or i_type_desc' code = 'TD' ). "#EC NOTEXT
+    endif.
+
+    if i_type is supplied.
+      cl_abap_typedescr=>describe_by_name(
+        exporting  p_name      = i_type
+        receiving  p_descr_ref = lo_type
+        exceptions others      = 4 ).
+    else.
+      lo_type = i_type_desc.
+    endif.
+
+    if sy-subrc is not initial.
+      zcx_mockup_loader_error=>raise( msg = |Type { i_type } not found|  code = 'WT' ). "#EC NOTEXT
+    endif.
+
+    " Create container to load zip data to
+    lo_dtype ?= lo_type.
+    create data lr_data type handle lo_dtype.
+
+    " Load from zip and store
+    io_ml->load_data(
+      exporting
+        i_obj       = i_obj
+        i_strict    = i_strict
+      importing
+        e_container = lr_data ).
+
+    zcl_mockup_loader_store=>get_instance( )->_store(
+      i_name     = i_name
+      i_data_ref = lr_data
+      i_tabkey   = i_tabkey ).
+
   endmethod.
 
 
