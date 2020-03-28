@@ -20,7 +20,9 @@ Features:
 - Strict and non-strict parsing - skip irrelevant table fields in your test data
 - "Deep" data loading - load master-detail structures in one step. See *'Deep data loading'* section
 - Load source redirection - convenient utility to temporarily redirect loading from in-system-MIME object to local file, while you are working on or enhancing your test dataset. See *Load source redirection* section
-- Tools to simplify conversion from Excel to MIME object inside the system as well as CI flows - [mockup compiler](https://github.com/sbcgua/mockup_compiler), [mockup compiler JS](https://github.com/sbcgua/mockup-compiler-js), [mockup editor](https://github.com/sbcgua/mockup_editor) (alpha, view only at the moment)
+- Tools to simplify conversion from Excel to MIME object inside the system, CI flows and viewing mocks
+  - [mockup loader toolkit](https://github.com/sbcgua/mockup_loader_toolkit)
+  - [mockup compiler JS](https://github.com/sbcgua/mockup-compiler-js)
 - Utilities for table data filtering
 
 ## Contents
@@ -318,7 +320,6 @@ The most convenient way to install the package is to use [abapGit](https://githu
 
 Dependencies (to install before mockup loader):
 - [text2tab](https://github.com/sbcgua/abap_data_parser) - tab-delimited text parser (was a part of *mockup loader* but now a separate reusable tool). Mandatory prerequisite.
-- [abap_w3mi_poller](https://github.com/sbcgua/abap_w3mi_poller) - *optional* - enables 'Upload to MIME' button in `ZMOCKUP_LOADER_SWSRC`. The mockup loader **can be compiled without this** package (the call is dynamic).
 
 P.S. APACK manifest implementation is under consideration.
 
@@ -340,7 +341,7 @@ N.B.
 
 You may have a lot of data prepared in Excel files. Many files, many sheets in each. Although Ctrl+C in Excel actually copies TAB-delimited text, which greatly simplifies the matter for minor cases, it is boring and time consuming to copy all the test cases to text. Here are special tools to simplify this workflow. Briefly: they take directory of excel files with mockup data and convert them into format compatible with mockup loader.
 
-- [mockup compiler](https://github.com/sbcgua/mockup_compiler) - ABAP implementation.
+- [mockup compiler](https://github.com/sbcgua/mockup_loader_toolkit) - ABAP implementation.
 
   ![compile zip slug](docs/compiler.png)
 
