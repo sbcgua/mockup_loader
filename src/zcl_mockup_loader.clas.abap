@@ -42,6 +42,7 @@ class ZCL_MOCKUP_LOADER definition
 
     interfaces zif_mockup_loader.
     aliases:
+      set_params for zif_mockup_loader~set_params,
       load_blob for zif_mockup_loader~load_blob,
       load_data for zif_mockup_loader~load_data.
 
@@ -85,12 +86,6 @@ class ZCL_MOCKUP_LOADER definition
         !i_type_desc type ref to cl_abap_typedescr optional
       raising
         zcx_mockup_loader_error .
-    methods set_params
-      importing
-        !i_amt_format type char2 optional
-        !i_encoding type abap_encoding optional
-        !i_date_format type char4 optional
-        !i_begin_comment type char1 optional .
   protected section.
   private section.
 

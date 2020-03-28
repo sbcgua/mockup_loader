@@ -73,12 +73,6 @@
      <LANGU>E</LANGU>
      <DESCRIPT>Read ZIP file</DESCRIPT>
     </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_MOCKUP_LOADER</CLSNAME>
-     <CMPNAME>SET_PARAMS</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Set parsing params</DESCRIPT>
-    </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>
  </asx:abap>

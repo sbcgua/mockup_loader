@@ -21,4 +21,11 @@ interface zif_mockup_loader
     raising
       zcx_mockup_loader_error .
 
+  methods set_params
+    importing
+      !i_amt_format type char2 optional
+      !i_encoding type abap_encoding optional
+      !i_date_format type char4 optional
+      !i_begin_comment type char1 optional .
+
 endinterface.
