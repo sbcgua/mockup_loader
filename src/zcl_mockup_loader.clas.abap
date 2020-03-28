@@ -106,8 +106,8 @@ class ZCL_MOCKUP_LOADER definition
     methods read_zip
       importing
         !i_name type string
-      exporting
-        !e_rawdata type string
+      returning
+        value(r_rawdata) type string
       raising
         zcx_mockup_loader_error .
     methods constructor
@@ -338,15 +338,15 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
       when 'FILE'. " Load from frontend
         call function 'GUI_UPLOAD'
-        exporting
-          filename   = i_path
-          filetype   = 'BIN'
-        importing
-          filelength = l_size
-        tables
-          data_tab   = lt_w3mime
-        exceptions
-          others = 1.
+          exporting
+            filename   = i_path
+            filetype   = 'BIN'
+          importing
+            filelength = l_size
+          tables
+            data_tab   = lt_w3mime
+          exceptions
+            others = 1.
 
         if sy-subrc is not initial.
           zcx_mockup_loader_error=>raise( msg = |Cannot upload file: { i_path }| code = 'RE' ). "#EC NOTEXT
@@ -380,8 +380,10 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     endif.
 
     mo_zip->load(
-      exporting  zip    = l_xstring
-      exceptions others = 4 ).
+      exporting
+        zip    = l_xstring
+      exceptions
+        others = 4 ).
 
     if sy-subrc is not initial or lines( mo_zip->files ) = 0.
       zcx_mockup_loader_error=>raise( msg = 'ZIP load failed' code = 'ZE' ).  "#EC NOTEXT
@@ -463,17 +465,11 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
   method read_zip.
     data:
-          l_xstring type xstring,
-          lo_conv   type ref to cl_abap_conv_in_ce,
-          l_ex      type ref to cx_root.
+      l_xstring type xstring,
+      lo_conv   type ref to cl_abap_conv_in_ce,
+      l_ex      type ref to cx_root.
 
-    mo_zip->get( exporting  name            = i_name
-                importing  content         = l_xstring
-                exceptions zip_index_error = 1 ).
-
-    if sy-subrc is not initial.
-      zcx_mockup_loader_error=>raise( msg = |Cannot read { i_name }| code = 'ZF' ). "#EC NOTEXT
-    endif.
+    l_xstring = zif_mockup_loader~load_blob( i_name ).
 
     " Remove unicode signatures
     case mv_encoding.
@@ -485,7 +481,11 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
     try.
       lo_conv = cl_abap_conv_in_ce=>create( encoding = mv_encoding ).
-      lo_conv->convert( exporting input = l_xstring importing data = e_rawdata ).
+      lo_conv->convert(
+        exporting
+          input = l_xstring
+        importing
+          data  = r_rawdata ).
     catch cx_root into l_ex.
       zcx_mockup_loader_error=>raise( msg = 'Codepage conversion error' code = 'CP' ). "#EC NOTEXT
     endtry.
@@ -529,7 +529,13 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       exporting
         name    = i_obj_path
       importing
-        content = r_content ).
+        content = r_content
+      exceptions
+        zip_index_error = 1 ).
+
+    if sy-subrc is not initial.
+      zcx_mockup_loader_error=>raise( msg = |Cannot read { i_obj_path }| code = 'ZF' ). "#EC NOTEXT
+    endif.
 
   endmethod.
 
@@ -542,11 +548,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       zcx_mockup_loader_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
     endif.
 
-    me->read_zip(
-      exporting
-        i_name    = i_obj && '.txt'
-      importing
-        e_rawdata = l_rawdata ).
+    l_rawdata = me->read_zip( i_name = i_obj && '.txt' ).
 
     me->parse_data(
       exporting
@@ -561,7 +563,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   endmethod.
 
 
-  method SET_PARAMS.
+  method set_params.
 
     if i_amt_format is initial or i_amt_format+1(1) is initial. " Empty param or decimal separator
       me->mv_amt_format = ' ,'. " Defaults

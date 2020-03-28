@@ -615,9 +615,7 @@ class ltcl_test_mockup_loader implementation.
 
     " Positive ***************************************
     try.
-      o->read_zip(
-        exporting i_name    = 'testdir/testfile_complete.txt'
-        importing e_rawdata = l_str ).
+      l_str = o->read_zip( i_name = 'testdir/testfile_complete.txt' ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
@@ -626,9 +624,7 @@ class ltcl_test_mockup_loader implementation.
     " NEGATIVE - wrong file name **********************
     clear lo_ex.
     try.
-      o->read_zip(
-        exporting i_name    = 'testdir/wrong_filename.xyz'
-        importing e_rawdata = l_str ).
+      l_str = o->read_zip( i_name = 'testdir/wrong_filename.xyz' ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'ZF'.
@@ -636,9 +632,7 @@ class ltcl_test_mockup_loader implementation.
     " NEGATIVE - wrong code page **********************
     clear lo_ex.
     try.
-      o->read_zip(
-        exporting i_name    = 'testdir/testfile_complete_utf16.txt'
-        importing e_rawdata = l_str ).
+      l_str = o->read_zip( i_name = 'testdir/testfile_complete_utf16.txt' ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'CP'.
