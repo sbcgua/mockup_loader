@@ -144,7 +144,7 @@ class ltcl_test_mockup_loader definition for testing
     methods utf16_encoding           for testing.
 
     methods parse_data               for testing.
-    methods load_blob                for testing.
+    methods load_blob                for testing raising zcx_mockup_loader_error.
     methods load_data_to_ref         for testing.
     methods load_deep                for testing raising zcx_mockup_loader_error.
     methods load_deep_negative       for testing.
@@ -644,7 +644,6 @@ class ltcl_test_mockup_loader implementation.
 **********************************************************************
   method load_blob.
     data:
-          lo_exr     type ref to cx_root,
           lo_ex      type ref to zcx_mockup_loader_error,
           l_str_exp  type string,
           l_xstr_act type xstring,
@@ -653,32 +652,53 @@ class ltcl_test_mockup_loader implementation.
 
     l_str_exp = '<?xml version="1.0"?><mytag>mydata</mytag>'.
 
-    try. " .XML
-      lo_conv = cl_abap_conv_in_ce=>create( encoding = zif_mockup_loader_constants=>encoding_utf8 ).
-      l_xstr_act = o->load_blob( 'testdir/test_raw.xml' ).
-      lo_conv->convert(
-        exporting
-          input = l_xstr_act
-        importing
-          data  = l_str_act ).
-    catch cx_root into lo_exr.
-      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
+    " .XML
+    lo_conv = cl_abap_conv_in_ce=>create( encoding = zif_mockup_loader_constants=>encoding_utf8 ).
+    l_xstr_act = o->load_blob( 'testdir/test_raw.xml' ).
+    lo_conv->convert(
+      exporting
+        input = l_xstr_act
+      importing
+        data  = l_str_act ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = l_str_act
+      exp = l_str_exp ).
+
+    " .TXT
+    l_xstr_act = o->load_blob( 'testdir/test_raw.txt' ).
+    lo_conv->convert(
+      exporting
+        input = l_xstr_act
+      importing
+        data  = l_str_act ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = l_str_act
+      exp = l_str_exp ).
+
+    " Missing file
+    try .
+      o->load_blob( 'testdir/no-file-like-this' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>assert_equals(
+        act = lo_ex->code
+        exp = 'ZF' ).
     endtry.
 
-    cl_abap_unit_assert=>assert_equals( act = l_str_act exp = l_str_exp ).
+    " Case insensitive path
+    lo_conv = cl_abap_conv_in_ce=>create( encoding = zif_mockup_loader_constants=>encoding_utf8 ).
+    l_xstr_act = o->load_blob( 'TESTDIR/test_raw.xml' ).
+    lo_conv->convert(
+      exporting
+        input = l_xstr_act
+      importing
+        data  = l_str_act ).
 
-    try. " .TXT
-      l_xstr_act = o->load_blob( 'testdir/test_raw.txt' ).
-      lo_conv->convert(
-        exporting
-          input = l_xstr_act
-        importing
-          data  = l_str_act ).
-    catch cx_root into lo_exr.
-      cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
-    endtry.
-
-    cl_abap_unit_assert=>assert_equals( act = l_str_act exp = l_str_exp ).
+    cl_abap_unit_assert=>assert_equals(
+      act = l_str_act
+      exp = l_str_exp ).
 
   endmethod.
 

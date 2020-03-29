@@ -533,8 +533,33 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       exceptions
         zip_index_error = 1 ).
 
-    if sy-subrc is not initial.
-      zcx_mockup_loader_error=>raise( msg = |Cannot read { i_obj_path }| code = 'ZF' ). "#EC NOTEXT
+    if sy-subrc <> 0.
+      " try find case insensitive first
+      data ls_file like line of mo_zip->files.
+      data lv_obj_path like i_obj_path.
+      lv_obj_path = to_lower( i_obj_path ).
+
+      loop at mo_zip->files into ls_file.
+        if to_lower( ls_file-name ) = lv_obj_path.
+          exit.
+        endif.
+        clear ls_file.
+      endloop.
+
+      if ls_file is initial.
+        zcx_mockup_loader_error=>raise( msg = |Cannot read { i_obj_path }| code = 'ZF' ). "#EC NOTEXT
+      else.
+        mo_zip->get(
+          exporting
+            name    = ls_file-name
+          importing
+            content = r_content
+          exceptions
+            zip_index_error = 1 ).
+        if sy-subrc <> 0.
+          zcx_mockup_loader_error=>raise( msg = |Cannot read { i_obj_path }| code = 'ZF' ). "#EC NOTEXT
+        endif.
+      endif.
     endif.
 
   endmethod.
