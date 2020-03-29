@@ -8,6 +8,13 @@ Legend
 + : added
 - : removed
 
+v2.1.8, 2020-03-29
+------------------
+* fixed get_control_for_method issue with lowercased methods - now always uppercased
+* moved set_params method to interface
+! BREAKING: move load_and_store method from zcl_mockup_loader class to zcl_mockup_loader_store
+! BREAKING: ZIP file path search is case IN-sensitive now
+
 v2.1.7, 2020-02-23
 ------------------
 - BREAKING: delete methods load_raw_x and load_raw

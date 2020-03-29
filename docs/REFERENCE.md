@@ -81,7 +81,7 @@ exporting
   E_CONTAINER type ANY
 ```
 
-- **I_OBJ** - path to file inside ZIP. Extension `'.txt'` is automatically appended so should not be specified. Please be aware that ZIP file names are **case sensitive** (at least this is how SAP handles them).
+- **I_OBJ** - path to file inside ZIP. Extension `'.txt'` is automatically appended so should not be specified. Please be aware that ZIP file names are **case insensitive** (at least this is how SAP handles them).
 - **I_STRICT** - suggests if the structure of the file must strictly correspond to the structure of target container. The call **always** validates that all fields in the text file are present in target structure. `I_STRICT` = 'True' **additionally** means that the number of fields is the same as in the target structure.
     - One exception is `MANDT` field. It may be skipped in a text file even for strict validation. So a text file with all structure fields but MANDT is still considered as strictly equal.
 - **I_DEEP** - allow filling deep components (tables/structures) in the target structure. If the component is not empty it must have the form of `<source_path>[<source_id_field>=<value|@reference_field>]`. See more detail below.
@@ -689,7 +689,7 @@ Supports:
 
 Addressing structured method parameters also works: `'get_my_data -> mock_path [a = i_struc-field]'`
 
-The string is case insensitive (except the file path - zip is case sensitive !!!) so you can specify most of parameters using the case you prefer. Also spaces are trimmed. The following strings would give the same result:
+The string is case **in**sensitive so you can specify most of parameters using the case you prefer. Also spaces are trimmed. The following strings would give the same result:
 - `'get_my_data -> mock_path [a = i_a]'`
 - `'GET_MY_DATA -> mock_path [A = I_A]'`
 - `'get_my_data->mock_path[a=i_a]'`
