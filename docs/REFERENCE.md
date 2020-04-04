@@ -573,12 +573,14 @@ Generated stub instance implements `ZIF_MOCKUP_LOADER_STUB_CONTROL` interface. I
 
 - `enable` and `disable` methods to temporarily stop loading mock data for all or spefic method (if `i_method` param is supplied).
 - `get_call_count( i_method )` to get hot many time the stubbed method was called
+- `set_proxy_target( io_proxy_target )` to set proxy target dynamically
 
 ### CONSTRUCTOR
 
 ```abap
   importing
     i_interface_name type seoclsname
+    io_proxy_target  type ref to object
     io_ml_instance   type ref to zcl_mockup_loader
 ```
 - **i_interface_name** - global interface name to stub
