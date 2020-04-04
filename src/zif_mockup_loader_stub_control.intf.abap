@@ -15,4 +15,8 @@ interface ZIF_MOCKUP_LOADER_STUB_CONTROL
     returning
       value(rv_call_count) type i.
 
+  methods set_proxy_target
+    importing
+      io_proxy_target type ref to object optional.
+
 endinterface.

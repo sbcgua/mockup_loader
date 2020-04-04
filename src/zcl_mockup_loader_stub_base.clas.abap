@@ -206,4 +206,9 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
     lr_control = get_control_for_method( i_method ).
     rv_call_count = lr_control->call_count.
   endmethod.
+
+
+  method zif_mockup_loader_stub_control~set_proxy_target.
+    mo_proxy_target = io_proxy_target.
+  endmethod.
 ENDCLASS.

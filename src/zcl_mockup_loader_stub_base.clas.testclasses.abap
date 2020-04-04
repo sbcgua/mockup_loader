@@ -13,6 +13,7 @@ class ltcl_mockup_stub_base_test definition final
     methods get_mock_data for testing raising zcx_mockup_loader_error.
     methods control_disable for testing raising zcx_mockup_loader_error.
     methods control_call_count for testing raising zcx_mockup_loader_error.
+    methods control_set_proxy for testing raising zcx_mockup_loader_error.
 endclass.
 
 class lcl_mockup_loader_stub_final definition final
@@ -139,6 +140,18 @@ class ltcl_mockup_stub_base_test implementation.
     cl_abap_unit_assert=>assert_equals(
       act = li_control->get_call_count( 'METHOD_SIMPLE' )
       exp = 1 ).
+
+  endmethod.
+
+  method control_set_proxy.
+
+    cl_abap_unit_assert=>assert_initial( mo_stub_cut->mo_proxy_target ).
+
+    mo_stub_cut->zif_mockup_loader_stub_control~set_proxy_target( me ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = mo_stub_cut->mo_proxy_target
+      exp = me ).
 
   endmethod.
 endclass.
