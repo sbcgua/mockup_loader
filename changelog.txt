@@ -11,6 +11,8 @@ Legend
 v2.1.9, 2020-04-??
 ------------------
 + zif_mockup_loader_stub_control~set_proxy_target to set proxy target dynamically
++ stub->connect_method able to connect deep structures (i_deep = abap_true)
++ stub->connect able to connect deep structures ("method_name -> :deep: mock_path")
 
 v2.1.8, 2020-03-29
 ------------------

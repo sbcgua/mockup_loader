@@ -594,11 +594,13 @@ Generated stub instance implements `ZIF_MOCKUP_LOADER_STUB_CONTROL` interface. I
     i_method_name  type abap_methname
     i_mock_name    type string
     i_load_strict  type abap_bool default abap_false
+    i_corresponding type abap_bool default abap_false
     i_sift_param   type abap_parmname optional
     i_mock_tab_key type abap_compname optional
     i_output_param type abap_parmname optional
     i_field_only   type abap_parmname optional
     i_const_value  type string optional
+    i_deep         type abap_bool default abap_false
   returning
     r_instance type ref to zcl_mockup_loader_stub_factory
 ```
@@ -607,11 +609,13 @@ Activates stub for the given method, connects it to the specified mockup path, o
 - **i_method_name**  - interface method to stub
 - **i_mock_name**    - mock path (in-zip) to load data from
 - **i_load_strict**  - if the mockdata should be loaded strictly (see `load_data` method for more info)
+- **i_corresponding** - load corresponding fields only
 - **i_sift_param**   - importing parameter of the interface to take filter value from. Structured addressing also supported, e.g. `IS_PARAMS-CONNID`. **Range** parameters are also supported.
 - **i_mock_tab_key** - key field in the mock data to use for the filter
 - **i_output_param** - parameter of the interface to save data to. Exporting, changing and returning are supported. If empty - the returning parameter is assumed and searched in the method definition. Parameter must be a table or a structure (as all load targets)
 - **i_field_only**   - return just specified field of the first metching record. e.g. Document type of a document selected by number. See example below.
 - **i_const_value**  - return this value as the output. Does not load any mocks just returns an elementary value (returing type must be convertible from string)
+- **i_deep**         - enable deep structures/tables loading, can be combine with `i_corresponding`
 - **returning value** is the instance of stub factory, for chaining
 
 Example of **i_field_only** usage. The below code will find the **first** record in the prepared data in which field `CONNID` matches input parameter `I_CONNID` and return `PRICE` field of this method.
@@ -688,6 +692,7 @@ Supports:
 - `'get_my_data -> *'` - forward the method
 - `'get_my_data -> my_mock(single_field) [field = i_param]'` - return one specific field of the first filtered item
 - `'get_my_data -> =value'` - return constant single value (or amount)
+- `'get_my_data -> :deep: value'` - enable deep structures (can be also `~:deep:` = deep + corresponding)
 
 Addressing structured method parameters also works: `'get_my_data -> mock_path [a = i_struc-field]'`
 
