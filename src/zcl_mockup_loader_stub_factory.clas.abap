@@ -421,6 +421,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     if rs_parsed-mock_name cp ':deep:*'.
       rs_parsed-mock_name = replace( val = rs_parsed-mock_name sub = ':deep:' with = '' ).
       rs_parsed-deep = abap_true.
+      condense rs_parsed-mock_name.
     endif.
 
   endmethod.

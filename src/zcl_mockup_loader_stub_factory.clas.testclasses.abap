@@ -986,6 +986,32 @@ class ltcl_mockup_stub_factory_test implementation.
 
     clear ls_exp.
     ls_exp-method_name   = 'methodX'.
+    ls_exp-mock_name     = 'mock_path'.
+    ls_exp-corresponding = ''.
+    ls_exp-sift_param    = ''.
+    ls_exp-mock_tab_key  = ''.
+    ls_exp-field_only    = ''.
+    ls_exp-const_value   = ''.
+    ls_exp-deep          = abap_true.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> :deep: mock_path' )
+      exp = ls_exp ).
+
+    clear ls_exp.
+    ls_exp-method_name   = 'methodX'.
+    ls_exp-mock_name     = 'mock_path'.
+    ls_exp-corresponding = abap_true.
+    ls_exp-sift_param    = ''.
+    ls_exp-mock_tab_key  = ''.
+    ls_exp-field_only    = ''.
+    ls_exp-const_value   = ''.
+    ls_exp-deep          = abap_true.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> ~:deep:mock_path' )
+      exp = ls_exp ).
+
+    clear ls_exp.
+    ls_exp-method_name   = 'methodX'.
     ls_exp-mock_name     = 'xxx:deep:mock_path'. " Deep marker is just at the beginning
     ls_exp-corresponding = ''.
     ls_exp-sift_param    = ''.
