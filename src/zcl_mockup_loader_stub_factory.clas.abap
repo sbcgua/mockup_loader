@@ -22,6 +22,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         !i_field_only type abap_parmname optional
         !i_output_param type abap_parmname optional
         !i_const_value type string optional
+        !i_deep type abap_bool default abap_false
       returning
         value(r_instance) type ref to zcl_mockup_loader_stub_factory
       raising
@@ -196,6 +197,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     ls_config-output_param  = to_upper( i_output_param ).
     ls_config-field_only    = to_upper( i_field_only ).
     ls_config-const_value   = i_const_value.
+    ls_config-deep          = i_deep.
 
     read table mt_config with key method_name = ls_config-method_name transporting no fields.
     if sy-subrc is initial.
@@ -370,6 +372,8 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     " for corresponding `METHOD -> ~file`
     " for single field  `METHOD -> file(field_name)`
     " for fixed value   `METHOD -> =value`
+    " for deep          `METHOD -> :deep:value`
+    " TODO 'directives' - :xxx:
 
     data l_pair type string.
     data l_filter type string.
@@ -412,6 +416,11 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       clear rs_parsed-mock_name.
       shift rs_parsed-const_value left by 1 places.
       condense rs_parsed-const_value.
+    endif.
+
+    if rs_parsed-mock_name cp ':deep:*'.
+      rs_parsed-mock_name = replace( val = rs_parsed-mock_name sub = ':deep:' with = '' ).
+      rs_parsed-deep = abap_true.
     endif.
 
   endmethod.

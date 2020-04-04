@@ -19,6 +19,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         as_proxy        type abap_bool,
         field_only      type abap_parmname,
         const_value     type string,
+        deep            type abap_bool,
       end of ty_mock_config .
     types:
       tt_mock_config type standard table of ty_mock_config with key method_name .
@@ -136,6 +137,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
         i_obj    = <conf>-mock_name
         i_strict = <conf>-load_strict
         i_corresponding = boolc( <conf>-field_only is not initial or <conf>-corresponding = abap_true )
+        i_deep   = <conf>-deep
         i_where  = ls_filter
       importing
         e_container = r_data ).

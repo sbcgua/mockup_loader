@@ -10,9 +10,18 @@ interface zif_mockup_loader_stub_dummy
   types:
     begin of ty_sflight_extract,
       connid type sflight-connid,
+      fldate type sflight-fldate,
       price type sflight-price,
     end of ty_sflight_extract,
     tt_sflight_extract type standard table of ty_sflight_extract with default key.
+
+  types:
+    begin of ty_deep,
+      carrid type sflight-carrid,
+      connid type sflight-connid,
+      prices type tt_sflight_extract,
+    end of ty_deep,
+    tt_deep type standard table of ty_deep with key carrid connid.
 
   types:
     ty_connid_range type range of sflight-connid.
@@ -84,5 +93,11 @@ interface zif_mockup_loader_stub_dummy
       !i_connid type s_conn_id
     returning
       value(r_val) type sflight-price .
+
+  methods return_deep
+    importing
+      !i_connid type s_conn_id
+    returning
+      value(r_deep) type tt_deep .
 
 endinterface.

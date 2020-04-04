@@ -5,6 +5,7 @@ class ltcl_mockup_stub_factory_test definition final
 
   private section.
     methods main_test_stub for testing.
+    methods connect_deep_corresponding for testing raising zcx_mockup_loader_error.
     methods connect_method for testing.
     methods build_config for testing.
     methods instantiation for testing.
@@ -167,6 +168,50 @@ class ltcl_mockup_stub_factory_test implementation.
 
   method main_test_stub.
     lcl_test_base=>main_test( 'ZCL_MOCKUP_LOADER_STUB_FACTORY' ).
+  endmethod.
+
+  method connect_deep_corresponding.
+
+    data lo_ml type ref to zcl_mockup_loader.
+    data lo_dc type ref to zcl_mockup_loader_stub_factory.
+    data li_if type ref to zif_mockup_loader_stub_dummy.
+
+    data lt_exp type zif_mockup_loader_stub_dummy=>tt_deep.
+
+    lo_ml  = zcl_mockup_loader=>create(
+      i_type = 'MIME'
+      i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
+
+    create object lo_dc
+      exporting
+        io_ml_instance   = lo_ml
+        i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+
+    lo_dc->connect_method(
+      i_sift_param      = 'I_CONNID'
+      i_mock_tab_key    = 'CONNID'
+      i_method_name     = 'RETURN_DEEP'
+      i_deep            = abap_true
+      i_corresponding   = abap_true
+      i_mock_name       = 'EXAMPLE/sflight' ).
+
+    li_if ?= lo_dc->generate_stub( ).
+
+    lo_ml->load_data(
+      exporting
+        i_obj    = 'EXAMPLE/sflight'
+        i_strict = abap_false
+        i_corresponding = abap_true
+        i_deep   = abap_true
+      importing
+        e_container = lt_exp ).
+
+    delete lt_exp where connid <> '2000'.
+
+    data lt_res like lt_exp.
+    lt_res = li_if->return_deep( i_connid = '2000' ).
+    cl_abap_unit_assert=>assert_equals( act = lt_res exp = lt_exp ).
+
   endmethod.
 
   method connect_method.
@@ -924,6 +969,32 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-const_value   = ''.
     cl_abap_unit_assert=>assert_equals(
       act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> *' )
+      exp = ls_exp ).
+
+    clear ls_exp.
+    ls_exp-method_name   = 'methodX'.
+    ls_exp-mock_name     = 'mock_path'.
+    ls_exp-corresponding = ''.
+    ls_exp-sift_param    = ''.
+    ls_exp-mock_tab_key  = ''.
+    ls_exp-field_only    = ''.
+    ls_exp-const_value   = ''.
+    ls_exp-deep          = abap_true.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> :deep:mock_path' )
+      exp = ls_exp ).
+
+    clear ls_exp.
+    ls_exp-method_name   = 'methodX'.
+    ls_exp-mock_name     = 'xxx:deep:mock_path'. " Deep marker is just at the beginning
+    ls_exp-corresponding = ''.
+    ls_exp-sift_param    = ''.
+    ls_exp-mock_tab_key  = ''.
+    ls_exp-field_only    = ''.
+    ls_exp-const_value   = ''.
+    ls_exp-deep          = abap_false.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> xxx:deep:mock_path' )
       exp = ls_exp ).
 
   endmethod.
