@@ -88,10 +88,18 @@ class ZCL_MOCKUP_LOADER definition
 
     methods initialize
       importing
-        !i_path type string
-        !i_type type zif_mockup_loader=>ty_src_type
+        !i_zip_blob type xstring
       raising
         zcx_mockup_loader_error .
+    class-methods read_zip_blob
+      importing
+        !i_path type string
+        !i_type type zif_mockup_loader=>ty_src_type
+      returning
+        value(r_xdata) type xstring
+      raising
+        zcx_mockup_loader_error .
+
     methods parse_data
       importing
         !i_rawdata type string
@@ -250,9 +258,12 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         c_src_type = l_src_type
         c_src_path = l_src_path ).
 
-    ro_instance->initialize(
+    data lv_xdata type xstring.
+    lv_xdata = read_zip_blob(
       i_type = l_src_type
       i_path = l_src_path ).
+
+    ro_instance->initialize( lv_xdata ).
 
   endmethod.
 
@@ -309,85 +320,21 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
 
   method initialize.
-    data: l_key       type wwwdatatab,
-          l_xstring   type xstring,
-          l_size      type int4,
-          lt_w3mime   type table of w3mime,
-          ls_w3mime   type w3mime.
 
-    " Load data
-    case i_type.
-      when 'MIME'. " Load from SMW0
-        l_key-relid = 'MI'.
-        l_key-objid = i_path.
-
-        call function 'WWWDATA_IMPORT'
-          exporting
-            key    = l_key
-          tables
-            mime   = lt_w3mime[]
-          exceptions
-            others = 1.
-
-        if sy-subrc is not initial.
-          zcx_mockup_loader_error=>raise( msg = 'SMW0 data import error' code = 'RE' ).  "#EC NOTEXT
-        endif.
-
-        describe table lt_w3mime lines l_size.
-        l_size = sy-tleng * sy-tfill.
-
-      when 'FILE'. " Load from frontend
-        call function 'GUI_UPLOAD'
-          exporting
-            filename   = i_path
-            filetype   = 'BIN'
-          importing
-            filelength = l_size
-          tables
-            data_tab   = lt_w3mime
-          exceptions
-            others = 1.
-
-        if sy-subrc is not initial.
-          zcx_mockup_loader_error=>raise( msg = |Cannot upload file: { i_path }| code = 'RE' ). "#EC NOTEXT
-        endif.
-
-      when others.
-        if sy-subrc is not initial.
-          zcx_mockup_loader_error=>raise( msg = 'Wrong source type' code = 'WS' ). "#EC NOTEXT
-        endif.
-
-    endcase.
-
-    " Convert to XString
-    call function 'SCMS_BINARY_TO_XSTRING'
-      exporting
-        input_length = l_size
-      importing
-        buffer       = l_xstring
-      tables
-        binary_tab   = lt_w3mime[]
-      exceptions
-        failed       = 1.
-
-    if sy-subrc is not initial.
-      zcx_mockup_loader_error=>raise( 'Binary to string error' ). "#EC NOTEXT
-    endif.
-
-    " Extract zip
-    if mo_zip is initial.
+    if mo_zip is not bound.
       create object mo_zip.
     endif.
 
     mo_zip->load(
       exporting
-        zip    = l_xstring
+        zip    = i_zip_blob
       exceptions
         others = 4 ).
 
     if sy-subrc is not initial or lines( mo_zip->files ) = 0.
       zcx_mockup_loader_error=>raise( msg = 'ZIP load failed' code = 'ZE' ).  "#EC NOTEXT
     endif.
+
   endmethod.
 
 
@@ -489,6 +436,75 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     catch cx_root into l_ex.
       zcx_mockup_loader_error=>raise( msg = 'Codepage conversion error' code = 'CP' ). "#EC NOTEXT
     endtry.
+
+  endmethod.
+
+
+  method read_zip_blob.
+
+    data: l_key       type wwwdatatab,
+          l_size      type int4,
+          lt_w3mime   type table of w3mime,
+          ls_w3mime   type w3mime.
+
+    " Load data
+    case i_type.
+      when 'MIME'. " Load from SMW0
+        l_key-relid = 'MI'.
+        l_key-objid = i_path.
+
+        call function 'WWWDATA_IMPORT'
+          exporting
+            key    = l_key
+          tables
+            mime   = lt_w3mime[]
+          exceptions
+            others = 1.
+
+        if sy-subrc is not initial.
+          zcx_mockup_loader_error=>raise( msg = 'SMW0 data import error' code = 'RE' ).  "#EC NOTEXT
+        endif.
+
+        describe table lt_w3mime lines l_size.
+        l_size = sy-tleng * sy-tfill.
+
+      when 'FILE'. " Load from frontend
+        call function 'GUI_UPLOAD'
+          exporting
+            filename   = i_path
+            filetype   = 'BIN'
+          importing
+            filelength = l_size
+          tables
+            data_tab   = lt_w3mime
+          exceptions
+            others = 1.
+
+        if sy-subrc is not initial.
+          zcx_mockup_loader_error=>raise( msg = |Cannot upload file: { i_path }| code = 'RE' ). "#EC NOTEXT
+        endif.
+
+      when others.
+        if sy-subrc is not initial.
+          zcx_mockup_loader_error=>raise( msg = 'Wrong source type' code = 'WS' ). "#EC NOTEXT
+        endif.
+
+    endcase.
+
+    " Convert to XString
+    call function 'SCMS_BINARY_TO_XSTRING'
+      exporting
+        input_length = l_size
+      importing
+        buffer       = r_xdata
+      tables
+        binary_tab   = lt_w3mime[]
+      exceptions
+        failed       = 1.
+
+    if sy-subrc is not initial.
+      zcx_mockup_loader_error=>raise( 'Binary to string error' ). "#EC NOTEXT
+    endif.
 
   endmethod.
 
