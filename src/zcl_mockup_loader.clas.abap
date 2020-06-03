@@ -85,6 +85,7 @@ class ZCL_MOCKUP_LOADER definition
     data mv_encoding type abap_encoding .
     data mv_date_format type zif_mockup_loader=>ty_date_format .
     data mv_begin_comment type zif_mockup_loader=>ty_comment_char.
+    data mv_is_redirected type abap_bool.
 
     methods initialize
       importing
@@ -124,7 +125,8 @@ class ZCL_MOCKUP_LOADER definition
     class-methods redirect_source
       changing
         c_src_type      type zif_mockup_loader=>ty_src_type
-        c_src_path      type string.
+        c_src_path      type string
+        c_is_redirected type abap_bool.
     class-methods build_table_type
       importing
         io_type_descr   type ref to cl_abap_typedescr
@@ -255,6 +257,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
     redirect_source(
       changing
+        c_is_redirected = ro_instance->mv_is_redirected
         c_src_type = l_src_type
         c_src_path = l_src_path ).
 
@@ -530,12 +533,19 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       " or maybe remove feature at all ? not used, at least by me :)
       c_src_type = l_redirect_type.
       c_src_path = l_redirect_mime.
+      c_is_redirected = abap_true.
     elseif l_redirect_type = 'FILE' and l_redirect_file is not initial and l_redirect_mime = c_src_path.
       " Redirect only if redirect mime = original mime
       c_src_type = l_redirect_type.
       c_src_path = l_redirect_file.
+      c_is_redirected = abap_true.
     endif.
 
+  endmethod.
+
+
+  method zif_mockup_loader~is_redirected.
+    r_yes = mv_is_redirected.
   endmethod.
 
 

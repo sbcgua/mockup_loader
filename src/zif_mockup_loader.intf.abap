@@ -34,4 +34,8 @@ interface zif_mockup_loader
       !i_date_format type ty_date_format optional
       !i_begin_comment type ty_comment_char optional .
 
+  methods is_redirected
+    returning
+      value(r_yes) type abap_bool.
+
 endinterface.

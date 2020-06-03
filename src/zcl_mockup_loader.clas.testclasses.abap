@@ -380,6 +380,8 @@ class ltcl_test_mockup_loader implementation.
       set parameter id c_getset_mime field l_mime_bak.
     end-of-definition.
 
+    cl_abap_unit_assert=>assert_false( o->zif_mockup_loader~is_redirected( ) ).
+
     " MIME
     _bak_params.
 
@@ -391,6 +393,7 @@ class ltcl_test_mockup_loader implementation.
     clear lo_ex.
     try.
       o = create_default( ).
+      cl_abap_unit_assert=>assert_true( o->zif_mockup_loader~is_redirected( ) ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
 
@@ -410,6 +413,7 @@ class ltcl_test_mockup_loader implementation.
     clear lo_ex.
     try.
       o = create_default( ).
+      cl_abap_unit_assert=>assert_true( o->zif_mockup_loader~is_redirected( ) ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
 
@@ -429,11 +433,13 @@ class ltcl_test_mockup_loader implementation.
     clear lo_ex.
     try.
       o = create_default( ).
+      cl_abap_unit_assert=>assert_false( o->zif_mockup_loader~is_redirected( ) ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
 
     _restore_params.
     cl_abap_unit_assert=>assert_initial( lo_ex ).
+    cl_abap_unit_assert=>assert_false( o->zif_mockup_loader~is_redirected( ) ).
 
   endmethod.       " source_redirect_test
 
