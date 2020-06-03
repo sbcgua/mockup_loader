@@ -85,6 +85,7 @@ class ZCL_MOCKUP_LOADER definition
     data mv_encoding type abap_encoding .
     data mv_date_format type zif_mockup_loader=>ty_date_format .
     data mv_begin_comment type zif_mockup_loader=>ty_comment_char.
+    data mv_use_caching type abap_bool.
 
     methods initialize
       importing
