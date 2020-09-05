@@ -319,7 +319,7 @@ Some design facts about the `store`:
 The most convenient way to install the package is to use [abapGit](https://github.com/larshp/abapGit) - it is easily installed itself and then a couple of click to clone the repo into the system. There is also an option for offline installation - download the repo as zip file and import it with abapGit. Unit test execution is always recommended after installation.
 
 Dependencies (to install before mockup loader):
-- [text2tab](https://github.com/sbcgua/abap_data_parser) - tab-delimited text parser (was a part of *mockup loader* but now a separate reusable tool). Mandatory prerequisite.
+- [text2tab](https://github.com/sbcgua/text2tab) - tab-delimited text parser (was a part of *mockup loader* but now a separate reusable tool). Mandatory prerequisite.
 
 P.S. APACK manifest implementation is under consideration.
 
