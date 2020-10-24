@@ -171,10 +171,9 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     ls_params = parse_connect_string( i_connect_string ).
 
     if ls_params-mock_name = '*'. " Proxy
-      me->forward_method(
-        i_method_name = ls_params-method_name ).
+      forward_method( i_method_name = ls_params-method_name ).
     else.
-      me->connect_method(
+      connect_method(
         i_sift_param      = ls_params-sift_param
         i_mock_tab_key    = ls_params-mock_tab_key
         i_field_only      = ls_params-field_only
@@ -246,7 +245,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
   endmethod.
 
 
-  method FORWARD_METHOD.
+  method forward_method.
     if mo_proxy_target is initial.
       zcx_mockup_loader_error=>raise(
         msg  = |Proxy target was not specified during instantiation|
@@ -355,7 +354,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
     _src( 'endclass.' ).                                        "#EC NOTEXT
 
-    generate subroutine pool mt_src name l_prog_name MESSAGE lv_message. "#EC CI_GENERATE
+    generate subroutine pool mt_src name l_prog_name message lv_message. "#EC CI_GENERATE
     l_class_name = |\\PROGRAM={ l_prog_name }\\CLASS=LCL_MOCKUP_LOADER_STUB|.
 
     create object r_stub type (l_class_name)

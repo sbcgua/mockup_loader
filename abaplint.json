@@ -59,10 +59,10 @@
     },
     "cloud_types": true,
     "colon_missing_space": true,
-    "commented_code": {
-      "exclude": [],
-      "allowIncludeInFugr": true
-    },
+    // "commented_code": {
+    //   "exclude": [],
+    //   "allowIncludeInFugr": true
+    // },
     "constructor_visibility_public": true,
     "contains_tab": true,
     "definitions_top": false,
@@ -75,10 +75,10 @@
       "afterColon": true
     },
     "downport": true,
-    "empty_line_in_statement": {
-      "exclude": [],
-      "allowChained": false
-    },
+    // "empty_line_in_statement": {
+    //   "exclude": [],
+    //   "allowChained": false
+    // },
     "empty_statement": true,
     "empty_structure": {
       "exclude": [

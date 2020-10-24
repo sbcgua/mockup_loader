@@ -129,8 +129,8 @@ class lcl_mime_storage implementation.
     select single relid into dummy
       from wwwdata
       where relid = iv_type
-      and   objid = iv_key
-      and   srtf2 = 0.
+      and objid = iv_key
+      and srtf2 = 0.
 
     rv_yes = boolc( sy-subrc = 0 ).
 
@@ -141,8 +141,8 @@ class lcl_mime_storage implementation.
     select single * into corresponding fields of rs_object
       from wwwdata
       where relid = iv_type
-      and   objid = iv_key
-      and   srtf2 = 0.
+      and objid = iv_key
+      and srtf2 = 0.
 
     if sy-subrc > 0.
       lcx_error=>raise( 'Cannot read W3xx info' ). "#EC NOTEXT
@@ -314,7 +314,7 @@ class lcl_fs implementation.
         user_action = lv_uact
       exceptions others = 4 ).
 
-    if sy-subrc > 0 OR lv_uact <> cl_gui_frontend_services=>action_ok.
+    if sy-subrc > 0 or lv_uact <> cl_gui_frontend_services=>action_ok.
       return. " Empty value
     endif.
 
@@ -556,7 +556,7 @@ form f4_mime_path changing c_path.
   select distinct objid text from wwwdata
     into corresponding fields of table lt_data
     where relid = 'MI'
-    and   objid like 'Z%'
+    and objid like 'Z%'
     order by objid.
 
   call function 'F4IF_INT_TABLE_VALUE_REQUEST'

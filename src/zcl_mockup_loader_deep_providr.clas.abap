@@ -61,10 +61,7 @@ CLASS ZCL_MOCKUP_LOADER_DEEP_PROVIDR IMPLEMENTATION.
               cl_abap_typedescr=>describe_by_data( i_cursor )->absolute_name }|
             code = 'ZZ'                 " TODO improve error visibility
             methname = 'deep->select'.  "#EC NOTEXT
-*            line = line
-*            field = field
-*            structure = structure
-*            location = location.
+
       endif.
       get reference of <valref> into ls_filter-valref.
     endif.

@@ -315,9 +315,9 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
 
     split i_where at '=' into r_filter-name <value>.
     shift r_filter-name right deleting trailing space.
-    shift r_filter-name left  deleting leading space.
+    shift r_filter-name left deleting leading space.
     shift <value>       right deleting trailing space.
-    shift <value>       left  deleting leading space.
+    shift <value>       left deleting leading space.
     translate r_filter-name to upper case.
 
     if r_filter-name is initial or <value> is initial.

@@ -2,7 +2,6 @@ class ZCL_MOCKUP_LOADER_STORE definition
   public
   final
   create private
-
   global friends zcl_mockup_loader .
 
   public section.
@@ -113,15 +112,15 @@ CLASS ZCL_MOCKUP_LOADER_STORE IMPLEMENTATION.
 
     if i_type is supplied.
       cl_abap_typedescr=>describe_by_name(
-        exporting  p_name      = i_type
-        receiving  p_descr_ref = lo_type
+        exporting p_name      = i_type
+        receiving p_descr_ref = lo_type
         exceptions others      = 4 ).
     else.
       lo_type = i_type_desc.
     endif.
 
     if sy-subrc is not initial.
-      zcx_mockup_loader_error=>raise( msg = |Type { i_type } not found|  code = 'WT' ). "#EC NOTEXT
+      zcx_mockup_loader_error=>raise( msg = |Type { i_type } not found| code = 'WT' ). "#EC NOTEXT
     endif.
 
     " Create container to load zip data to
@@ -136,7 +135,7 @@ CLASS ZCL_MOCKUP_LOADER_STORE IMPLEMENTATION.
       importing
         e_container = lr_data ).
 
-    zcl_mockup_loader_store=>get_instance( )->_store(
+    get_instance( )->_store(
       i_name     = i_name
       i_data_ref = lr_data
       i_tabkey   = i_tabkey ).
@@ -212,7 +211,7 @@ CLASS ZCL_MOCKUP_LOADER_STORE IMPLEMENTATION.
 
 
   method store.
-    data          lr_data type ref to data.
+    data lr_data type ref to data.
     field-symbols <data>  type any.
 
     " Create clone container and copy data there
@@ -220,9 +219,10 @@ CLASS ZCL_MOCKUP_LOADER_STORE IMPLEMENTATION.
     assign lr_data->* to <data>.
     <data> = i_data.
 
-    me->_store( i_name     = i_name
-                i_data_ref = lr_data
-                i_tabkey   = i_tabkey ).
+    _store(
+      i_name     = i_name
+      i_data_ref = lr_data
+      i_tabkey   = i_tabkey ).
   endmethod.
 
 
@@ -282,7 +282,7 @@ CLASS ZCL_MOCKUP_LOADER_STORE IMPLEMENTATION.
     endif.
 
     " If types are not equal try going deeper to table line structure
-    if ld_src->absolute_name ne ld_dst->absolute_name.
+    if ld_src->absolute_name <> ld_dst->absolute_name.
       if ld_src->kind = 'T' and ld_dst->kind = 'T'. " Table => Table
         ld_tab      ?= ld_dst.
         ld_dst_line ?= ld_tab->get_table_line_type( ).
@@ -292,7 +292,7 @@ CLASS ZCL_MOCKUP_LOADER_STORE IMPLEMENTATION.
         zcx_mockup_loader_error=>raise( msg = |Types differ for store { i_name }| code = 'TT' ). "#EC NOTEXT
       endif.
 
-      if ld_src_line->absolute_name ne ld_dst_line->absolute_name.
+      if ld_src_line->absolute_name <> ld_dst_line->absolute_name.
         zcx_mockup_loader_error=>raise( msg = |Types differ for store { i_name }| code = 'TS' ). "#EC NOTEXT
       endif.
     endif.
@@ -348,7 +348,7 @@ CLASS ZCL_MOCKUP_LOADER_STORE IMPLEMENTATION.
     l_store-tabkey = i_tabkey.
     l_store-data   = i_data_ref.
 
-    me->purge( i_name ).
+    purge( i_name ).
     append l_store to me->mt_store.
 
   endmethod.

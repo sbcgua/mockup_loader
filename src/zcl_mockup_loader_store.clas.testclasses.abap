@@ -196,7 +196,7 @@ class ltcl_test_mockup_store implementation.
       importing e_data = dummy_act
       exceptions others = 4 ).
 
-    cl_abap_unit_assert=>assert_subrc(  act = sy-subrc       exp = 4 ).
+    cl_abap_unit_assert=>assert_subrc( act = sy-subrc       exp = 4 ).
     cl_abap_unit_assert=>assert_equals( act = sy-msgno       exp = 499 ). " SY(499) -> & & & &
 
     " Purge tests

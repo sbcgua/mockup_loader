@@ -98,8 +98,8 @@ class lcl_main_logic implementation.
       select single price into corresponding fields of ls_flight
         from sflight
         where carrid = o_context->a_carrid
-        and   connid = i_connid
-        and   fldate = i_date.
+        and connid = i_connid
+        and fldate = i_date.
     else.                                  " Test env
       zcl_mockup_loader_store=>retrieve(
         exporting

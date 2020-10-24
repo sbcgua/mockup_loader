@@ -76,6 +76,9 @@ class ZCL_MOCKUP_LOADER definition
         !i_required_version type string
       returning
         value(r_fits) type abap_bool .
+    methods constructor
+      raising
+        zcx_mockup_loader_error .
 
   protected section.
   private section.
@@ -117,9 +120,6 @@ class ZCL_MOCKUP_LOADER definition
         !i_name type string
       returning
         value(r_rawdata) type string
-      raising
-        zcx_mockup_loader_error .
-    methods constructor
       raising
         zcx_mockup_loader_error .
     class-methods redirect_source
@@ -424,9 +424,9 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     " Remove unicode signatures
     case mv_encoding.
       when zif_mockup_loader_constants=>encoding_utf8.
-        shift l_xstring left deleting leading  cl_abap_char_utilities=>byte_order_mark_utf8 in byte mode.
+        shift l_xstring left deleting leading cl_abap_char_utilities=>byte_order_mark_utf8 in byte mode.
       when zif_mockup_loader_constants=>encoding_utf16.
-        shift l_xstring left deleting leading  cl_abap_char_utilities=>byte_order_mark_little in byte mode.
+        shift l_xstring left deleting leading cl_abap_char_utilities=>byte_order_mark_little in byte mode.
     endcase.
 
     try.
@@ -599,9 +599,9 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       zcx_mockup_loader_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
     endif.
 
-    l_rawdata = me->read_zip( i_name = i_obj && '.txt' ).
+    l_rawdata = read_zip( i_name = i_obj && '.txt' ).
 
-    me->parse_data(
+    parse_data(
       exporting
         i_rawdata   = l_rawdata
         i_strict    = i_strict
@@ -631,8 +631,8 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     if i_date_format is initial
       or not i_date_format+3(1) co ' ./-'
       or not ( i_date_format+0(3) = 'DMY'
-        or i_date_format+0(3)     = 'MDY'
-        or i_date_format+0(3)     = 'YMD' ).
+        or i_date_format+0(3) = 'MDY'
+        or i_date_format+0(3) = 'YMD' ).
       me->mv_date_format = 'DMY.'. " DD.MM.YYYY
     else.
       me->mv_date_format = i_date_format.

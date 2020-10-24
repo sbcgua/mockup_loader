@@ -34,7 +34,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
     types:
       tt_control type standard table of ty_control with key method_name .
 
-    interfaces ZIF_MOCKUP_LOADER_STUB_CONTROL.
+    interfaces zif_mockup_loader_stub_control.
 
     methods constructor
       importing
