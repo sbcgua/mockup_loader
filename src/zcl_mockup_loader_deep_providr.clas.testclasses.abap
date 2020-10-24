@@ -19,6 +19,10 @@ class ltcl_mockup_loader_mock implementation.
 
   method zif_mockup_loader~load_blob.
   endmethod.
+  method zif_mockup_loader~set_params.
+  endmethod.
+  method zif_mockup_loader~is_redirected.
+  endmethod.
 
   method zif_mockup_loader~load_data.
     data ls_data type ty_data.

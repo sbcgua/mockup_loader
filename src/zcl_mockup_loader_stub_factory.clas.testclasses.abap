@@ -223,12 +223,6 @@ class ltcl_mockup_stub_factory_test implementation.
     data lo_ex type ref to zcx_mockup_loader_error.
 
     try.
-
-    catch zcx_mockup_loader_error into lo_ex.
-      cl_abap_unit_assert=>fail( ).
-    endtry.
-
-    try.
       lo_ml  = zcl_mockup_loader=>create(
         i_type = 'MIME'
         i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).

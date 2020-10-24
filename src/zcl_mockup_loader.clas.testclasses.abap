@@ -354,9 +354,9 @@ class ltcl_test_mockup_loader implementation.
   method source_redirect_test.
 
     constants:
-      c_getset_type type memoryid value 'ZMOCKUP_LOADER_STYPE',
-      c_getset_mime type memoryid value 'ZMOCKUP_LOADER_SMIME',
-      c_getset_file type memoryid value 'ZMOCKUP_LOADER_SPATH'.
+      lc_getset_type type memoryid value 'ZMOCKUP_LOADER_STYPE',
+      lc_getset_mime type memoryid value 'ZMOCKUP_LOADER_SMIME',
+      lc_getset_file type memoryid value 'ZMOCKUP_LOADER_SPATH'.
 
     data:
       lx_ut      type ref to cx_aunit_fail,
@@ -370,14 +370,14 @@ class ltcl_test_mockup_loader implementation.
 
     " "DANGEROUS" TEST AS MODIFIES SET/GET PARAMS
     define _bak_params.
-      get parameter id c_getset_file field l_file_bak.
-      get parameter id c_getset_mime field l_mime_bak.
+      get parameter id lc_getset_file field l_file_bak.
+      get parameter id lc_getset_mime field l_mime_bak.
     end-of-definition.
     define _restore_params.
       clear l_type.
-      set parameter id c_getset_type field l_type.
-      set parameter id c_getset_file field l_file_bak.
-      set parameter id c_getset_mime field l_mime_bak.
+      set parameter id lc_getset_type field l_type.
+      set parameter id lc_getset_file field l_file_bak.
+      set parameter id lc_getset_mime field l_mime_bak.
     end-of-definition.
 
     cl_abap_unit_assert=>assert_false( o->zif_mockup_loader~is_redirected( ) ).
@@ -386,9 +386,9 @@ class ltcl_test_mockup_loader implementation.
     _bak_params.
 
     l_type = 'MIME'.
-    set parameter id c_getset_type field l_type.
+    set parameter id lc_getset_type field l_type.
     l_path = 'ZMOCKUP_LOADER_WRONG_OBJECT'.
-    set parameter id c_getset_mime field l_path.
+    set parameter id lc_getset_mime field l_path.
 
     clear lo_ex.
     try.
@@ -404,11 +404,11 @@ class ltcl_test_mockup_loader implementation.
     _bak_params.
 
     l_type = 'FILE'.
-    set parameter id c_getset_type field l_type.
+    set parameter id lc_getset_type field l_type.
     l_path = 'ZMOCKUP_LOADER_WRONG_OBJECT'.
-    set parameter id c_getset_file field l_path.
+    set parameter id lc_getset_file field l_path.
     l_path = 'ZMOCKUP_LOADER_UNIT_TEST'.
-    set parameter id c_getset_mime field l_path. " replace the mock which was in setup
+    set parameter id lc_getset_mime field l_path. " replace the mock which was in setup
 
     clear lo_ex.
     try.
@@ -424,11 +424,11 @@ class ltcl_test_mockup_loader implementation.
     _bak_params.
 
     l_type = 'FILE'.
-    set parameter id c_getset_type field l_type.
+    set parameter id lc_getset_type field l_type.
     l_path = 'ZMOCKUP_LOADER_WRONG_OBJECT'.
-    set parameter id c_getset_file field l_path.
+    set parameter id lc_getset_file field l_path.
     l_path = 'ZMOCKUP_LOADER_NOT_EXISTING'.
-    set parameter id c_getset_mime field l_path. " replace the mock which was in setup
+    set parameter id lc_getset_mime field l_path. " replace the mock which was in setup
 
     clear lo_ex.
     try.

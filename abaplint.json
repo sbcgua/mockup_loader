@@ -53,7 +53,7 @@
       "ignoreExceptions": true,
       "ignoreLocal": true,
       "ignoreInterfaces": false,
-      "statics": "^G._.+$",
+      "statics": "^G.?_.+$",
       "instance": "^M._.+$",
       "constants": ""
     },
@@ -116,6 +116,8 @@
     // "if_in_if": true,
     "implement_methods": {
       "exclude": [
+        "zcl_mockup_loader_deep_providr.clas.abap",
+        "zcx_mockup_loader_error.clas.abap"
       ]
     },
     "in_statement_indentation": false,
@@ -199,12 +201,13 @@
       "depth": 6
     },
     "newline_between_methods": {
-      "exclude": [],
+      "exclude": ["testclasses.abap$"],
       "count": 3,
       "logic": "less"
     },
     "no_public_attributes": {
       "exclude": [
+        "testclasses.abap$"
       ],
       "allowReadOnly": true
     },
@@ -251,7 +254,9 @@
     },
     "parser_error": true,
     "prefer_inline": true,
-    "prefer_returning_to_exporting": true,
+    "prefer_returning_to_exporting": {
+      "exclude": ["zif_mockup_loader_stub_dummy.intf.abap"]
+    },
     "preferred_compare_operator": {
       "exclude": [],
       "badOperators": [
