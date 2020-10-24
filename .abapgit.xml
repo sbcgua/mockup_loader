@@ -16,6 +16,7 @@
     <item>/CONTRIBUTING.md</item>
     <item>/changelog.txt</item>
     <item>/.travis.yml</item>
+    <item>/-.travis.yml</item>
     <item>/abaplint.json</item>
     <item>/ci/</item>
     <item>/deploy_key.enc</item>
