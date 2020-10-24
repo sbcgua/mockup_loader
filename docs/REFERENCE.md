@@ -344,44 +344,6 @@ Checks id the mockup loader instance is redirected by `ZMOCKUP_LOADER_SWSRC` tra
   endif.
 ```
 
-### LOAD_AND_STORE
-
-```abap
-importing
-  I_OBJ       type STRING
-  I_STRICT    type ABAP_BOOL default ABAP_FALSE
-  I_NAME      type CHAR40
-  I_TYPE      type CSEQUENCE
-  I_TYPE_DESC type ref to CL_ABAP_TYPEDESCR OPTIONAL
-  I_TABKEY    type ABAP_COMPNAME optional
-```
-
-The method is the combination of `LOAD_DATA` and `STORE` (see `ZCL_MOCKUP_LOADER_STORE` below) - created to avoid intermediary variables to hold the data in between.
-
-See `LOAD_DATA` for description of **I_OBJ** and **I_STRICT**. See `STORE` to clarify **I_NAME** and **I_TABKEY**.
-
-**I_TYPE** is literal name of the type to validate the text data structure and create store container.  Please refer to documentation of RTTI method `cl_abap_typedescr=>describe_by_name` for information on how to specify type names. But briefly it accepts thing like:
-
--  dictionary types (e.g. `'BSET_TAB'`)
--  type pools types (e.g. `'ABAP_COMPDESCR'` from ABAP type pool)
--  locally defined types (e.g. `'TY_BSET_EXTRACT'` defined locally in program)
--  class **public** types (e.g. `'ZCL_SOME_CLASS=>TY_SOME_TYPE'`)
-
-Alternatively **I_TYPE_DESC** can be used instead to pass `CL_ABAP_TYPEDESCR` instance.
-
-**Example:**
-
-```abap
-try.
-  call method o->load_and_store
-    exporting i_obj       = 'TEST1/BSEG'
-              i_name      = 'BSEG'
-              i_type      = 'BSEG_T'. " Dictionary BSEG table type
-catch zcx_mockup_loader_error into lo_ex.
-  fail( lo_ex->get_text( ) ).
-endtry.
-```
-
 
 
 ## ZCL_MOCKUP_LOADER_STORE
@@ -482,6 +444,47 @@ importing
 ```abap
 call method o_ml->purge
   exporting i_name   = 'BKPF'.
+```
+
+### LOAD_AND_STORE
+
+```abap
+importing
+  IO_ML       type ref to ZCL_MOCKUP_LOADER
+  I_OBJ       type STRING
+  I_STRICT    type ABAP_BOOL default ABAP_FALSE
+  I_NAME      type CHAR40
+  I_TYPE      type CSEQUENCE
+  I_TYPE_DESC type ref to CL_ABAP_TYPEDESCR OPTIONAL
+  I_TABKEY    type ABAP_COMPNAME optional
+```
+
+The method is the combination of `LOAD_DATA` (of mockup_loader instance) and `STORE` - created to avoid intermediary variables to hold the data in between.
+
+See `LOAD_DATA` for description of **I_OBJ** and **I_STRICT**. See `STORE` to clarify **I_NAME** and **I_TABKEY**.
+
+**I_TYPE** is literal name of the type to validate the text data structure and create store container.  Please refer to documentation of RTTI method `cl_abap_typedescr=>describe_by_name` for information on how to specify type names. But briefly it accepts thing like:
+
+-  dictionary types (e.g. `'BSET_TAB'`)
+-  type pools types (e.g. `'ABAP_COMPDESCR'` from ABAP type pool)
+-  locally defined types (e.g. `'TY_BSET_EXTRACT'` defined locally in program)
+-  class **public** types (e.g. `'ZCL_SOME_CLASS=>TY_SOME_TYPE'`)
+
+Alternatively **I_TYPE_DESC** can be used instead to pass `CL_ABAP_TYPEDESCR` instance.
+
+**Example:**
+
+```abap
+try.
+  call method o->load_and_store
+    exporting 
+      io_ml       = lo_ml_instance
+      i_obj       = 'TEST1/BSEG'
+      i_name      = 'BSEG'
+      i_type      = 'BSEG_T'. " Dictionary BSEG table type
+catch zcx_mockup_loader_error into lo_ex.
+  fail( lo_ex->get_text( ) ).
+endtry.
 ```
 
 
