@@ -468,8 +468,8 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
           zcx_mockup_loader_error=>raise( msg = 'SMW0 data import error' code = 'RE' ).  "#EC NOTEXT
         endif.
 
-        describe table lt_w3mime lines l_size.
-        l_size = sy-tleng * sy-tfill.
+        describe field ls_w3mime length l_size in byte mode.
+        l_size = l_size * lines( lt_w3mime ).
 
       when 'FILE'. " Load from frontend
         call function 'GUI_UPLOAD'

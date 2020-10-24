@@ -541,17 +541,17 @@ endform.                    "set_file_path
 *&---------------------------------------------------------------------*
 *&      Form  set_mime_path
 *&---------------------------------------------------------------------*
-form f4_mime_path changing c_path.
+form f4_mime_path changing c_path type char40.
   types:
-    begin of t_data,
+    begin of lty_data,
       objid type wwwdata-objid,
       text  type wwwdata-text,
-    end of t_data.
+    end of lty_data.
 
   data:
-        ls_return type ddshretval,
-        lt_data   type table of t_data,
-        lt_return type table of ddshretval.
+    ls_return type ddshretval,
+    lt_data   type table of lty_data,
+    lt_return type table of ddshretval.
 
   select distinct objid text from wwwdata
     into corresponding fields of table lt_data
