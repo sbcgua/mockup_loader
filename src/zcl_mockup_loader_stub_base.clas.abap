@@ -12,6 +12,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         load_strict     type abap_bool,
         corresponding   type abap_bool,
         sift_param      type string,
+        sift_const      type string,
         mock_tab_key    type abap_compname,
         output_param    type abap_parmname,
         output_pkind    type abap_parmkind,
@@ -128,6 +129,13 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
       else.
         zcx_mockup_loader_error=>raise( msg = 'Unexpected sift param type' code = 'US' ).
       endif.
+    endif.
+
+    " if sift const, build filter. param xor const is checked in the factory
+    if <conf>-sift_const is not initial.
+      ls_filter = zcl_mockup_loader_utils=>conv_single_val_to_filter(
+        i_where = <conf>-mock_tab_key
+        i_value = <conf>-sift_const ).
     endif.
 
     " create data container and load mock

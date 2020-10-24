@@ -18,6 +18,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         !i_load_strict type abap_bool default abap_false
         !i_corresponding type abap_bool default abap_false
         !i_sift_param type string optional
+        !i_sift_const type string optional
         !i_mock_tab_key type abap_compname optional
         !i_field_only type abap_parmname optional
         !i_output_param type abap_parmname optional
@@ -193,6 +194,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     ls_config-load_strict   = i_load_strict.
     ls_config-corresponding = i_corresponding.
     ls_config-sift_param    = to_upper( i_sift_param ).
+    ls_config-sift_const    = i_sift_const.
     ls_config-mock_tab_key  = to_upper( i_mock_tab_key ).
     ls_config-output_param  = to_upper( i_output_param ).
     ls_config-field_only    = to_upper( i_field_only ).
@@ -368,6 +370,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
   method parse_connect_string.
     " for mock          `METHOD -> file`
     " for mock w/params `METHOD -> file [param = key]`
+    " for mock w/params `METHOD -> file [param = "const"]`
     " for proxy         `METHOD -> *`
     " for corresponding `METHOD -> ~file`
     " for single field  `METHOD -> file(field_name)`
@@ -400,9 +403,20 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       rs_parsed-field_only = substring( val = rs_parsed-field_only len = lv_len - 1 ).
     endif.
 
+    condense rs_parsed-sift_param.
+
+    if rs_parsed-sift_param is not initial and rs_parsed-sift_param+0(1) = '"'.
+      lv_len = strlen( rs_parsed-sift_param ).
+      if substring( val = rs_parsed-sift_param off = lv_len - 1 ) <> '"'.
+        zcx_mockup_loader_error=>raise( msg = 'incorrect connect string format' code = 'SF' ).
+      endif.
+      rs_parsed-sift_const = substring( val = rs_parsed-sift_param len = lv_len - 2 off = 1 ).
+      clear rs_parsed-sift_param.
+    endif.
+
     condense rs_parsed-method_name.
     condense rs_parsed-mock_name.
-    condense rs_parsed-sift_param.
+    condense rs_parsed-sift_const.
     condense rs_parsed-mock_tab_key.
 
     if rs_parsed-mock_name cp '*/~*'.
@@ -442,14 +456,19 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       zcx_mockup_loader_error=>raise(
         msg  = 'Either mock or const value is allowed'
         code = 'CV' ). "#EC NOTEXT
-    elseif boolc( i_config-sift_param is initial ) <> boolc( i_config-mock_tab_key is initial ). " XOR
+    elseif boolc( i_config-sift_param is initial and i_config-sift_const is initial )
+      <> boolc( i_config-mock_tab_key is initial ). " XOR
       zcx_mockup_loader_error=>raise(
-        msg  = 'Specify both i_sift_param and i_mock_tab_key'
+        msg  = 'Specify both i_sift_param/const and i_mock_tab_key'
         code = 'MS' ). "#EC NOTEXT
     elseif i_config-corresponding = abap_true and i_config-field_only is not initial.
       zcx_mockup_loader_error=>raise(
         msg  = 'Cannot combine field_only and corresponding'
         code = 'PC' ). "#EC NOTEXT
+    elseif i_config-sift_param is not initial and i_config-sift_const is not initial.
+      zcx_mockup_loader_error=>raise(
+        msg  = 'Cannot combine sift_param and sift_const'
+        code = 'CS' ). "#EC NOTEXT
     endif.
 
     " find method, check if exists
