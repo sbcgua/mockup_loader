@@ -529,7 +529,7 @@ endform.                    "get_stype
 *&---------------------------------------------------------------------*
 *&      Form  set_file_path
 *&---------------------------------------------------------------------*
-form f4_file_path changing c_path.
+form f4_file_path changing c_path type char128.
   data: l_path type localfile.
 
   l_path = lcl_fs=>choose_file_dialog( ).
