@@ -331,6 +331,19 @@ returning
 
 Same as `LOAD_RAW` except that the path should be completely specified, with the extension, and the data `xstring` is returned and not exported.
 
+### IS_REDIRECTED
+
+Checks id the mockup loader instance is redirected by `ZMOCKUP_LOADER_SWSRC` transaction. In practice, can be used to issue warnings within your unit tests that the source of data is not final.
+
+```abap
+  if mo_ml->zif_mockup_loader~is_redirected( ) = abap_true.
+    cl_abap_unit_assert=>fail(
+      msg   = 'Redirect is ON'
+      level = if_aunit_constants~tolerable
+      quit  = if_aunit_constants~no ).
+  endif.
+```
+
 ### LOAD_AND_STORE
 
 ```abap
@@ -368,7 +381,6 @@ catch zcx_mockup_loader_error into lo_ex.
   fail( lo_ex->get_text( ) ).
 endtry.
 ```
-
 
 
 
@@ -471,7 +483,6 @@ importing
 call method o_ml->purge
   exporting i_name   = 'BKPF'.
 ```
-
 
 
 ## ZCL_MOCKUP_LOADER_UTILS

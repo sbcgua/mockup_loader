@@ -321,13 +321,11 @@ The most convenient way to install the package is to use [abapGit](https://githu
 Dependencies (to install before mockup loader):
 - [text2tab](https://github.com/sbcgua/text2tab) - tab-delimited text parser (was a part of *mockup loader* but now a separate reusable tool). Mandatory prerequisite.
 
-P.S. APACK manifest implementation is under consideration.
-
 ## Load source redirection
 
 Zipped mockups slug is supposed to be uploaded as a MIME object via SMW0. However, during data or test creation, it is more convenient (and faster) to read local file. In particular, not to upload 'draft' test data to the system.
 
-`i_type` and `i_path` are the parameters to the `create` method to define the 'normal' mockup source. To **temporarily** switch to another source you can use the transaction `ZMOCKUP_LOADER_SWSRC`. It will initialize SET/GET parameters  `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH(MIME)` which will **override** defaults for the current session only.
+`i_type` and `i_path` are the parameters to the `create` method to define the 'normal' mockup source. To **temporarily** switch to another source you can use the transaction `ZMOCKUP_LOADER_SWSRC`. It will initialize SET/GET parameters `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH(MIME)` which will **override** defaults for the current session only. Code-wise, you can also find out if the mockup loader instance is redirected by calling `is_redirected` method.
 
 ![switch source](docs/switch.png)
 
