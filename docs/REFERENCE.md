@@ -610,6 +610,7 @@ Generated stub instance implements `ZIF_MOCKUP_LOADER_STUB_CONTROL` interface. I
     i_load_strict  type abap_bool default abap_false
     i_corresponding type abap_bool default abap_false
     i_sift_param   type abap_parmname optional
+    i_sift_const   type abap_parmname optional
     i_mock_tab_key type abap_compname optional
     i_output_param type abap_parmname optional
     i_field_only   type abap_parmname optional
@@ -625,6 +626,7 @@ Activates stub for the given method, connects it to the specified mockup path, o
 - **i_load_strict**  - if the mockdata should be loaded strictly (see `load_data` method for more info)
 - **i_corresponding** - load corresponding fields only
 - **i_sift_param**   - importing parameter of the interface to take filter value from. Structured addressing also supported, e.g. `IS_PARAMS-CONNID`. **Range** parameters are also supported.
+- **i_sift_const**   - similar to sift param, but use fixed constant instead of dynamic value passed into the mocked method e.g. `1234`
 - **i_mock_tab_key** - key field in the mock data to use for the filter
 - **i_output_param** - parameter of the interface to save data to. Exporting, changing and returning are supported. If empty - the returning parameter is assumed and searched in the method definition. Parameter must be a table or a structure (as all load targets)
 - **i_field_only**   - return just specified field of the first metching record. e.g. Document type of a document selected by number. See example below.
@@ -700,6 +702,7 @@ lo_factory->connect( 'get_my_data -> mock_path' ).
 Supports:
 - `'get_my_data -> my_mock'` - map `get_my_data` method to `my_mock`
 - `'get_my_data -> my_mock [field = i_param]'` - filter data where `field` of an item = `i_param` passed to the method
+- `'get_my_data -> my_mock [field = "const"]'` - filter data where `field` of an item = the given `const` (see `i_sift_const` above)
 - `'get_my_data -> ~my_mock'` - copy only corresponding fields, for the case when target structure/table is **SMALLER** than the source. So `non-strict` reading in a opposite sense
 - `'get_my_data -> TEST_SUITE/~my_mock'` - this also works as 'corresponding' (deeper filename starts with ~)
 - `'get_my_data -> ~my_mock [field = i_param]'` - importantly, if the `field` is **NOT** in the target structure **you still CAN use it** for filtering.
