@@ -624,9 +624,22 @@ initialization.
   txt_mp   = 'MIME object'.                                 "#EC NOTEXT
   txt_mp2  = '(to redirect)'.                               "#EC NOTEXT
 
-  sscrfields-functxt_01 = 'Variants'.                       "#EC NOTEXT
-  sscrfields-functxt_02 = 'My variants'.                    "#EC NOTEXT
-  sscrfields-functxt_03 = 'Upload to MIME'.                 "#EC NOTEXT
+  data ls_btn type smp_dyntxt.
+
+  ls_btn-icon_id   = icon_variants.
+  ls_btn-icon_text = 'Variants'.
+  ls_btn-quickinfo = 'Select from saved variants and apply'.
+  sscrfields-functxt_01 = ls_btn.
+
+  ls_btn-icon_id   = icon_visit.
+  ls_btn-icon_text = 'My variants'.
+  ls_btn-quickinfo = 'Select from OWN saved variants and apply'.
+  sscrfields-functxt_02 = ls_btn.
+
+  ls_btn-icon_id   = icon_import.
+  ls_btn-icon_text = 'Upload to MIME'.
+  ls_btn-quickinfo = 'Upload file to to MIME storage (smw0)'.
+  sscrfields-functxt_03 = ls_btn.
 
   perform get_stype.
 
