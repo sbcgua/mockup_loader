@@ -641,6 +641,14 @@ initialization.
   ls_btn-quickinfo = 'Upload file to to MIME storage (smw0)'.
   sscrfields-functxt_03 = ls_btn.
 
+  " Hide MIME option, seems to be not used. Also need refactoring in terms of target/source mime (2 fields)
+  loop at screen.
+    if screen-name = 'P_MIME' or screen-name = 'TXT_MIME'.
+      screen-active = 0.
+    endif.
+    modify screen.
+  endloop.
+
   perform get_stype.
 
 at selection-screen output.
@@ -691,6 +699,8 @@ form set_stype.
           screen-active = 1.
         when 'P_FPATH' or 'TXT_FP'.
           screen-active = 1.
+        when 'P_MIME' or 'TXT_MIME'.
+          screen-active = 0.
       endcase.
       modify screen.
     endloop.
@@ -712,6 +722,8 @@ form set_stype.
     loop at screen.
       case screen-name.
         when 'P_MPATH' or 'P_FPATH' or 'TXT_FP' or 'TXT_MP' or 'TXT_MP2'.
+          screen-active = 0.
+        when 'P_MIME' or 'TXT_MIME'.
           screen-active = 0.
       endcase.
       modify screen.
