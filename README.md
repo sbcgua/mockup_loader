@@ -323,17 +323,19 @@ Dependencies (to install before mockup loader):
 
 ## Load source redirection
 
-Zipped mockups slug is supposed to be uploaded as a MIME object via SMW0. However, during data or test creation, it is more convenient (and faster) to read local file. In particular, not to upload 'draft' test data to the system.
+Zipped mockups slug is supposed to be uploaded as a MIME object via SMW0. However, during data or test creation, it is more convenient (and faster) to read local file. In particular, not to upload 'draft' test data to the system before it is ready, interfering with other developers. It is also very convenient to use in conjunction with [java script mockup compiler](https://github.com/sbcgua/mockup-compiler-js) (see "Conversion from Excel" section below).
 
-`i_type` and `i_path` are the parameters to the `create` method to define the 'normal' mockup source. To **temporarily** switch to another source you can use the transaction `ZMOCKUP_LOADER_SWSRC`. It will initialize SET/GET parameters `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH(MIME)` which will **override** defaults for the current session only. Code-wise, you can also find out if the mockup loader instance is redirected by calling `is_redirected` method.
+To normally code the mockup source via `i_type` and `i_path` parameters to the `create` method. To **temporarily** switch to another source you can use the transaction `ZMOCKUP_LOADER_SWSRC`. It will initialize SET/GET parameters `ZMOCKUP_LOADER_STYPE` and `ZMOCKUP_LOADER_SPATH`/`ZMOCKUP_LOADER_SMIME` which will **override** defaults for the current session only.
 
 ![switch source](docs/switch.png)
 
-N.B.
-- Type change in the selection screen immediately changes the parameters in session memory, no run is required ('enter' should be pressed though after manual text fields change to trigger `on screen`)
-- `Get SU3` reads param values from user master (useful when you work on the same project for some time)
-- `Upload to MIME` uploads the file to MIME storage instead of going through `SMW0` (the MIME object must exist)
-- Saving variants is also convenient ;)
+Code-wise, you can also find out if the mockup loader instance is redirected by calling `is_redirected` method. E.g. to issue redirection warning within your unit tests (see example in [REFERENCE.md](docs/REFERENCE.md))
+
+User's manual:
+
+- Type change in the selection screen immediately changes the parameters in session memory, no run is required (**'enter' must be pressed** though after manual text fields change to trigger `on screen` event)
+- `Upload to MIME` toolbar button uploads the file to MIME storage instead of going through `SMW0` (the MIME object must exist)
+- Saving variants is also convenient. You can then call the variant by `Variants` or `My variants` (created by your user) toolbar commands. Prefer these commands to the native variant selection (the very first button), because native variant command does not trigger `on screen`, so you must press Enter after choosing your variant (which is less convenient).
 
 ## Conversion from Excel
 
