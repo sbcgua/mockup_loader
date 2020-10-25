@@ -37,6 +37,28 @@
 report zmockup_loader_switch_source.
 tables sscrfields.
 
+types:
+  ty_source_type type c length 4.
+
+constants:
+  begin of gc_source_type,
+    undef type ty_source_type value '',
+    file type ty_source_type value 'FILE',
+    mime type ty_source_type value 'MIME',
+  end of gc_source_type.
+
+types:
+  begin of ty_variant,
+    report type varid-report,
+    variant type varid-variant,
+    user type varid-ename,
+    text type varit-vtext,
+    type type ty_source_type,
+    mime type w3objid,
+    file type char255,
+  end of ty_variant,
+  tt_variants type standard table of ty_variant with default key.
+
 *&---------------------------------------------------------------------*
 *&      Class lib (part of w3mime poller)
 *&---------------------------------------------------------------------*
@@ -134,7 +156,7 @@ class lcl_mime_storage implementation.
 
     rv_yes = boolc( sy-subrc = 0 ).
 
-  endmethod.  " check_obj_exists.
+  endmethod.
 
   method get_object_info.
 
@@ -148,7 +170,7 @@ class lcl_mime_storage implementation.
       lcx_error=>raise( 'Cannot read W3xx info' ). "#EC NOTEXT
     endif.
 
-  endmethod.  " get_object_info.
+  endmethod.
 
   method read_object_single_meta.
 
@@ -227,7 +249,7 @@ class lcl_mime_storage implementation.
       lcx_error=>raise( 'Cannot upload W3xx data' ). "#EC NOTEXT
     endif.
 
-  endmethod.  " update_object.
+  endmethod.
 
 
   method update_object_single_meta.
@@ -297,7 +319,7 @@ class lcl_fs implementation.
       lcx_error=>raise( 'Cannot read file' ). "#EC NOTEXT
     endif.
 
-  endmethod.  " read_file.
+  endmethod.
 
   method choose_file_dialog.
     data:
@@ -367,7 +389,189 @@ class lcl_utils implementation.
       it_data  = lt_data
       iv_size  = lv_size ).
 
-  endmethod.  " upload.
+  endmethod.
+endclass.
+
+**********************************************************************
+* VARIANT DIALOG
+**********************************************************************
+class lcl_variants_dialog definition final.
+  public section.
+    class-methods create
+      returning
+        value(ro_instance) type ref to lcl_variants_dialog.
+    methods popup
+      importing
+        i_own_only type abap_bool default abap_false
+      returning
+        value(rs_selected) type ty_variant.
+  private section.
+    methods display_popup
+      importing
+        it_variants type tt_variants
+      returning
+        value(rs_selected) type ty_variant.
+    methods select_variants
+      importing
+        i_own_only type abap_bool default abap_false
+      returning
+        value(rt_variants) type tt_variants.
+    methods select_variant_values
+      changing
+        cs_variant type ty_variant.
+endclass.
+
+class lcl_variants_dialog implementation.
+
+  method create.
+    create object ro_instance.
+  endmethod.
+
+  method popup.
+
+    data lt_variants type tt_variants.
+    lt_variants = select_variants( i_own_only ).
+    rs_selected = display_popup( lt_variants ).
+
+  endmethod.
+
+  method select_variants.
+
+    select h~report h~variant h~ename as user t~vtext as text
+      into corresponding fields of table rt_variants
+      from varid as h left outer join varit as t on
+        h~report = t~report
+        and h~variant = t~variant
+        and t~langu = sy-langu
+      where h~report = sy-cprog.
+
+    if i_own_only = abap_true.
+      delete rt_variants where user <> sy-uname.
+    endif.
+
+    field-symbols <v> like line of rt_variants.
+    loop at rt_variants assigning <v>.
+      select_variant_values( changing cs_variant = <v> ).
+    endloop.
+
+  endmethod.
+
+  method select_variant_values.
+
+    data lt_values type table of rsparamsl_255.
+    data ls_val like line of lt_values.
+
+    call function 'RS_VARIANT_VALUES_TECH_DAT_255'
+      exporting
+        report  = cs_variant-report
+        variant = cs_variant-variant
+      tables
+        variant_values = lt_values
+      exceptions
+        others = 1.
+
+    if sy-subrc <> 0.
+      return. " hmmm, refactor
+    endif.
+
+    " detect type
+    cs_variant-type = gc_source_type-undef.
+    read table lt_values into ls_val with key selname = 'P_FILE'.
+    if sy-subrc = 0 and ls_val-low = 'X'.
+      cs_variant-type = gc_source_type-file.
+    else.
+      read table lt_values into ls_val with key selname = 'P_MIME'.
+      if sy-subrc = 0 and ls_val-low = 'X'.
+        cs_variant-type = gc_source_type-mime.
+      endif.
+    endif.
+
+    read table lt_values into ls_val with key selname = 'P_FPATH'.
+    if sy-subrc = 0.
+      cs_variant-file = ls_val-low.
+    endif.
+
+    read table lt_values into ls_val with key selname = 'P_MPATH'.
+    if sy-subrc = 0.
+      cs_variant-mime = ls_val-low.
+    endif.
+
+  endmethod.
+
+  method display_popup.
+
+    data lt_fieldcat type slis_t_fieldcat_alv.
+    data ls_selfield type slis_selfield.
+    data lv_exit type c length 1.
+    field-symbols <f> like line of lt_fieldcat.
+
+    append initial line to lt_fieldcat assigning <f>.
+    <f>-col_pos   = 1.
+    <f>-fieldname = 'VARIANT'.
+    <f>-seltext_m = 'Variant'.
+    <f>-ddictxt   = 'M'.
+    <f>-outputlen = 15.
+
+    append initial line to lt_fieldcat assigning <f>.
+    <f>-col_pos   = 2.
+    <f>-fieldname = 'TEXT'.
+    <f>-seltext_m = 'Description'.
+    <f>-ddictxt   = 'M'.
+    <f>-outputlen = 15.
+
+    append initial line to lt_fieldcat assigning <f>.
+    <f>-col_pos   = 3.
+    <f>-fieldname = 'USER'.
+    <f>-seltext_m = 'Created by'.
+    <f>-ddictxt   = 'M'.
+
+    append initial line to lt_fieldcat assigning <f>.
+    <f>-col_pos   = 4.
+    <f>-fieldname = 'TYPE'.
+    <f>-seltext_m = 'Source'.
+    <f>-ddictxt   = 'M'.
+    <f>-outputlen = 6.
+
+    append initial line to lt_fieldcat assigning <f>.
+    <f>-col_pos   = 5.
+    <f>-fieldname = 'MIME'.
+    <f>-seltext_m = 'Target mime'.
+    <f>-ddictxt   = 'M'.
+    <f>-outputlen = 20.
+
+    append initial line to lt_fieldcat assigning <f>.
+    <f>-col_pos   = 6.
+    <f>-fieldname = 'FILE'.
+    <f>-seltext_l = 'Source file'.
+    <f>-ddictxt   = 'L'.
+    <f>-outputlen = 40.
+
+    call function 'REUSE_ALV_POPUP_TO_SELECT'
+      exporting
+        i_title               = 'Select variant'
+        i_zebra               = 'X'
+        i_screen_start_column = 5
+        i_screen_start_line   = 5
+        i_tabname             = '1'
+        it_fieldcat           = lt_fieldcat
+      importing
+        es_selfield           = ls_selfield
+        e_exit                = lv_exit
+      tables
+        t_outtab              = it_variants
+      exceptions
+        program_error         = 1
+        others                = 2.
+
+    if lv_exit is not initial.
+      return.
+    endif.
+
+    read table it_variants into rs_selected index ls_selfield-tabindex.
+    assert sy-subrc = 0.
+
+  endmethod.
+
 endclass.
 
 
@@ -404,6 +608,7 @@ selection-screen end of block b1.
 
 selection-screen: function key 1.
 selection-screen: function key 2.
+selection-screen: function key 3.
 
 
 *&---------------------------------------------------------------------*
@@ -419,8 +624,9 @@ initialization.
   txt_mp   = 'MIME object'.                                 "#EC NOTEXT
   txt_mp2  = '(to redirect)'.                               "#EC NOTEXT
 
-  sscrfields-functxt_01 = 'Get SU3 value'.                  "#EC NOTEXT
-  sscrfields-functxt_02 = 'Upload to MIME'.                 "#EC NOTEXT
+  sscrfields-functxt_01 = 'Variants'.                       "#EC NOTEXT
+  sscrfields-functxt_02 = 'My variants'.                    "#EC NOTEXT
+  sscrfields-functxt_03 = 'Upload to MIME'.                 "#EC NOTEXT
 
   perform get_stype.
 
@@ -449,9 +655,11 @@ at selection-screen on p_mpath.
 
 at selection-screen.
   case sy-ucomm.
-    when 'FC01'.          "Get SU3 value
-      perform get_su3_value.
+    when 'FC01'.
+      perform get_variants using abap_false.
     when 'FC02'.
+      perform get_variants using abap_true.
+    when 'FC03'.
       perform upload_mime.
   endcase.
 
@@ -459,7 +667,8 @@ at selection-screen.
 *&      Form  set_stype
 *&---------------------------------------------------------------------*
 form set_stype.
-  data: l_stype type char4.
+
+  data l_stype type ty_source_type.
 
   if p_file is not initial.
     l_stype = 'FILE'.
@@ -498,20 +707,22 @@ form set_stype.
 
   set parameter id 'ZMOCKUP_LOADER_STYPE' field l_stype.
 
-endform.                    "set_stype
+endform.
 
 *&---------------------------------------------------------------------*
 *&      Form  get_stype
 *&---------------------------------------------------------------------*
 form get_stype.
-  data: l_stype type char4,
-        l_smime type char128,
-        l_spath type char128.
+
+  data:
+    l_stype type ty_source_type,
+    l_smime type w3objid,
+    l_spath type char255.
 
   get parameter id 'ZMOCKUP_LOADER_STYPE' field l_stype.
   get parameter id 'ZMOCKUP_LOADER_SPATH' field l_spath.
   get parameter id 'ZMOCKUP_LOADER_SMIME' field l_smime.
-  clear: p_fpath, p_mpath.
+  clear: p_fpath, p_mpath, p_undef, p_file, p_mime.
 
   case l_stype.
     when 'FILE'.
@@ -524,19 +735,16 @@ form get_stype.
     when others.
       p_undef = 'X'.
   endcase.
-endform.                    "get_stype
+
+endform.
 
 *&---------------------------------------------------------------------*
 *&      Form  set_file_path
 *&---------------------------------------------------------------------*
 form f4_file_path changing c_path type char128.
-  data: l_path type localfile.
-
-  l_path = lcl_fs=>choose_file_dialog( ).
-
-  c_path = l_path.
-  set parameter id 'ZMOCKUP_LOADER_SPATH' field l_path.
-endform.                    "set_file_path
+  c_path = lcl_fs=>choose_file_dialog( ).
+  set parameter id 'ZMOCKUP_LOADER_SPATH' field c_path.
+endform.
 
 *&---------------------------------------------------------------------*
 *&      Form  set_mime_path
@@ -574,40 +782,44 @@ form f4_mime_path changing c_path type char40.
 
   if sy-subrc is not initial.
     message id sy-msgid type sy-msgty number sy-msgno
-            with sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+      with sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
   endif.
 
   read table lt_return into ls_return index 1.
   p_mpath = ls_return-fieldval.
   set parameter id 'ZMOCKUP_LOADER_SMIME' field p_mpath.
-endform.                    "set_file_path
+
+endform.
 
 *&---------------------------------------------------------------------*
 *&      Form  get_su3_value
 *&---------------------------------------------------------------------*
-form get_su3_value.
-  data l_param type usr05-parva.
+form get_variants using p_own_only type abap_bool.
 
-  call function 'G_GET_USER_PARAMETER'
-    exporting parameter_id    = 'ZMOCKUP_LOADER_SPATH'
-    importing parameter_value = l_param.
+  data ls_variant type ty_variant.
+  data msg type string.
 
-  p_fpath = l_param.
-  set parameter id 'ZMOCKUP_LOADER_SPATH' field l_param.
+  ls_variant = lcl_variants_dialog=>create( )->popup( i_own_only = p_own_only ).
+  if ls_variant is not initial.
+    msg = |{ ls_variant-variant } selected|.
+    message msg type 'S'.
+  else.
+    return.
+  endif.
 
-  call function 'G_GET_USER_PARAMETER'
-    exporting parameter_id    = 'ZMOCKUP_LOADER_SMIME'
-    importing parameter_value = l_param.
+  set parameter id 'ZMOCKUP_LOADER_STYPE' field ls_variant-type.
+  set parameter id 'ZMOCKUP_LOADER_SPATH' field ls_variant-file.
+  set parameter id 'ZMOCKUP_LOADER_SMIME' field ls_variant-mime.
 
-  p_mpath = l_param.
-  set parameter id 'ZMOCKUP_LOADER_SMIME' field l_param.
+  perform get_stype.
 
-endform.                    "get_su3_value
+endform.
 
 *&---------------------------------------------------------------------*
-*&      Form  get_su3_value
+*&      Form  upload_mime
 *&---------------------------------------------------------------------*
 form upload_mime.
+
   if p_file is initial.
     message 'Upload only work in FILE mode' type 'E'. "#EC NOTEXT
   endif.
@@ -639,4 +851,4 @@ form upload_mime.
 
   message 'Upload successful' type 'S'. "#EC NOTEXT
 
-endform.                    "upload_mime
+endform.
