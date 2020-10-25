@@ -8,11 +8,16 @@ Legend
 + : added
 - : removed
 
-v2.1.9, 2020-04-??
+v2.1.9, 2020-10-25
 ------------------
 + zif_mockup_loader_stub_control~set_proxy_target to set proxy target dynamically
 + stub->connect_method able to connect deep structures (i_deep = abap_true)
-+ stub->connect able to connect deep structures ("method_name -> :deep: mock_path")
++ stub->connect able to connect deep structures ('method_name -> :deep: mock_path')
++ stub->connect able to filter data with a constant value ('method_name -> mock_path [ key_field = "1234" ]')
++ zif_mockup_loader~is_redirected to find out if the source was redirected by ZMOCKUP_LOADER_SWSRC
++ improvements in ZMOCKUP_LOADER_SWSRC - added toolbar commands to select variants and apply them at the same time
+- removed ZMOCKUP_LOADER_SWSRC p_mime option (not used and needs refactoring anyway - not deleted but hidden)
+! improvements in CI, the code passes latest abaplint
 
 v2.1.8, 2020-03-29
 ------------------
