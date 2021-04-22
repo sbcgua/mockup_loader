@@ -151,6 +151,7 @@ class ltcl_test_mockup_loader definition for testing
 
     methods load_corresponding       for testing raising zcx_mockup_loader_error.
     methods load_corresponding_w_filter for testing raising zcx_mockup_loader_error.
+    methods load_w_renames           for testing raising zcx_mockup_loader_error.
 
     methods assert_version           for testing.
 
@@ -942,6 +943,35 @@ class ltcl_test_mockup_loader implementation.
     cl_abap_unit_assert=>assert_equals(
       act = dummy_tab_act
       exp = dummy_tab_exp ).
+
+  endmethod.
+
+  method load_w_renames.
+
+    types:
+      begin of lty_dummy_w_renames,
+        tdate    type datum,
+        ychar    type c length 8,
+      end of lty_dummy_w_renames.
+
+    data:
+      dummy_act type lty_dummy_w_renames,
+      dummy_exp type lty_dummy_w_renames.
+
+    o->load_data(
+      exporting
+        i_obj           = 'testdir/testfile_complete'
+        i_strict        = abap_false
+        i_rename_fields = 'tchar:ychar'
+        i_corresponding = abap_true
+      importing
+        e_container = dummy_act ).
+
+    dummy_exp-tdate = '20150101'.
+    dummy_exp-ychar = 'Trololo1'.
+    cl_abap_unit_assert=>assert_equals(
+      act = dummy_act
+      exp = dummy_exp ).
 
   endmethod.
 

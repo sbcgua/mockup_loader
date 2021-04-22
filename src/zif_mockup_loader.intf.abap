@@ -22,6 +22,7 @@ interface zif_mockup_loader
       !i_corresponding type abap_bool default abap_false
       !i_deep   type abap_bool default abap_false
       !i_where  type any optional
+      !i_rename_fields type any optional
     exporting
       !e_container type any
     raising

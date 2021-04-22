@@ -111,6 +111,7 @@ class ZCL_MOCKUP_LOADER definition
         !i_corresponding type abap_bool default abap_false
         !i_deep type abap_bool default abap_false
         !i_where type any optional
+        !i_rename_fields type any optional
       exporting
         !e_container type any
       raising
@@ -395,6 +396,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
           i_data     = i_rawdata
           i_strict   = i_strict
           i_corresponding = i_corresponding
+          i_rename_fields = i_rename_fields
           i_has_head = abap_true " assume head always, maybe change later
         importing
           e_container = <temp_tab> ).
@@ -608,6 +610,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         i_corresponding = i_corresponding
         i_deep      = i_deep
         i_where     = i_where
+        i_rename_fields = i_rename_fields
       importing
         e_container = e_container ).
 
