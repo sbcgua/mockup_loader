@@ -8,6 +8,10 @@ Legend
 + : added
 - : removed
 
+v2.1.10, 2021-04-22
+-------------------
++ add i_rename_fields param to load_data. Passes it through into the same param in text2tab and allows renaming fields before transferring to the target structure
+
 v2.1.9, 2020-10-25
 ------------------
 + zif_mockup_loader_stub_control~set_proxy_target to set proxy target dynamically
