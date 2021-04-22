@@ -77,6 +77,8 @@ importing
   I_STRICT type ABAP_BOOL default ABAP_FALSE
   I_DEEP   type ABAP_BOOL default ABAP_FALSE
   I_WHERE  type ANY       optional
+  I_CORRESPONDING type ABAP_BOOL default ABAP_FALSE
+  I_RENAME_FIELDS type ANY optional
 exporting
   E_CONTAINER type ANY
 ```
@@ -87,6 +89,8 @@ exporting
 - **I_DEEP** - allow filling deep components (tables/structures) in the target structure. If the component is not empty it must have the form of `<source_path>[<source_id_field>=<value|@reference_field>]`. See more detail below.
 - **I_WHERE** - optional condition to filter the source table. See "Using filtering" section below for details.   
 - **E_CONTAINER** - container for the data. Can be a table or a structure. In the latter case just the first data line of the file is parsed, no error is thrown if there are more lines in case like that. Can also be **data ref** to a table or a structure. In this case data ref **must be** created and passed to the method, it cannot infer data type for proper conversion without it.
+- **I_CORRESPONDING** - load corresponding fields only
+- **I_RENAME_FIELDS** - rename fields before transferring to the target container, for detail see the similar parameter in [text2tab](https://github.com/sbcgua/text2tab#field-name-remapping)
 
 The method assumes that field names are specified in the first line of the text file and are **capitalized**. The order is not important and can be mixed. `MANDT` field, if present, is ignored (no value transferred).
 
