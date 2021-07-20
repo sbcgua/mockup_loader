@@ -79,7 +79,6 @@ define assert_excode.
   cl_abap_unit_assert=>assert_equals( exp = &1 act = lo_ex->code ).
 end-of-definition.
 
-
 **********************************************************************
 * Test Class definition
 **********************************************************************
@@ -88,7 +87,6 @@ class ltcl_test_mockup_loader definition for testing
   duration short
   risk level harmless.
 
-* ================
   public section.
 
     types:
@@ -120,6 +118,7 @@ class ltcl_test_mockup_loader definition for testing
         text   type string,
       end of ty_deep_line,
       tt_deep_line type standard table of ty_deep_line with key docid lineid,
+
       begin of ty_deep_head,
         docid type i,
         lines type tt_deep_line,
@@ -127,7 +126,6 @@ class ltcl_test_mockup_loader definition for testing
       end of ty_deep_head,
       tt_deep_head type standard table of ty_deep_head with key docid.
 
-* ================
   private section.
     constants c_tab  like cl_abap_char_utilities=>horizontal_tab value cl_abap_char_utilities=>horizontal_tab.
     constants c_crlf like cl_abap_char_utilities=>cr_lf value cl_abap_char_utilities=>cr_lf.
@@ -167,7 +165,7 @@ class ltcl_test_mockup_loader definition for testing
       returning value(r_o) type ref to zcl_mockup_loader
       raising zcx_mockup_loader_error.
 
-endclass.       "lcl_test_mockup_loader
+endclass.
 
 * Friends
 class zcl_mockup_loader definition local friends ltcl_test_mockup_loader.
@@ -190,7 +188,7 @@ class ltcl_test_mockup_loader implementation.
         msg  = 'Load source is redirected,'
         && ' please reset with ZMOCKUP_LOADER_SWITCH_SOURCE before running the test' ). "#EC NOTEXT
     endif.
-  endmethod.       "class_setup
+  endmethod.
 
   method create_default.
     r_o = zcl_mockup_loader=>create(
@@ -198,7 +196,7 @@ class ltcl_test_mockup_loader implementation.
       i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
       i_amt_format = ''     " default
       i_encoding   = zif_mockup_loader_constants=>encoding_utf8 ). " utf8
-  endmethod.  " create_default.
+  endmethod.
 
   method setup.
     data lo_ex type ref to zcx_mockup_loader_error.
@@ -208,7 +206,7 @@ class ltcl_test_mockup_loader implementation.
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
-  endmethod.       "setup
+  endmethod.
 
 **********************************************************************
 * Dummy data generation
@@ -241,7 +239,7 @@ class ltcl_test_mockup_loader implementation.
     read table e_dummy_tab into e_dummy_struc index 1.
     e_dummy_string = l_string.
 
-  endmethod.       " get_dummy_data
+  endmethod.
 
 **********************************************************************
 * Simple integrated test - most basic usage of the class
@@ -347,7 +345,7 @@ class ltcl_test_mockup_loader implementation.
     endtry.
     assert_excode 'NC'.
 
-  endmethod.       " integrated_test
+  endmethod.
 
 **********************************************************************
 * Source redirection via SET/GET parameters test
@@ -442,7 +440,7 @@ class ltcl_test_mockup_loader implementation.
     cl_abap_unit_assert=>assert_initial( lo_ex ).
     cl_abap_unit_assert=>assert_false( o->zif_mockup_loader~is_redirected( ) ).
 
-  endmethod.       " source_redirect_test
+  endmethod.
 
 **********************************************************************
 * Check Unicode encoding parsing
@@ -466,7 +464,7 @@ class ltcl_test_mockup_loader implementation.
 
     cl_abap_unit_assert=>assert_equals( act = dummy_tab_act exp = dummy_tab_exp ).
 
-  endmethod. "utf16_encoding
+  endmethod.
 
 **********************************************************************
 * Test of data parser - dummy data is supplied to the tested method
@@ -608,7 +606,7 @@ class ltcl_test_mockup_loader implementation.
     assert_excode 'XE'. " parser error
 
 
-  endmethod.       "parse_data
+  endmethod.
 
 **********************************************************************
 * ZIP file read test - gets data from SMW0 ZMOCKUP_LOADER_UNIT_TEST
@@ -644,7 +642,7 @@ class ltcl_test_mockup_loader implementation.
     endtry.
     assert_excode 'CP'.
 
-  endmethod.        " read_zip
+  endmethod.
 
 **********************************************************************
 * LOAD_RAW - test load only method e.g. for XMLs
