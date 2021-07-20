@@ -249,9 +249,8 @@ Some code is quite difficult to test when it has a *db select* in the middle. Of
 " Test class (o_mls is mockup_loader_STORE instance)
 ...
 o_mls->store( " Store some data with 'BKPF' label
-  exporting
-    i_name = 'BKPF'
-    i_data = ls_bkpf ). " One line structure
+  i_name = 'BKPF'
+  i_data = ls_bkpf ). " One line structure
 ...
 
 " Working class method
@@ -278,10 +277,9 @@ In case of multiple test cases it can also be convenient to load a number of tab
 " Test class
 ...
 o_mls->store( " Store some data with 'BKPF' label
-  exporting
-    i_name   = 'BKPF'
-    i_tabkey = 'BELNR'    " Key field for the stored table
-    i_data   = lt_bkpf ). " Table with MANY different documents
+  i_name   = 'BKPF'
+  i_tabkey = 'BELNR'    " Key field for the stored table
+  i_data   = lt_bkpf ). " Table with MANY different documents
 ...
 
 " Working class method
