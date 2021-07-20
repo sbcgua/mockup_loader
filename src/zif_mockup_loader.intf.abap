@@ -1,6 +1,8 @@
 interface zif_mockup_loader
   public .
 
+  constants version        type string value 'v2.1.10'.      "#EC NOTEXT
+
   types:
     ty_src_type     type c length 4,
     ty_date_format  type c length 4,
