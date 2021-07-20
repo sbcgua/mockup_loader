@@ -9,6 +9,31 @@ interface zif_mockup_loader
     ty_amt_format   type c length 2,
     ty_comment_char type c length 1.
 
+  types:
+    ty_filter_type type c length 1.
+
+  constants:
+    begin of c_filter_type,
+      value type ty_filter_type value 'V',
+      range type ty_filter_type value 'R',
+    end of c_filter_type.
+
+  types:
+    begin of ty_filter,
+      name   type string,
+      valref type ref to data,
+      type   type ty_filter_type,
+    end of ty_filter .
+  types:
+    tt_filter type standard table of ty_filter with key name .
+  types:
+    begin of ty_where,
+      name  type string,
+      range type ref to data,
+    end of ty_where .
+  types:
+    tt_where type standard table of ty_where with key name .
+
   methods load_blob
     importing
       !i_obj_path type string

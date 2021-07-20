@@ -103,19 +103,19 @@ class ltcl_test_mockup_utils definition for testing
     methods filter_helper
       importing
         i_tab        type tt_dummy
-        i_filter     type zcl_mockup_loader_utils=>tt_filter
+        i_filter     type zif_mockup_loader=>tt_filter
       returning
         value(r_tab) type tt_dummy.
 
     methods assert_filter_equals
       importing
-        i_act type zcl_mockup_loader_utils=>ty_filter
-        i_exp type zcl_mockup_loader_utils=>ty_filter.
+        i_act type zif_mockup_loader=>ty_filter
+        i_exp type zif_mockup_loader=>ty_filter.
 
     methods assert_filter_tab_equals
       importing
-        i_act type zcl_mockup_loader_utils=>tt_filter
-        i_exp type zcl_mockup_loader_utils=>tt_filter.
+        i_act type zif_mockup_loader=>tt_filter
+        i_exp type zif_mockup_loader=>tt_filter.
 
     methods filter_table for testing raising zcx_mockup_loader_error.
     methods filter_table_neg for testing raising zcx_mockup_loader_error.
@@ -163,11 +163,11 @@ class ltcl_test_mockup_utils implementation.
       dummy_tab_exp  type tt_dummy,
       dummy          type ty_dummy,
 
-      l_filter       type zcl_mockup_loader_utils=>tt_filter,
+      l_filter       type zif_mockup_loader=>tt_filter,
       lo_ex          type ref to zcx_mockup_loader_error,
 
-      lt_tywhere     type zcl_mockup_loader_utils=>tt_where,
-      l_tywhere      type zcl_mockup_loader_utils=>ty_where,
+      lt_tywhere     type zif_mockup_loader=>tt_where,
+      l_tywhere      type zif_mockup_loader=>ty_where,
 
       begin of l_where_err1,
         tnumber  type range of ty_dummy-tnumber,
@@ -343,7 +343,7 @@ class ltcl_test_mockup_utils implementation.
       ls_act        type ty_dummy,
       ls_exp        type ty_dummy,
       l_str         type string,
-      lt_filter     type zcl_mockup_loader_utils=>tt_filter,
+      lt_filter     type zif_mockup_loader=>tt_filter,
       lo_ex         type ref to zcx_mockup_loader_error.
 
     field-symbols <f> like line of lt_filter.
@@ -401,7 +401,7 @@ class ltcl_test_mockup_utils implementation.
     data:
       dummy_tab_src type tt_dummy,
       ls_act        type ty_dummy,
-      lt_filter     type zcl_mockup_loader_utils=>tt_filter,
+      lt_filter     type zif_mockup_loader=>tt_filter,
       ls_filter     like line of lt_filter,
       lo_ex         type ref to zcx_mockup_loader_error.
 
@@ -462,7 +462,7 @@ class ltcl_test_mockup_utils implementation.
     data:
       lv_fit    type abap_bool,
       ls_line   type ty_dummy,
-      lt_filter type zcl_mockup_loader_utils=>tt_filter,
+      lt_filter type zif_mockup_loader=>tt_filter,
       l_str     type string.
 
     data:
@@ -535,7 +535,7 @@ class ltcl_test_mockup_utils implementation.
 
     data:
       l_val         type string,
-      lt_filter     type zcl_mockup_loader_utils=>tt_filter,
+      lt_filter     type zif_mockup_loader=>tt_filter,
       ls_filter     like line of lt_filter,
       lo_ex         type ref to zcx_mockup_loader_error.
 
@@ -578,8 +578,8 @@ class ltcl_test_mockup_utils implementation.
   method build_filter.
 
     data:
-      lt_filter     type zcl_mockup_loader_utils=>tt_filter,
-      lt_filter_act type zcl_mockup_loader_utils=>tt_filter,
+      lt_filter     type zif_mockup_loader=>tt_filter,
+      lt_filter_act type zif_mockup_loader=>tt_filter,
       ls_filter     like line of lt_filter,
       lo_ex         type ref to zcx_mockup_loader_error.
 
@@ -605,8 +605,8 @@ class ltcl_test_mockup_utils implementation.
         b type d,
       end of ls_filter.
 
-    data lt_filter_exp type zcl_mockup_loader_utils=>tt_filter.
-    data lt_filter_act type zcl_mockup_loader_utils=>tt_filter.
+    data lt_filter_exp type zif_mockup_loader=>tt_filter.
+    data lt_filter_act type zif_mockup_loader=>tt_filter.
     data ls_val_copy like ls_filter.
     field-symbols <f> like line of lt_filter_exp.
 
@@ -654,12 +654,12 @@ class ltcl_test_mockup_utils implementation.
 
   method conv_single_val_to_filter.
 
-    data ls_filter_act type zcl_mockup_loader_utils=>ty_filter.
-    data ls_filter_exp type zcl_mockup_loader_utils=>ty_filter.
+    data ls_filter_act type zif_mockup_loader=>ty_filter.
+    data ls_filter_exp type zif_mockup_loader=>ty_filter.
 
     data lv_str type string value 'efg'.
     ls_filter_exp-name = 'ABC'.
-    ls_filter_exp-type = zcl_mockup_loader_utils=>c_filter_type-value.
+    ls_filter_exp-type = zif_mockup_loader=>c_filter_type-value.
     get reference of lv_str into ls_filter_exp-valref.
 
     ls_filter_act = zcl_mockup_loader_utils=>conv_single_val_to_filter(
@@ -685,12 +685,12 @@ class ltcl_test_mockup_utils implementation.
 
   method conv_string_to_filter.
 
-    data ls_filter_act type zcl_mockup_loader_utils=>ty_filter.
-    data ls_filter_exp type zcl_mockup_loader_utils=>ty_filter.
+    data ls_filter_act type zif_mockup_loader=>ty_filter.
+    data ls_filter_exp type zif_mockup_loader=>ty_filter.
 
     data lv_str type string value 'efg'.
     ls_filter_exp-name = 'ABC'.
-    ls_filter_exp-type = zcl_mockup_loader_utils=>c_filter_type-value.
+    ls_filter_exp-type = zif_mockup_loader=>c_filter_type-value.
     get reference of lv_str into ls_filter_exp-valref.
 
     ls_filter_act = zcl_mockup_loader_utils=>conv_string_to_filter( 'abc = efg' ).
@@ -719,8 +719,8 @@ class ltcl_test_mockup_utils implementation.
 
   method conv_where_to_filter.
 
-    data ls_filter_act type zcl_mockup_loader_utils=>ty_filter.
-    data ls_filter_exp type zcl_mockup_loader_utils=>ty_filter.
+    data ls_filter_act type zif_mockup_loader=>ty_filter.
+    data ls_filter_exp type zif_mockup_loader=>ty_filter.
 
     data lr_i type range of ty_dummy-tnumber.
     field-symbols <r> like line of lr_i.
@@ -728,10 +728,10 @@ class ltcl_test_mockup_utils implementation.
     <r>-option = 'EQ'.
 
     ls_filter_exp-name = 'ABC'.
-    ls_filter_exp-type = zcl_mockup_loader_utils=>c_filter_type-range.
+    ls_filter_exp-type = zif_mockup_loader=>c_filter_type-range.
     get reference of lr_i into ls_filter_exp-valref.
 
-    data ls_where type zcl_mockup_loader_utils=>ty_where.
+    data ls_where type zif_mockup_loader=>ty_where.
     ls_where-name = 'abc'.
     get reference of lr_i into ls_where-range.
 
@@ -769,18 +769,18 @@ class ltcl_test_mockup_utils implementation.
     append initial line to ls_where-char assigning <c>.
     <c>-option = 'EQ'.
 
-    data lt_filter_act type zcl_mockup_loader_utils=>tt_filter.
-    data lt_filter_exp type zcl_mockup_loader_utils=>tt_filter.
+    data lt_filter_act type zif_mockup_loader=>tt_filter.
+    data lt_filter_exp type zif_mockup_loader=>tt_filter.
     field-symbols <f> like line of lt_filter_exp.
 
     append initial line to lt_filter_exp assigning <f>.
     <f>-name = 'NUM'.
-    <f>-type = zcl_mockup_loader_utils=>c_filter_type-range.
+    <f>-type = zif_mockup_loader=>c_filter_type-range.
     get reference of ls_where-num into <f>-valref.
 
     append initial line to lt_filter_exp assigning <f>.
     <f>-name = 'CHAR'.
-    <f>-type = zcl_mockup_loader_utils=>c_filter_type-range.
+    <f>-type = zif_mockup_loader=>c_filter_type-range.
     get reference of ls_where-char into <f>-valref.
 
     data lo_type type ref to cl_abap_structdescr.
@@ -830,7 +830,7 @@ class ltcl_test_mockup_utils implementation.
       lt_exp        type tt_dummy_corresponding,
       ls_act        type ty_dummy_corresponding,
       ls_exp        type ty_dummy_corresponding,
-      lt_filter     type zcl_mockup_loader_utils=>tt_filter.
+      lt_filter     type zif_mockup_loader=>tt_filter.
 
     field-symbols <src> like line of dummy_tab_src.
     field-symbols <exp> like line of lt_exp.
@@ -884,7 +884,7 @@ class ltcl_test_mockup_utils implementation.
       lt_exp        type tt_dummy,
       lt_act_corr   type tt_dummy_corresponding,
       lt_exp_corr   type tt_dummy_corresponding,
-      lt_filter     type zcl_mockup_loader_utils=>tt_filter. " empty
+      lt_filter     type zif_mockup_loader=>tt_filter. " empty
 
     field-symbols <src> like line of dummy_tab_src.
     field-symbols <exp> like line of lt_exp_corr.
@@ -923,8 +923,8 @@ class ltcl_test_mockup_utils implementation.
 
   method conv_range_to_filter.
 
-    data ls_filter_act type zcl_mockup_loader_utils=>ty_filter.
-    data ls_filter_exp type zcl_mockup_loader_utils=>ty_filter.
+    data ls_filter_act type zif_mockup_loader=>ty_filter.
+    data ls_filter_exp type zif_mockup_loader=>ty_filter.
 
     data lr_i type range of ty_dummy-tnumber.
     field-symbols <r> like line of lr_i.
@@ -932,7 +932,7 @@ class ltcl_test_mockup_utils implementation.
     <r>-option = 'EQ'.
 
     ls_filter_exp-name = 'ABC'.
-    ls_filter_exp-type = zcl_mockup_loader_utils=>c_filter_type-range.
+    ls_filter_exp-type = zif_mockup_loader=>c_filter_type-range.
     get reference of lr_i into ls_filter_exp-valref.
 
     ls_filter_act = zcl_mockup_loader_utils=>conv_range_to_filter(

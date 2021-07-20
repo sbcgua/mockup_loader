@@ -36,7 +36,7 @@ CLASS ZCL_MOCKUP_LOADER_DEEP_PROVIDR IMPLEMENTATION.
   method zif_text2tab_deep_provider~select.
 
     data ls_address type zcl_text2tab_utils=>ty_deep_address.
-    data ls_filter type zcl_mockup_loader_utils=>ty_filter.
+    data ls_filter type zif_mockup_loader=>ty_filter.
 
     clear e_container.
 
@@ -46,13 +46,13 @@ CLASS ZCL_MOCKUP_LOADER_DEEP_PROVIDR IMPLEMENTATION.
       return. " empty dataset
     elseif ls_address-key_value is not initial.
       ls_filter-name = ls_address-key_field.
-      ls_filter-type = zcl_mockup_loader_utils=>c_filter_type-value.
+      ls_filter-type = zif_mockup_loader=>c_filter_type-value.
       get reference of ls_address-key_value into ls_filter-valref.
     else. " ref field is not initial
       field-symbols <valref> type any.
 
       ls_filter-name = ls_address-key_field.
-      ls_filter-type = zcl_mockup_loader_utils=>c_filter_type-value.
+      ls_filter-type = zif_mockup_loader=>c_filter_type-value.
       assign component ls_address-ref_field of structure i_cursor to <valref>.
       if sy-subrc <> 0.
         raise exception type zcx_text2tab_error

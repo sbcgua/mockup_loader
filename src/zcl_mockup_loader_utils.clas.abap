@@ -5,38 +5,13 @@ class ZCL_MOCKUP_LOADER_UTILS definition
 
   public section.
 
-    types:
-      ty_filter_type type c length 1.
-
-    constants:
-      begin of c_filter_type,
-        value type ty_filter_type value 'V',
-        range type ty_filter_type value 'R',
-      end of c_filter_type.
-
-    types:
-      begin of ty_filter,
-        name   type string,
-        valref type ref to data,
-        type   type ty_filter_type,
-      end of ty_filter .
-    types:
-      tt_filter type standard table of ty_filter with key name .
-    types:
-      begin of ty_where,
-        name  type string,
-        range type ref to data,
-      end of ty_where .
-    types:
-      tt_where type standard table of ty_where with key name .
-
     class-data g_ty_where_abs_name type abap_abstypename read-only .
     class-data g_range_key type abap_keydescr_tab read-only .
     class-data g_ty_filter_abs_name type abap_abstypename read-only .
 
     class-methods filter_table
       importing
-        !i_filter type tt_filter optional
+        !i_filter type zif_mockup_loader=>tt_filter optional
         !i_tab type any table
         !i_where type any optional
         !i_corresponding type abap_bool default abap_false
@@ -49,13 +24,13 @@ class ZCL_MOCKUP_LOADER_UTILS definition
         !i_where type any
         !i_single_value type any optional
       returning
-        value(r_filter) type tt_filter
+        value(r_filter) type zif_mockup_loader=>tt_filter
       raising
         zcx_mockup_loader_error .
     class-methods does_line_fit_filter
       importing
         !i_line type any
-        !i_filter type tt_filter
+        !i_filter type zif_mockup_loader=>tt_filter
       returning
         value(r_yesno) type abap_bool .
     class-methods class_constructor .
@@ -64,7 +39,7 @@ class ZCL_MOCKUP_LOADER_UTILS definition
       importing
         !i_where type any
       returning
-        value(r_filter) type tt_filter
+        value(r_filter) type zif_mockup_loader=>tt_filter
       raising
         zcx_mockup_loader_error .
     class-methods conv_nc_struc_to_filter
@@ -72,7 +47,7 @@ class ZCL_MOCKUP_LOADER_UTILS definition
         !i_where  type any
         !id_struc type ref to cl_abap_structdescr optional
       returning
-        value(rt_filter) type tt_filter
+        value(rt_filter) type zif_mockup_loader=>tt_filter
       raising
         zcx_mockup_loader_error .
     class-methods conv_single_val_to_filter
@@ -80,7 +55,7 @@ class ZCL_MOCKUP_LOADER_UTILS definition
         !i_where type csequence
         !i_value type any
       returning
-        value(r_filter) type ty_filter
+        value(r_filter) type zif_mockup_loader=>ty_filter
       raising
         zcx_mockup_loader_error .
     class-methods conv_range_to_filter
@@ -88,7 +63,7 @@ class ZCL_MOCKUP_LOADER_UTILS definition
         !i_where type csequence
         !i_range type any table
       returning
-        value(r_filter) type ty_filter
+        value(r_filter) type zif_mockup_loader=>ty_filter
       raising
         zcx_mockup_loader_error .
 
@@ -96,14 +71,14 @@ class ZCL_MOCKUP_LOADER_UTILS definition
       importing
         !i_where type clike
       returning
-        value(r_filter) type ty_filter
+        value(r_filter) type zif_mockup_loader=>ty_filter
       raising
         zcx_mockup_loader_error .
     class-methods conv_where_to_filter
       importing
-        !i_where type ty_where
+        !i_where type zif_mockup_loader=>ty_where
       returning
-        value(r_filter) type ty_filter
+        value(r_filter) type zif_mockup_loader=>ty_filter
       raising
         zcx_mockup_loader_error
         cx_sy_move_cast_error .
@@ -138,8 +113,8 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
     data dy_type       type ref to cl_abap_typedescr.
     data dy_struc      type ref to cl_abap_structdescr.
     data dy_table      type ref to cl_abap_tabledescr.
-    data l_filter      type ty_filter.
-    data lt_filter     type tt_filter.
+    data l_filter      type zif_mockup_loader=>ty_filter.
+    data lt_filter     type zif_mockup_loader=>tt_filter.
 
     if i_where is initial.
       return.
@@ -212,11 +187,11 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
 
 
   method class_constructor.
-    data l_dummy_where  type ty_where.
-    data l_dummy_filter type ty_filter.
+    data l_dummy_where  type zif_mockup_loader=>ty_where.
+    data l_dummy_filter type zif_mockup_loader=>ty_filter.
     data dy_tab  type ref to cl_abap_tabledescr.
     data dy_type type ref to cl_abap_typedescr.
-    data l_dummy_range type range of ty_filter_type.
+    data l_dummy_range type range of zif_mockup_loader=>ty_filter_type.
 
     dy_type = cl_abap_typedescr=>describe_by_data( l_dummy_where ).
     g_ty_where_abs_name = dy_type->absolute_name.
@@ -234,7 +209,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
 
     data dy_struc      type ref to cl_abap_structdescr.
     data dy_table      type ref to cl_abap_tabledescr.
-    data l_filter      type ty_filter.
+    data l_filter      type zif_mockup_loader=>ty_filter.
     data lt_components type cl_abap_structdescr=>component_table.
     data l_component   like line of lt_components.
 
@@ -257,7 +232,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
         endif.
 
         l_filter-name = l_component-name.
-        l_filter-type = c_filter_type-range.
+        l_filter-type = zif_mockup_loader=>c_filter_type-range.
         assign component l_component-name of structure i_where to <tab>.
         get reference of <tab> into l_filter-valref.
         append l_filter to rt_filter.
@@ -267,7 +242,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
       elseif l_component-type->kind = cl_abap_typedescr=>kind_elem.
 
         l_filter-name = l_component-name.
-        l_filter-type = c_filter_type-value.
+        l_filter-type = zif_mockup_loader=>c_filter_type-value.
         assign component l_component-name of structure i_where to <val>.
         get reference of <val> into l_filter-valref.
         append l_filter to rt_filter.
@@ -293,7 +268,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
     create data r_filter-valref type handle dy_data.
     assign r_filter-valref->* to <value>.
 
-    r_filter-type = c_filter_type-range.
+    r_filter-type = zif_mockup_loader=>c_filter_type-range.
     r_filter-name = to_upper( i_where ).
     <value>       = i_range.
 
@@ -312,7 +287,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
     create data r_filter-valref type handle dy_data.
     assign r_filter-valref->* to <value>.
 
-    r_filter-type = c_filter_type-value.
+    r_filter-type = zif_mockup_loader=>c_filter_type-value.
     r_filter-name = to_upper( i_where ).
     <value>       = i_value.
 
@@ -322,7 +297,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
   method conv_string_to_filter.
     field-symbols <value> type string.
 
-    r_filter-type = c_filter_type-value.
+    r_filter-type = zif_mockup_loader=>c_filter_type-value.
     create data r_filter-valref type string.
     assign r_filter-valref->* to <value>.
 
@@ -341,9 +316,9 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
 
 
   method conv_tt_where_to_filter.
-    data l_filter         type ty_filter.
+    data l_filter         like line of r_filter.
     field-symbols <tab>   type any table.
-    field-symbols <where> type ty_where.
+    field-symbols <where> type zif_mockup_loader=>ty_where.
 
     assign i_where to <tab>.
     loop at <tab> assigning <where>.
@@ -358,7 +333,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
 
     r_filter-name   = to_upper( i_where-name ).
     r_filter-valref = i_where-range.
-    r_filter-type   = c_filter_type-range.
+    r_filter-type   = zif_mockup_loader=>c_filter_type-range.
     if abap_false = is_range( cl_abap_typedescr=>describe_by_data_ref( r_filter-valref ) ).
       zcx_mockup_loader_error=>raise( msg = |I_WHERE-RANGE must be a range table| code = 'RT' ).   "#EC NOTEXT
     endif.
@@ -366,7 +341,7 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
 
 
   method does_line_fit_filter.
-    data l_filter         type ty_filter.
+    data l_filter         like line of i_filter.
     field-symbols <field> type any.
     field-symbols <range> type any table.
     field-symbols <value> type any.
@@ -377,12 +352,12 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
       assign component l_filter-name of structure i_line to <field>.
       check <field> is assigned. " Just skip irrelevant ranges
 
-      if l_filter-type = c_filter_type-range.
+      if l_filter-type = zif_mockup_loader=>c_filter_type-range.
         assign l_filter-valref->* to <range>.
         if not <field> in <range>.
           r_yesno = abap_false.
         endif.
-      elseif l_filter-type = c_filter_type-value.
+      elseif l_filter-type = zif_mockup_loader=>c_filter_type-value.
         assign l_filter-valref->* to <value>.
         if not <field> = <value>. " cx_sy_conversion_error does not catch that :(
           r_yesno = abap_false.

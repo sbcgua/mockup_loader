@@ -70,7 +70,7 @@ class ltcl_deep_provider_test implementation.
     data ls_record_dummy type ty_data.
     data ls_data type ltcl_mockup_loader_mock=>ty_data.
     data ls_exp_data type ltcl_mockup_loader_mock=>ty_data.
-    data ls_where type zcl_mockup_loader_utils=>ty_filter.
+    data ls_where type zif_mockup_loader=>ty_filter.
 
     create object lo_ml_mock.
     create object lo_cut exporting ii_ml_instance = lo_ml_mock.

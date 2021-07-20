@@ -229,7 +229,7 @@ CLASS ZCL_MOCKUP_LOADER_STORE IMPLEMENTATION.
   method _retrieve.
     data:
           l_store     type ty_store,
-          lt_filter   type zcl_mockup_loader_utils=>tt_filter,
+          lt_filter   type zif_mockup_loader=>tt_filter,
           ld_src      type ref to cl_abap_typedescr,
           ld_dst      type ref to cl_abap_typedescr,
           ld_tab      type ref to cl_abap_tabledescr,

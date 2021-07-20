@@ -114,7 +114,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
     endif.
 
     " if sift, build filter
-    data ls_filter type zcl_mockup_loader_utils=>ty_filter.
+    data ls_filter type zif_mockup_loader=>ty_filter.
     if <conf>-sift_param is not initial.
       data ld_type type ref to cl_abap_typedescr.
       ld_type = cl_abap_typedescr=>describe_by_data( i_sift_value ).

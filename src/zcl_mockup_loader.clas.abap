@@ -131,7 +131,7 @@ class ZCL_MOCKUP_LOADER definition
     class-methods build_table_type
       importing
         io_type_descr   type ref to cl_abap_typedescr
-        it_filter       type zcl_mockup_loader_utils=>tt_filter
+        it_filter       type zif_mockup_loader=>tt_filter
         i_corresponding type abap_bool default abap_false
       returning
         value(ro_table_descr) type ref to cl_abap_tabledescr
@@ -149,12 +149,12 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     data lv_version_ok type abap_bool.
 
     lv_version_ok = zcl_text2tab_utils=>check_version_fits(
-      i_current_version  = zif_mockup_loader_constants=>version
+      i_current_version  = zif_mockup_loader=>version
       i_required_version = i_required_version ).
 
     if lv_version_ok = abap_false.
       zcx_mockup_loader_error=>raise(
-        |mockup loader version ({ zif_mockup_loader_constants=>version
+        |mockup loader version ({ zif_mockup_loader=>version
         }) < required ({ i_required_version })| ). "#EC NOTEXT
     endif.
 
@@ -198,7 +198,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
           continue. " found, no need to add
         endif.
         ld_value = cl_abap_typedescr=>describe_by_data_ref( <f>-valref ).
-        if <f>-type = zcl_mockup_loader_utils=>c_filter_type-range.
+        if <f>-type = zif_mockup_loader=>c_filter_type-range.
           ld_range_tab ?= ld_value.
           ld_range_line ?= ld_range_tab->get_table_line_type( ).
           ld_value = ld_range_line->get_component_type( 'LOW' ).
@@ -221,7 +221,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   method check_version_fits.
 
     r_fits = zcl_text2tab_utils=>check_version_fits(
-      i_current_version  = zif_mockup_loader_constants=>version
+      i_current_version  = zif_mockup_loader=>version
       i_required_version = i_required_version ).
 
   endmethod.
@@ -346,7 +346,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     data:
       lx_dp          type ref to zcx_text2tab_error,
       lo_type_descr  type ref to cl_abap_typedescr,
-      lt_filter      type zcl_mockup_loader_utils=>tt_filter,
+      lt_filter      type zif_mockup_loader=>tt_filter,
       lo_table_descr type ref to cl_abap_tabledescr,
       ld_temp_tab    type ref to data.
     field-symbols:

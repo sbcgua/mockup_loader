@@ -736,7 +736,7 @@ class ltcl_test_mockup_loader implementation.
     data lx type ref to zcx_mockup_loader_error.
 
     try .
-      zcl_mockup_loader=>assert_version( zif_mockup_loader_constants=>version ).
+      zcl_mockup_loader=>assert_version( zif_mockup_loader=>version ).
     catch zcx_mockup_loader_error into lx.
     endtry.
     cl_abap_unit_assert=>assert_not_bound( lx ).
@@ -914,7 +914,7 @@ class ltcl_test_mockup_loader implementation.
       act = dummy_tab_act
       exp = dummy_tab_exp ).
 
-    data lt_filter type zcl_mockup_loader_utils=>tt_filter.
+    data lt_filter type zif_mockup_loader=>tt_filter.
     data lt_range type range of ty_dummy-tnumber.
 
     " Filter table
