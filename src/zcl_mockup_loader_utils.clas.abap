@@ -30,7 +30,6 @@ class ZCL_MOCKUP_LOADER_UTILS definition
     types:
       tt_where type standard table of ty_where with key name .
 
-    type-pools abap .
     class-data g_ty_where_abs_name type abap_abstypename read-only .
     class-data g_range_key type abap_keydescr_tab read-only .
     class-data g_ty_filter_abs_name type abap_abstypename read-only .
@@ -172,7 +171,8 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
           lt_filter = conv_tt_where_to_filter( i_where ).
 
 
-        when cl_abap_typedescr=>typekind_struct2. " structure can be ty_where or "named components"
+        when cl_abap_typedescr=>typekind_struct1 or cl_abap_typedescr=>typekind_struct2.
+          " structure can be ty_where or "named components"
           dy_struc ?= dy_type.
 
           if dy_struc->absolute_name = g_ty_where_abs_name. " ty_where
@@ -238,7 +238,8 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
     data lt_components type cl_abap_structdescr=>component_table.
     data l_component   like line of lt_components.
 
-    field-symbols <tab>  type any table.
+    field-symbols <tab> type any table.
+    field-symbols <val> type any.
 
     dy_struc = id_struc.
     if dy_struc is initial.
@@ -247,23 +248,35 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
 
     lt_components  = dy_struc->get_components( ).
     loop at lt_components into l_component.
-      if l_component-type->kind <> cl_abap_typedescr=>kind_table.
+      if l_component-type->kind = cl_abap_typedescr=>kind_table.
+
+        if is_range( l_component-type ) = abap_false. " Not range-like structure ?
+          zcx_mockup_loader_error=>raise(
+            msg  = |I_WHERE must be a structure of ranges or values|
+            code = 'WS' ).   "#EC NOTEXT
+        endif.
+
+        l_filter-name = l_component-name.
+        l_filter-type = c_filter_type-range.
+        assign component l_component-name of structure i_where to <tab>.
+        get reference of <tab> into l_filter-valref.
+        append l_filter to rt_filter.
+        " TODO: potential bug, if ref value is changed between build_filter and its usage
+        " better: copy value/table to a newly created data ref
+
+      elseif l_component-type->kind = cl_abap_typedescr=>kind_elem.
+
+        l_filter-name = l_component-name.
+        l_filter-type = c_filter_type-value.
+        assign component l_component-name of structure i_where to <val>.
+        get reference of <val> into l_filter-valref.
+        append l_filter to rt_filter.
+
+      else.
         zcx_mockup_loader_error=>raise(
-          msg  = |I_WHERE must be a structure of ranges|
+          msg  = |I_WHERE must be a structure of ranges or values|
           code = 'WS' ).   "#EC NOTEXT
       endif.
-
-      if abap_false = is_range( l_component-type ). " Not range-like structure ?
-        zcx_mockup_loader_error=>raise(
-          msg  = |I_WHERE must be a structure of ranges|
-          code = 'WS' ).   "#EC NOTEXT
-      endif.
-
-      l_filter-name = l_component-name.
-      l_filter-type = c_filter_type-range.
-      assign component l_component-name of structure i_where to <tab>.
-      get reference of <tab> into l_filter-valref.
-      append l_filter to rt_filter.
     endloop.
   endmethod.
 
