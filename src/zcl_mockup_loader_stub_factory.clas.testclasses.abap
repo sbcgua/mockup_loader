@@ -100,7 +100,8 @@ class lcl_test_base implementation.
     try.
       lo_ml  = zcl_mockup_loader=>create(
         i_type = 'MIME'
-        i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
+        i_path = 'ZMOCKUP_LOADER_EXAMPLE'
+        i_encoding = zif_mockup_loader_constants=>encoding_utf16 ).
 
       create object lo_dc type (iv_factory_classname)
         exporting
@@ -183,7 +184,8 @@ class ltcl_mockup_stub_factory_test implementation.
 
     lo_ml  = zcl_mockup_loader=>create(
       i_type = 'MIME'
-      i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
+      i_path = 'ZMOCKUP_LOADER_EXAMPLE'
+      i_encoding = zif_mockup_loader_constants=>encoding_utf16 ).
 
     create object lo_dc
       exporting
@@ -225,7 +227,8 @@ class ltcl_mockup_stub_factory_test implementation.
     try.
       lo_ml  = zcl_mockup_loader=>create(
         i_type = 'MIME'
-        i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
+        i_path = 'ZMOCKUP_LOADER_EXAMPLE'
+        i_encoding = zif_mockup_loader_constants=>encoding_utf16 ).
 
       create object lo_dc
         exporting
@@ -428,7 +431,8 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " wrong interface
       lo_ml  = zcl_mockup_loader=>create(
         i_type = 'MIME'
-        i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
+        i_path = 'ZMOCKUP_LOADER_EXAMPLE'
+        i_encoding = zif_mockup_loader_constants=>encoding_utf16 ).
 
       clear: lo_ex.
       create object lo
@@ -514,7 +518,8 @@ class ltcl_mockup_stub_factory_test implementation.
   method get_ml.
     ro_ml = zcl_mockup_loader=>create(
       i_type = 'MIME'
-      i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
+      i_path = 'ZMOCKUP_LOADER_EXAMPLE'
+      i_encoding = zif_mockup_loader_constants=>encoding_utf16 ).
   endmethod.
 
   method get_factory.
@@ -741,7 +746,8 @@ class ltcl_mockup_stub_factory_test implementation.
 
     lo_ml  = zcl_mockup_loader=>create(
       i_type = 'MIME'
-      i_path = 'ZMOCKUP_LOADER_EXAMPLE' ).
+      i_path = 'ZMOCKUP_LOADER_EXAMPLE'
+      i_encoding = zif_mockup_loader_constants=>encoding_utf16 ).
 
     create object lo_dc
       exporting

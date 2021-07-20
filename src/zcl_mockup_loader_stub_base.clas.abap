@@ -25,6 +25,16 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
     types:
       tt_mock_config type standard table of ty_mock_config with key method_name .
 
+    interfaces zif_mockup_loader_stub_control.
+
+    methods constructor
+      importing
+        !it_config type tt_mock_config
+        !io_ml type ref to zcl_mockup_loader
+        !io_proxy_target type ref to object optional .
+
+  protected section.
+
     types:
       begin of ty_control,
         method_name     type abap_methname,
@@ -34,20 +44,14 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
     types:
       tt_control type standard table of ty_control with key method_name .
 
-    interfaces zif_mockup_loader_stub_control.
-
-    methods constructor
-      importing
-        !it_config type tt_mock_config
-        !io_ml type ref to zcl_mockup_loader
-        !io_proxy_target type ref to object optional .
-  protected section.
     methods get_mock_data
       importing
         i_method_name type abap_methname
         i_sift_value  type any optional
-      returning value(r_data) type ref to data
-      raising zcx_mockup_loader_error.
+      returning
+        value(r_data) type ref to data
+      raising
+        zcx_mockup_loader_error.
 
     methods is_disabled
       importing
@@ -59,7 +63,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
       importing
         i_method   type abap_methname.
 
-    data mt_config type tt_mock_config.
+    data mt_config  type tt_mock_config.
     data mt_control type tt_control.
     data mo_ml      type ref to zcl_mockup_loader.
     data mo_proxy_target type ref to object .

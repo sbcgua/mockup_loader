@@ -158,6 +158,7 @@ class ltcl_test implementation.
       o_ml = zcl_mockup_loader=>create(
         i_type       = 'MIME'
         i_path       = 'ZMOCKUP_LOADER_EXAMPLE'
+        i_encoding   = zif_mockup_loader_constants=>encoding_utf16
         i_amt_format = ' ,' ).
     catch cx_static_check into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
@@ -174,8 +175,10 @@ class ltcl_test implementation.
     try.
       " Load test cases index for local usage
       o_ml->load_data(
-        exporting i_obj       = 'EXAMPLE/testcases'
-        importing e_container = lt_testcases ).
+        exporting
+          i_obj       = 'EXAMPLE/testcases'
+        importing
+          e_container = lt_testcases ).
 
       " Load and store flights table
       zcl_mockup_loader_store=>load_and_store(
@@ -197,7 +200,8 @@ class ltcl_test implementation.
           i_date   = '20150101'
         receiving
           r_price  = l_result
-        exceptions others = 4 ).
+        exceptions
+          others = 4 ).
 
       if ls_case-type = '+'. " Positive test
         cl_abap_unit_assert=>assert_subrc(

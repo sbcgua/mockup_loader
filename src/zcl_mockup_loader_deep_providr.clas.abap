@@ -5,6 +5,14 @@ class ZCL_MOCKUP_LOADER_DEEP_PROVIDR definition
 
   public section.
 
+    interfaces zif_text2tab_deep_provider .
+
+    methods constructor
+      importing
+        !ii_ml_instance type ref to zif_mockup_loader .
+
+  protected section.
+  private section.
     types:
       begin of ty_cache,
         location type string,
@@ -12,13 +20,6 @@ class ZCL_MOCKUP_LOADER_DEEP_PROVIDR definition
       end of ty_cache,
       tt_cache type standard table of ty_cache with key location.
 
-    interfaces zif_text2tab_deep_provider .
-
-    methods constructor
-      importing
-        !ii_ml_instance type ref to zif_mockup_loader .
-  protected section.
-  private section.
     data mi_ml_instance type ref to zif_mockup_loader.
     data mt_cache type tt_cache.
 ENDCLASS.
