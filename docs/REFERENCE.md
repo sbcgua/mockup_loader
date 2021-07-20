@@ -155,12 +155,12 @@ endtry.
       e_container = lt_bseg ).
 ```
 
-3) A structure of `ZCL_MOCKUP_LOADER_UTILS=>TY_WHERE` or a table of `TT_WHERE`, where each line contain a filter (applied simultaneously in case of table => AND). `NAME` component should contain target table field name (ignored if missing in target table). `RANGE` is a reference to a range table. (we assume it should be convenient and well-readable in 7.40+ environments).
+3) A structure of `zif_mockup_loader=>ty_where` or a table of `tt_where`, where each line contain a filter (applied simultaneously in case of table => AND). `NAME` component should contain target table field name (ignored if missing in target table). `RANGE` is a reference to a range table. (we assume it should be convenient and well-readable in 7.40+ environments).
 
 ```abap
   data:
-    where_tab type zcl_mockup_loader_utils=>tt_where,
-    l_where   type zcl_mockup_loader_utils=>ty_where,
+    where_tab type zif_mockup_loader=>tt_where,
+    l_where   type zif_mockup_loader=>ty_where,
     belnr_rng type range of belnr_d,
     r_belnr   like line of rt_belnr,
 
@@ -190,10 +190,10 @@ endtry.
 
 ```
 
-4) A table `ZCL_MOCKUP_LOADER_UTILS=>TT_FILTER`. You probably should not contract the table yourselves but rather build it with `ZCL_MOCKUP_LOADER_UTILS=>BUILD_FILTER` which understands all the options above. Can be handy to reuse the pre-built filter several times. In addition `BUILD_FILTER` can accept `I_SINGLE_VALUE` param as an alternative to string-like pattern which is also more type-safe. In this case `I_WHERE` is the name of field to filter.
+4) A table `zif_mockup_loader=>tt_filter`. You probably should not contract the table yourselves but rather build it with `zcl_mockup_loader_utils=>build_filter` which understands all the options above. Can be handy to reuse the pre-built filter several times. In addition `build_filter` can accept `i_single_value` param as an alternative to string-like pattern which is also more type-safe. In this case `i_where` is the name of field to filter.
 
 ```abap
-  data lt_filt = zcl_mockup_loader_utils=>tt_filter.
+  data lt_filt = zif_mockup_loader=>tt_filter.
   lt_filt = zcl_mockup_loader_utils=>build_filter(
     i_where        = 'BELNR'
     i_single_value = '0010000012' ).
@@ -205,7 +205,7 @@ endtry.
       e_container = lt_bseg ).
 ```
 
-5) A structure `ZCL_MOCKUP_LOADER_UTILS=>TY_FILTER` - one line of `TT_FILTER` above.
+5) A structure `zif_mockup_loader=>ty_filter` - one line of `tt_filter` above.
 
 #### Filling deep components in one path
 
@@ -522,7 +522,7 @@ zcl_mockup_loader_utils=>filter_table(
 or
 
 ```abap
-data lt_filter type zcl_mockup_loader_utils=>tt_filter.
+data lt_filter type zif_mockup_loader=>tt_filter.
 lt_filter = zcl_mockup_loader_utils=>build_filter( i_where = 'BELNR = 0000000010' ).
 zcl_mockup_loader_utils=>filter_table(
   exporting
