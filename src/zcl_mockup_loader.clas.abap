@@ -626,7 +626,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     endif.
 
     if i_encoding is initial.
-      me->mv_encoding = zif_mockup_loader_constants=>encoding_utf16.
+      me->mv_encoding = zif_mockup_loader_constants=>encoding_utf8.
     else.
       me->mv_encoding = i_encoding.
     endif.
