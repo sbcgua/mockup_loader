@@ -130,24 +130,29 @@ endtry.
     importing e_container = lt_bseg.
 ```
 
-2) A structure of range tables which are used to filter the output. Component of the structure must be named after target table fields. The structure may contain ONLY ranges. The structure may contain components (names) which are missing in the target table - they are just ignored. 
+2) A structure of "named components" - range tables or values. Component of the structure must be named after target table fields. The structure may contain ranges or single values. The structure may contain components (names) which are missing in the target table - they are just ignored. 
 
 ```abap
   data:
-      begin of l_where,
-        belnr  type range of belnr_d,
-      end of l_where,
-      rl_belnr like line of l_where-belnr,
+    begin of l_where,
+      belnr  type range of belnr_d, " Range
+      gjahr  type gjahr,            " Single value
+    end of l_where,
+    rl_belnr like line of l_where-belnr,
 
   rl_belnr-sign   = 'I'.
   rl_belnr-option = 'EQ'.
   rl_belnr-low    = '0000000010'.
   append rl_belnr to l_where-belnr.
+
+  l_where-gjahr = '2021'.
 ...
   call method o_ml->load_data
-    exporting i_obj       = 'TEST1/BSEG'
-              i_where     = l_where
-    importing e_container = lt_bseg.
+    exporting 
+      i_obj       = 'TEST1/BSEG'
+      i_where     = l_where
+    importing
+      e_container = lt_bseg.
 ```
 
 3) A structure of `ZCL_MOCKUP_LOADER_UTILS=>TY_WHERE` or a table of `TT_WHERE`, where each line contain a filter (applied simultaneously in case of table => AND). `NAME` component should contain target table field name (ignored if missing in target table). `RANGE` is a reference to a range table. (we assume it should be convenient and well-readable in 7.40+ environments).
