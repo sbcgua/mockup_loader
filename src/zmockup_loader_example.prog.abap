@@ -47,7 +47,7 @@ class lcl_context definition final create private.
   private section.
     class-data go_instance type ref to lcl_context.     " Some settings for the production code
 
-endclass.  " lcl_context
+endclass.
 
 class lcl_context implementation.
   method get_instance. " Get sinleton instance
@@ -65,7 +65,7 @@ class lcl_context implementation.
     endif.
   endmethod.
 
-endclass.  " lcl_context
+endclass.
 
 **********************************************************************
 * SOME BUSINESS LOGIC CLASS - the object to test
@@ -84,12 +84,12 @@ class lcl_main_logic definition final create public.
   private section.
     data o_context type ref to lcl_context.
 
-endclass.  " lcl_main_logic
+endclass.
 
 class lcl_main_logic implementation.
   method constructor.
     o_context = lcl_context=>get_instance( ). " Get context
-  endmethod.   "constructor
+  endmethod.
 
   method get_price. " Get price of the connection in the context airline
     data ls_flight type sflight.
@@ -116,8 +116,8 @@ class lcl_main_logic implementation.
 
     r_price = ls_flight-price.
 
-  endmethod.   "get_price
-endclass.  " lcl_main_logic
+  endmethod.
+endclass.
 
 **********************************************************************
 * TEST CLASS
@@ -142,7 +142,7 @@ class ltcl_test definition for testing duration short
     methods: setup.
     methods: get_price for testing.
 
-endclass.   "lcl_test
+endclass.
 
 class ltcl_test implementation.
   method setup. " Initialize instances
@@ -220,4 +220,4 @@ class ltcl_test implementation.
 
   endmethod.
 
-endclass.   "lcl_test
+endclass.
