@@ -5,10 +5,6 @@ class ZCL_MOCKUP_LOADER_UTILS definition
 
   public section.
 
-    class-data g_ty_where_abs_name type abap_abstypename read-only .
-    class-data g_range_key type abap_keydescr_tab read-only .
-    class-data g_ty_filter_abs_name type abap_abstypename read-only .
-
     class-methods filter_table
       importing
         !i_filter type zif_mockup_loader=>tt_filter optional
@@ -91,6 +87,9 @@ class ZCL_MOCKUP_LOADER_UTILS definition
 
   protected section.
   private section.
+    class-data g_ty_where_abs_name type abap_abstypename.
+    class-data g_range_key type abap_keydescr_tab.
+    class-data g_ty_filter_abs_name type abap_abstypename.
 
     class-methods validate_destination_type
       importing
