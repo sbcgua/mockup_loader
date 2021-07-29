@@ -8,14 +8,6 @@ class ZCL_MOCKUP_LOADER_STORE definition
 
     types:
       ty_store_tag type c length 40.
-    types:
-      begin of ty_store,
-        name    type ty_store_tag,
-        tabkey  type abap_compname,
-        data    type ref to data,
-      end of ty_store .
-    types:
-      tt_store type standard table of ty_store with key name .
 
     class-methods get_instance
       returning
@@ -55,6 +47,16 @@ class ZCL_MOCKUP_LOADER_STORE definition
 
   protected section.
   private section.
+
+    types:
+      begin of ty_store,
+        name    type ty_store_tag,
+        tabkey  type abap_compname,
+        data    type ref to data,
+      end of ty_store .
+    types:
+      tt_store type standard table of ty_store with key name .
+
 
     class-data go_instance type ref to zcl_mockup_loader_store .
     data mt_store type tt_store .
