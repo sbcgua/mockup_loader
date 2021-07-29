@@ -6,6 +6,16 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
   public section.
 
     types:
+      begin of ty_filter_param,
+        mock_tab_key    type abap_compname,
+        sift_param      type string,
+        sift_const      type string,
+      end of ty_filter_param.
+
+    types:
+      tty_filter_params type standard table of ty_filter_param with key mock_tab_key.
+
+    types:
       begin of ty_mock_config,
         method_name     type abap_methname,
         mock_name       type string,
@@ -21,9 +31,14 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         field_only      type abap_parmname,
         const_value     type string,
         deep            type abap_bool,
+        filter          type tty_filter_params,
       end of ty_mock_config .
     types:
       tt_mock_config type standard table of ty_mock_config with key method_name .
+    types:
+      tty_mock_config_by_methname type sorted table of ty_mock_config with unique key method_name .
+    types:
+      tty_sift_values type standard table of ref to data with default key.
 
     interfaces zif_mockup_loader_stub_control.
 
@@ -43,6 +58,8 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
       end of ty_control .
     types:
       tt_control type standard table of ty_control with key method_name .
+    types:
+      tty_control_by_meth_name type sorted table of ty_control with unique key method_name .
 
     methods get_mock_data
       importing
@@ -63,10 +80,11 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
       importing
         i_method   type abap_methname.
 
-    data mt_config  type tt_mock_config.
-    data mt_control type tt_control.
+    data mt_config  type tty_mock_config_by_methname.
+    data mt_control type tty_control_by_meth_name.
     data mo_ml      type ref to zcl_mockup_loader.
-    data mo_proxy_target type ref to object .
+    data mo_proxy_target type ref to object.
+
   private section.
 
     methods set_disabled
@@ -79,11 +97,108 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         i_method   type abap_methname
       returning
         value(rv_ref) type ref to ty_control.
+
+    methods build_filter_item
+      importing
+        is_filter_param type ty_filter_param
+        ir_sift_value type ref to data
+      returning
+        value(rs_filter) type zif_mockup_loader=>ty_filter
+      raising
+        zcx_mockup_loader_error.
+
+    methods build_filter
+      importing
+        is_conf like line of mt_config
+        i_sift_value  type any optional
+      returning
+        value(rt_filter) type zif_mockup_loader=>tt_filter
+      raising
+        zcx_mockup_loader_error.
+
 ENDCLASS.
 
 
 
 CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
+
+  method build_filter.
+
+    data ls_filter like line of rt_filter.
+    data ls_filter_param type ty_filter_param.
+    data lr_sift_value type ref to data.
+
+    if is_conf-mock_tab_key is not initial.
+      ls_filter_param-mock_tab_key = is_conf-mock_tab_key.
+      ls_filter_param-sift_param   = is_conf-sift_param.
+      ls_filter_param-sift_const   = is_conf-sift_const.
+      get reference of i_sift_value into lr_sift_value.
+
+      ls_filter = build_filter_item(
+        is_filter_param = ls_filter_param
+        ir_sift_value   = lr_sift_value ).
+
+      if ls_filter is not initial.
+        append ls_filter to rt_filter.
+      endif.
+
+    elseif is_conf-filter is not initial.
+
+      field-symbols <sift_values> type tty_sift_values.
+      assign i_sift_value to <sift_values>.
+      if sy-subrc <> 0.
+        zcx_mockup_loader_error=>raise( msg = 'Unexpected sift param table' code = 'UT' ).
+      endif.
+
+      loop at is_conf-filter into ls_filter_param.
+        read table <sift_values> into lr_sift_value index sy-tabix.
+        if sy-subrc <> 0.
+          zcx_mockup_loader_error=>raise( msg = 'Sift param count <> filter count' code = 'SC' ).
+        endif.
+
+        ls_filter = build_filter_item(
+          is_filter_param = ls_filter_param
+          ir_sift_value   = lr_sift_value ).
+
+        if ls_filter is not initial.
+          append ls_filter to rt_filter.
+        endif.
+      endloop.
+
+    endif.
+
+  endmethod.
+
+  method build_filter_item.
+
+    data ld_type type ref to cl_abap_typedescr.
+    field-symbols <sift_value> type any.
+
+    assign ir_sift_value->* to <sift_value>.
+
+    if is_filter_param-sift_param is not initial.
+      ld_type = cl_abap_typedescr=>describe_by_data( <sift_value> ).
+      if ld_type->kind = ld_type->kind_elem.
+        rs_filter = zcl_mockup_loader_utils=>conv_single_val_to_filter(
+          i_where = is_filter_param-mock_tab_key
+          i_value = <sift_value> ).
+      elseif ld_type->kind = ld_type->kind_table.
+        rs_filter = zcl_mockup_loader_utils=>conv_range_to_filter(
+          i_where = is_filter_param-mock_tab_key
+          i_range = <sift_value> ).
+      else.
+        zcx_mockup_loader_error=>raise( msg = 'Unexpected sift param type' code = 'US' ).
+      endif.
+    endif.
+
+    " if sift const, build filter. param xor const is checked in the factory
+    if is_filter_param-sift_const is not initial.
+      rs_filter = zcl_mockup_loader_utils=>conv_single_val_to_filter(
+        i_where = is_filter_param-mock_tab_key
+        i_value = is_filter_param-sift_const ).
+    endif.
+
+  endmethod.
 
 
   method constructor.
@@ -96,13 +211,14 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
   method get_control_for_method.
 
     field-symbols <ctl> like line of mt_control.
+    data ls_ctl like line of mt_control.
     data l_method like i_method.
     l_method = to_upper( i_method ).
 
     read table mt_control assigning <ctl> with key method_name = l_method.
     if sy-subrc <> 0.
-      append initial line to mt_control assigning <ctl>.
-      <ctl>-method_name = l_method.
+      ls_ctl-method_name = l_method.
+      insert ls_ctl into table mt_control assigning <ctl>.
     endif.
     get reference of <ctl> into rv_ref.
 
@@ -118,29 +234,10 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
     endif.
 
     " if sift, build filter
-    data ls_filter type zif_mockup_loader=>ty_filter.
-    if <conf>-sift_param is not initial.
-      data ld_type type ref to cl_abap_typedescr.
-      ld_type = cl_abap_typedescr=>describe_by_data( i_sift_value ).
-      if ld_type->kind = ld_type->kind_elem.
-        ls_filter = zcl_mockup_loader_utils=>conv_single_val_to_filter(
-          i_where = <conf>-mock_tab_key
-          i_value = i_sift_value ).
-      elseif ld_type->kind = ld_type->kind_table.
-        ls_filter = zcl_mockup_loader_utils=>conv_range_to_filter(
-          i_where = <conf>-mock_tab_key
-          i_range = i_sift_value ).
-      else.
-        zcx_mockup_loader_error=>raise( msg = 'Unexpected sift param type' code = 'US' ).
-      endif.
-    endif.
-
-    " if sift const, build filter. param xor const is checked in the factory
-    if <conf>-sift_const is not initial.
-      ls_filter = zcl_mockup_loader_utils=>conv_single_val_to_filter(
-        i_where = <conf>-mock_tab_key
-        i_value = <conf>-sift_const ).
-    endif.
+    data lt_filter type zif_mockup_loader=>tt_filter.
+    lt_filter = build_filter(
+      is_conf      = <conf>
+      i_sift_value = i_sift_value ).
 
     " create data container and load mock
     create data r_data type handle <conf>-output_type.
@@ -150,7 +247,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
         i_strict = <conf>-load_strict
         i_corresponding = boolc( <conf>-field_only is not initial or <conf>-corresponding = abap_true )
         i_deep   = <conf>-deep
-        i_where  = ls_filter
+        i_where  = lt_filter
       importing
         e_container = r_data ).
 
