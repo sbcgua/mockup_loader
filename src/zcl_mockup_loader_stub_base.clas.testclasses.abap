@@ -29,8 +29,6 @@ class lcl_mockup_loader_stub_final definition final
   inheriting from zcl_mockup_loader_stub_base
   friends ltcl_mockup_stub_base_test.
 endclass.
-class lcl_mockup_loader_stub_final implementation.
-endclass.
 
 **********************************************************************
 
@@ -147,7 +145,7 @@ class ltcl_mockup_stub_base_test implementation.
     data lt_exp type flighttab.
     data lr_act type ref to data.
     field-symbols <act> type flighttab.
-    data lt_filter_refs type zcl_mockup_loader_stub_base=>tty_sift_values.
+    data lt_filter_refs type zif_mockup_loader=>tty_stub_sift_values.
     data lr like line of lt_filter_refs.
     data ls_filter_values like line of lt_exp.
 
@@ -179,7 +177,7 @@ class ltcl_mockup_stub_base_test implementation.
 
     data lx type ref to zcx_mockup_loader_error.
     data ls_dummy like line of gt_flights.
-    data lt_values type zcl_mockup_loader_stub_base=>tty_sift_values.
+    data lt_values type zif_mockup_loader=>tty_stub_sift_values.
 
     try.
       mo_stub_cut->get_mock_data(

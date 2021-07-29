@@ -6,16 +6,6 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
   public section.
 
     types:
-      begin of ty_filter_param,
-        mock_tab_key    type abap_compname,
-        sift_param      type string,
-        sift_const      type string,
-      end of ty_filter_param.
-
-    types:
-      tty_filter_params type standard table of ty_filter_param with key mock_tab_key.
-
-    types:
       begin of ty_mock_config,
         method_name     type abap_methname,
         mock_name       type string,
@@ -31,14 +21,12 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         field_only      type abap_parmname,
         const_value     type string,
         deep            type abap_bool,
-        filter          type tty_filter_params,
+        filter          type zif_mockup_loader=>tty_stub_filter_params,
       end of ty_mock_config .
     types:
       tt_mock_config type standard table of ty_mock_config with key method_name .
     types:
       tty_mock_config_by_methname type sorted table of ty_mock_config with unique key method_name .
-    types:
-      tty_sift_values type standard table of ref to data with default key.
 
     interfaces zif_mockup_loader_stub_control.
 
@@ -100,7 +88,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
 
     methods build_filter_item
       importing
-        is_filter_param type ty_filter_param
+        is_filter_param type zif_mockup_loader=>ty_stub_filter_param
         ir_sift_value type ref to data
       returning
         value(rs_filter) type zif_mockup_loader=>ty_filter
@@ -122,10 +110,11 @@ ENDCLASS.
 
 CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
 
+
   method build_filter.
 
     data ls_filter like line of rt_filter.
-    data ls_filter_param type ty_filter_param.
+    data ls_filter_param like line of is_conf-filter.
     data lr_sift_value type ref to data.
 
     if is_conf-mock_tab_key is not initial.
@@ -144,7 +133,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
 
     elseif is_conf-filter is not initial.
 
-      field-symbols <sift_values> type tty_sift_values.
+      field-symbols <sift_values> type zif_mockup_loader=>tty_stub_sift_values.
       assign i_sift_value to <sift_values>.
       if sy-subrc <> 0.
         zcx_mockup_loader_error=>raise( msg = 'Unexpected sift param table' code = 'UT' ).
@@ -168,6 +157,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
     endif.
 
   endmethod.
+
 
   method build_filter_item.
 

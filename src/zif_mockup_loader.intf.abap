@@ -5,11 +5,19 @@ interface zif_mockup_loader
   constants origin type string value 'https://github.com/sbcgua/mockup_loader'. "#EC NOTEXT
   constants license type string value 'MIT'. "#EC NOTEXT
 
+**********************************************************************
+* COMMON TYPES
+**********************************************************************
+
   types:
     ty_src_type     type c length 4,
     ty_date_format  type c length 4,
     ty_amt_format   type c length 2,
     ty_comment_char type c length 1.
+
+**********************************************************************
+* FILTER RELATED TYPES
+**********************************************************************
 
   types:
     ty_filter_type type c length 1.
@@ -35,6 +43,25 @@ interface zif_mockup_loader
     end of ty_where .
   types:
     tt_where type standard table of ty_where with key name .
+
+**********************************************************************
+* STUB RELATED TYPES
+**********************************************************************
+
+  types:
+    begin of ty_stub_filter_param,
+      mock_tab_key    type abap_compname,
+      sift_param      type string,
+      sift_const      type string,
+    end of ty_stub_filter_param.
+  types:
+    tty_stub_filter_params type standard table of ty_stub_filter_param with key mock_tab_key.
+  types:
+    tty_stub_sift_values type standard table of ref to data with default key.
+
+**********************************************************************
+* METHODS
+**********************************************************************
 
   methods load_blob
     importing
