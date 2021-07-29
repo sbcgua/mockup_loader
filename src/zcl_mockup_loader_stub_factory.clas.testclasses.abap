@@ -105,7 +105,7 @@ class lcl_test_base implementation.
 
       create object lo_dc type (iv_factory_classname)
         exporting
-          io_ml_instance = lo_ml
+          ii_ml_instance = lo_ml
           i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
 
       lo_dc->connect_method(
@@ -189,7 +189,7 @@ class ltcl_mockup_stub_factory_test implementation.
 
     create object lo_dc
       exporting
-        io_ml_instance   = lo_ml
+        ii_ml_instance   = lo_ml
         i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
 
     lo_dc->connect_method(
@@ -232,7 +232,7 @@ class ltcl_mockup_stub_factory_test implementation.
 
       create object lo_dc
         exporting
-          io_ml_instance = lo_ml
+          ii_ml_instance = lo_ml
           i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
 
       lo_dc->connect_method(
@@ -437,7 +437,7 @@ class ltcl_mockup_stub_factory_test implementation.
       clear: lo_ex.
       create object lo
         exporting
-          io_ml_instance   = lo_ml
+          ii_ml_instance   = lo_ml
           i_interface_name = 'CHAR1'.
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
@@ -447,7 +447,7 @@ class ltcl_mockup_stub_factory_test implementation.
       clear: lo_ex.
       create object lo
         exporting
-          io_ml_instance   = lo_ml
+          ii_ml_instance   = lo_ml
           io_proxy_target  = lo_ml
           i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
     catch zcx_mockup_loader_error into lo_ex.
@@ -466,7 +466,7 @@ class ltcl_mockup_stub_factory_test implementation.
       clear: lo_ex.
       create object lo
         exporting
-          io_ml_instance   = lo_ml
+          ii_ml_instance   = lo_ml
           i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
       lo->forward_method( 'PROXY_TEST' ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -477,7 +477,7 @@ class ltcl_mockup_stub_factory_test implementation.
       clear: lo_ex.
       create object lo
         exporting
-          io_ml_instance   = lo_ml
+          ii_ml_instance   = lo_ml
           io_proxy_target  = lcl_test_proxy_target=>create( )
           i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
       lo->forward_method( 'PROXY_TEST_XXX' ).
@@ -503,7 +503,7 @@ class ltcl_mockup_stub_factory_test implementation.
 
     create object lo
       exporting
-        io_ml_instance   = lo_ml
+        ii_ml_instance   = lo_ml
         io_proxy_target  = lcl_test_proxy_target=>create( )
         i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
     lo->forward_method( 'PROXY_TEST' ).
@@ -525,7 +525,7 @@ class ltcl_mockup_stub_factory_test implementation.
   method get_factory.
     create object ro_factory
       exporting
-        io_ml_instance   = io_ml " get_ml( )
+        ii_ml_instance   = io_ml " get_ml( )
         i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'
         io_proxy_target  = io_proxy.
   endmethod.
@@ -751,7 +751,7 @@ class ltcl_mockup_stub_factory_test implementation.
 
     create object lo_dc
       exporting
-        io_ml_instance   = lo_ml
+        ii_ml_instance   = lo_ml
         io_proxy_target  = lcl_test_proxy_target=>create( )
         i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
 

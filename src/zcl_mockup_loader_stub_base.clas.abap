@@ -33,7 +33,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
     methods constructor
       importing
         !it_config type tt_mock_config
-        !io_ml type ref to zcl_mockup_loader
+        !ii_ml type ref to zif_mockup_loader
         !io_proxy_target type ref to object optional .
 
   protected section.
@@ -70,7 +70,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
 
     data mt_config  type tty_mock_config_by_methname.
     data mt_control type tty_control_by_meth_name.
-    data mo_ml      type ref to zcl_mockup_loader.
+    data mi_ml      type ref to zif_mockup_loader.
     data mo_proxy_target type ref to object.
 
   private section.
@@ -193,7 +193,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
 
   method constructor.
     mt_config       = it_config.
-    mo_ml           = io_ml.
+    mi_ml           = ii_ml.
     mo_proxy_target = io_proxy_target.
   endmethod.
 
@@ -231,7 +231,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
 
     " create data container and load mock
     create data r_data type handle <conf>-output_type.
-    mo_ml->load_data(
+    mi_ml->load_data(
       exporting
         i_obj    = <conf>-mock_name
         i_strict = <conf>-load_strict

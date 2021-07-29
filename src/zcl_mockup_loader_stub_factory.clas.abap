@@ -7,7 +7,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
     methods constructor
       importing
         !i_interface_name type seoclsname
-        !io_ml_instance type ref to zcl_mockup_loader
+        !ii_ml_instance type ref to zif_mockup_loader
         !io_proxy_target type ref to object optional
       raising
         zcx_mockup_loader_error .
@@ -49,7 +49,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
 
     data mv_interface_name type seoclsname .
     data mt_config type zcl_mockup_loader_stub_base=>tt_mock_config .
-    data mo_ml type ref to zcl_mockup_loader .
+    data mi_ml type ref to zif_mockup_loader .
     data md_if_desc type ref to cl_abap_objectdescr .
     data mo_proxy_target type ref to object .
 
@@ -227,7 +227,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     endif.
 
     me->md_if_desc       ?= ld_desc.
-    me->mo_ml             = io_ml_instance.
+    me->mi_ml             = ii_ml_instance.
     me->mv_interface_name = i_interface_name.
     me->mo_proxy_target   = io_proxy_target.
 
@@ -361,7 +361,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       exporting
         it_config       = mt_config
         io_proxy_target = mo_proxy_target
-        io_ml           = mo_ml.
+        ii_ml           = mi_ml.
 
   endmethod.
 

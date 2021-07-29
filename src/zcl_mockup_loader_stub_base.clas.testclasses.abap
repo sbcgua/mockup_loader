@@ -82,7 +82,7 @@ class ltcl_mockup_stub_base_test implementation.
     create object mo_stub_cut
       exporting
         it_config = lt_config
-        io_ml     = go_ml.
+        ii_ml     = go_ml.
 
   endmethod.
 
