@@ -24,6 +24,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         !i_output_param type abap_parmname optional
         !i_const_value type string optional
         !i_deep type abap_bool default abap_false
+        !i_filter type zif_mockup_loader=>tty_stub_filter_params optional
       returning
         value(r_instance) type ref to zcl_mockup_loader_stub_factory
       raising
@@ -199,6 +200,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     ls_config-field_only    = to_upper( i_field_only ).
     ls_config-const_value   = i_const_value.
     ls_config-deep          = i_deep.
+    ls_config-filter        = i_filter.
 
     read table mt_config with key method_name = ls_config-method_name transporting no fields.
     if sy-subrc is initial.
@@ -337,10 +339,22 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
         else.
 
+          if <conf>-filter is not initial.
+            _src( '    data lt_sift_values type zif_mockup_loader=>tty_stub_sift_values.' ) ##NO_TEXT.
+            _src( '    data lr_sift_val type ref to data.' )       ##NO_TEXT.
+            field-symbols <f> like line of <conf>-filter.
+            loop at <conf>-filter assigning <f> where sift_param is not initial.
+              _src( |    get reference of { <f>-sift_param } into lr_sift_val.| )  ##NO_TEXT.
+              _src( |    append lr_sift_val to lt_sift_values.| )  ##NO_TEXT.
+            endloop.
+          endif.
+
           _src( '    data lr_data type ref to data.' ).          "#EC NOTEXT
           _src( '    lr_data = get_mock_data(' ).                "#EC NOTEXT
           if <conf>-sift_param is not initial.
             _src( |      i_sift_value = { <conf>-sift_param }| ) ##NO_TEXT.
+          elseif <conf>-filter is not initial.
+            _src( '      i_sift_value = lt_sift_values' )       ##NO_TEXT.
           endif.
           _src( |      i_method_name = '{ <method>-name }' ).| ) ##NO_TEXT.
           _src( '    field-symbols <container> type any.' ).      "#EC NOTEXT

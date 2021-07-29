@@ -32,6 +32,13 @@ interface zif_mockup_loader_stub_dummy
     returning
       value(r_tab) type flighttab .
 
+  methods tab_return_w_date
+    importing
+      !i_connid type s_conn_id
+      !i_fldate type sflight-fldate
+    returning
+      value(r_tab) type flighttab .
+
   methods tab_return_by_range
     importing
       !ir_connid type ty_connid_range
