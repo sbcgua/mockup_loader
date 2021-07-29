@@ -139,10 +139,14 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
         zcx_mockup_loader_error=>raise( msg = 'Unexpected sift param table' code = 'UT' ).
       endif.
 
+      data lv_value_index type i value 1.
       loop at is_conf-filter into ls_filter_param.
-        read table <sift_values> into lr_sift_value index sy-tabix.
-        if sy-subrc <> 0.
-          zcx_mockup_loader_error=>raise( msg = 'Sift param count <> filter count' code = 'SC' ).
+        if ls_filter_param-sift_param is not initial.
+          read table <sift_values> into lr_sift_value index lv_value_index.
+          if sy-subrc <> 0.
+            zcx_mockup_loader_error=>raise( msg = 'Sift param count <> filter count' code = 'SC' ).
+          endif.
+          lv_value_index = lv_value_index + 1.
         endif.
 
         ls_filter = build_filter_item(

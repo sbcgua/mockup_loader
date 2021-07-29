@@ -15,6 +15,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods filtering_w_const for testing raising zcx_mockup_loader_error.
     methods filtering_w_struc_param for testing raising zcx_mockup_loader_error.
     methods filtering_multi for testing raising zcx_mockup_loader_error.
+    methods filtering_multi_and_const for testing raising zcx_mockup_loader_error.
     methods returning_value for testing raising zcx_mockup_loader_error.
     methods corresponding for testing raising zcx_mockup_loader_error.
     methods filter_by_range_param for testing raising zcx_mockup_loader_error.
@@ -602,11 +603,55 @@ class ltcl_mockup_stub_factory_test implementation.
       act = lt_act
       exp = lt_exp ).
 
-    stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return_w_date(
       i_connid = '2000'
       i_fldate = '20150130' ).
     cl_abap_unit_assert=>assert_initial( lt_act ).
+
+  endmethod.
+
+
+  method filtering_multi_and_const.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data lt_exp type flighttab.
+    data lt_act type flighttab.
+    data lt_filter type zif_mockup_loader=>tty_stub_filter_params.
+    field-symbols <f> like line of lt_filter.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    lt_exp  = get_sflights( ml ).
+    delete lt_exp where not ( connid = '2000' and fldate = '20150102' ).
+
+    append initial line to lt_filter assigning <f>.
+    <f>-mock_tab_key = 'CONNID'.
+    <f>-sift_param   = 'I_CONNID'.
+    append initial line to lt_filter assigning <f>.
+    <f>-mock_tab_key = 'FLDATE'.
+    <f>-sift_const   = '20150102'.
+
+    factory->connect_method(
+      i_filter          = lt_filter
+      i_method_name     = 'TAB_RETURN_W_DATE'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+
+    stub ?= factory->generate_stub( ).
+    lt_act = stub->tab_return_w_date(
+      i_connid = '2000'
+      i_fldate = '20150101' ). " Intentionally different date !
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
+      exp = lt_exp ).
+
+    lt_act = stub->tab_return_w_date(
+      i_connid = '2000'
+      i_fldate = '20150130' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
+      exp = lt_exp ).
 
   endmethod.
 

@@ -17,6 +17,7 @@ class ltcl_mockup_stub_base_test definition final
     methods get_mock_data_sifted for testing raising zcx_mockup_loader_error.
     methods build_filter_negative for testing raising zcx_mockup_loader_error.
     methods get_mock_data_sifted_multi for testing raising zcx_mockup_loader_error.
+    methods get_sifted_multi_const for testing raising zcx_mockup_loader_error.
 
     methods control_disable for testing raising zcx_mockup_loader_error.
     methods control_call_count for testing raising zcx_mockup_loader_error.
@@ -77,6 +78,16 @@ class ltcl_mockup_stub_base_test implementation.
     append initial line to ls_conf-filter assigning <filter>.
     <filter>-mock_tab_key = 'FLDATE'.
     <filter>-sift_param   = 'I_FLDATE'.
+    append ls_conf to lt_config.
+
+    ls_conf-method_name  = 'METHOD_SIFTED_MULTI_C'.
+    clear ls_conf-filter.
+    append initial line to ls_conf-filter assigning <filter>.
+    <filter>-mock_tab_key = 'CONNID'.
+    <filter>-sift_param   = 'I_CONNID'.
+    append initial line to ls_conf-filter assigning <filter>.
+    <filter>-mock_tab_key = 'FLDATE'.
+    <filter>-sift_const   = '20150101'.
     append ls_conf to lt_config.
 
     create object mo_stub_cut
@@ -173,6 +184,58 @@ class ltcl_mockup_stub_base_test implementation.
 
   endmethod.
 
+  method get_sifted_multi_const.
+
+    data lt_exp type flighttab.
+    data lr_act type ref to data.
+    field-symbols <act> type flighttab.
+    data lt_filter_refs type zif_mockup_loader=>tty_stub_sift_values.
+    data lr like line of lt_filter_refs.
+    data ls_filter_values like line of lt_exp.
+
+    lt_exp = gt_flights.
+    delete lt_exp where not ( connid = '1000' and fldate = '20150101' ).
+
+    ls_filter_values-connid = '1000'.
+    get reference of ls_filter_values-connid into lr.
+    append lr to lt_filter_refs.
+
+    lr_act = mo_stub_cut->get_mock_data(
+      i_method_name = 'METHOD_SIFTED_MULTI_C'
+      i_sift_value  = lt_filter_refs ).
+
+    assign lr_act->* to <act>.
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( <act> )
+      exp = 1 ).
+    cl_abap_unit_assert=>assert_equals(
+      act = <act>
+      exp = lt_exp ).
+
+    " Test 2
+
+    lt_exp = gt_flights.
+    delete lt_exp where not ( connid = '2000' and fldate = '20150101' ).
+
+    clear lt_filter_refs.
+    ls_filter_values-connid = '2000'.
+    get reference of ls_filter_values-connid into lr.
+    append lr to lt_filter_refs.
+
+    lr_act = mo_stub_cut->get_mock_data(
+      i_method_name = 'METHOD_SIFTED_MULTI_C'
+      i_sift_value  = lt_filter_refs ).
+
+    assign lr_act->* to <act>.
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( <act> )
+      exp = 1 ).
+    cl_abap_unit_assert=>assert_equals(
+      act = <act>
+      exp = lt_exp ).
+
+  endmethod.
+
   method build_filter_negative.
 
     data lx type ref to zcx_mockup_loader_error.
@@ -230,7 +293,7 @@ class ltcl_mockup_stub_base_test implementation.
     li_control ?= mo_stub_cut.
     li_control->disable( ).
 
-    cl_abap_unit_assert=>assert_equals( act = lines( mo_stub_cut->mt_control ) exp = 3 ).
+    cl_abap_unit_assert=>assert_equals( act = lines( mo_stub_cut->mt_control ) exp = 4 ).
     read table mo_stub_cut->mt_control into ls_control with key method_name = 'METHOD_SIMPLE'.
     cl_abap_unit_assert=>assert_subrc( ).
     cl_abap_unit_assert=>assert_equals( act = ls_control-is_disabled exp = abap_true ).
@@ -241,7 +304,7 @@ class ltcl_mockup_stub_base_test implementation.
     " Enable all
     li_control->enable( ).
 
-    cl_abap_unit_assert=>assert_equals( act = lines( mo_stub_cut->mt_control ) exp = 3 ).
+    cl_abap_unit_assert=>assert_equals( act = lines( mo_stub_cut->mt_control ) exp = 4 ).
     read table mo_stub_cut->mt_control into ls_control with key method_name = 'METHOD_SIMPLE'.
     cl_abap_unit_assert=>assert_subrc( ).
     cl_abap_unit_assert=>assert_equals( act = ls_control-is_disabled exp = abap_false ).
@@ -252,7 +315,7 @@ class ltcl_mockup_stub_base_test implementation.
     " Disable one
     li_control->disable( 'METHOD_SIMPLE' ).
 
-    cl_abap_unit_assert=>assert_equals( act = lines( mo_stub_cut->mt_control ) exp = 3 ).
+    cl_abap_unit_assert=>assert_equals( act = lines( mo_stub_cut->mt_control ) exp = 4 ).
     read table mo_stub_cut->mt_control into ls_control with key method_name = 'METHOD_SIMPLE'.
     cl_abap_unit_assert=>assert_subrc( ).
     cl_abap_unit_assert=>assert_equals( act = ls_control-is_disabled exp = abap_true ).
