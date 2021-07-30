@@ -12,6 +12,7 @@ v2.2.0, 2021-??-??
 -------------------
 ! [BREAKING] version constant moved to zif_mockup_loader
 ! [BREAKING] types and constants moved from utils class to zif_mockup_loader #30
+! [BREAKING] types and constants moved from stub class to zif_mockup_loader
 ! [BREAKING] switch default file encoding to UTF8 (from UTF16) #31
 + allow flat key-value structures in "where" #28
 

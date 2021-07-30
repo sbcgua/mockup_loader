@@ -268,22 +268,6 @@ ID   DATE   ...   LINES
 
 For the first record the mockup loader will find file `path_to_lines_file.txt` and load the lines with `docid` = `1` (value of `id` field of the first record). For the second record the explicit value `12345` will be used as the filter.
 
-## Type-less parsing
-
-You can also create an instance that does not validate type against some existing type structure. Instead it generates the table dynamically, where each field if the line is unconverted string.
-
-```abap
-data:
-  lr_data   type ref to data,
-  lt_fields type string_table.
-
-zcl_text2tab_parser=>create_typeless( )->parse(
-  exporting
-    i_data      = my_get_some_raw_text_data( )
-  importing
-    e_head_fields = lt_fields  " Contain the list of field names !
-    e_container   = lr_data ). " The container is created inside the parser
-
 #### "Best practice" suggestions
 
 To improve code readability within numerous datasets we use macros.
@@ -303,10 +287,9 @@ end-of-definition.
 load_mockup_no_strict 'BKPF' lt_bkpf.
 ```
 
-
 ### LOAD_RAW
 
-**May be depreciated in future, use `load_blob` instead**
+**Depreciated, use `load_blob` instead**
 
 ```abap
 importing
@@ -322,7 +305,7 @@ Optionally, **I_EXT** - file extension - can be specified explicitly. Defaulted 
 
 ### LOAD_RAW_X
 
-**depreciated, use `load_blob` instead**
+**Depreciated, use `load_blob` instead**
 
 ```abap
 importing
