@@ -695,18 +695,46 @@ lo_factory->connect( 'get_my_data -> mock_path' ).
 ```
 
 Supports:
-- `'get_my_data -> my_mock'` - map `get_my_data` method to `my_mock`
-- `'get_my_data -> my_mock [field = i_param]'` - filter data where `field` of an item = `i_param` passed to the method
-- `'get_my_data -> my_mock [field = "const"]'` - filter data where `field` of an item = the given `const` (see `i_sift_const` above)
-- `'get_my_data -> ~my_mock'` - copy only corresponding fields, for the case when target structure/table is **SMALLER** than the source. So `non-strict` reading in a opposite sense
-- `'get_my_data -> TEST_SUITE/~my_mock'` - this also works as 'corresponding' (deeper filename starts with ~)
-- `'get_my_data -> ~my_mock [field = i_param]'` - importantly, if the `field` is **NOT** in the target structure **you still CAN use it** for filtering.
-- `'get_my_data -> *'` - forward the method
-- `'get_my_data -> my_mock(single_field) [field = i_param]'` - return one specific field of the first filtered item
-- `'get_my_data -> =value'` - return constant single value (or amount)
-- `'get_my_data -> :deep: value'` - enable deep structures (can be also `~:deep:` = deep + corresponding)
 
-Addressing structured method parameters also works: `'get_my_data -> mock_path [a = i_struc-field]'`
+```abap
+" map `get_my_data` method to `my_mock`
+'get_my_data -> my_mock'
+
+" filter data where `field` of an item = `i_param` passed to the method
+'get_my_data -> my_mock [field = i_param]'
+
+" multiple filter params are supported
+'get_my_data -> my_mock [field = i_param, field2 = i_params2]'
+
+" addressing structured method parameters also works
+'get_my_data -> mock_path [a = i_struc-field]'
+
+" filter data where `field` of an item = the given `const` (see `i_sift_const` above)
+'get_my_data -> my_mock [field = "const"]'
+
+" copy only corresponding fields, for the case when target structure/table is **SMALLER** than the source.
+" So `non-strict` reading in a opposite sense
+'get_my_data -> ~my_mock'
+
+" this also works as 'corresponding' (deeper filename starts with ~)
+'get_my_data -> TEST_SUITE/~my_mock'
+
+" importantly, if the `field` is **NOT** in the target structure **you still CAN use it** for filtering.
+'get_my_data -> ~my_mock [field = i_param]'
+
+" forward the method
+'get_my_data -> *'
+
+" return one specific field of the first filtered item
+'get_my_data -> my_mock(single_field) [field = i_param]'
+
+" return constant single value (or amount)
+'get_my_data -> =value'
+
+" enable deep structures (can be also `~:deep:` = deep + corresponding)
+'get_my_data -> :deep: value'
+```
+
 
 The string is case **in**sensitive so you can specify most of parameters using the case you prefer. Also spaces are trimmed. The following strings would give the same result:
 - `'get_my_data -> mock_path [a = i_a]'`

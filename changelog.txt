@@ -8,13 +8,14 @@ Legend
 + : added
 - : removed
 
-v2.2.0, 2021-??-??
+v2.2.0, 2021-08-??
 -------------------
 ! [BREAKING] version constant moved to zif_mockup_loader
 ! [BREAKING] types and constants moved from utils class to zif_mockup_loader #30
 ! [BREAKING] types and constants moved from stub class to zif_mockup_loader
 ! [BREAKING] switch default file encoding to UTF8 (from UTF16) #31
 + allow flat key-value structures in "where" #28
++ [MAJOR] multi filtering in stub, allows specifying multiple filter params in connect e.g. 'my_method->example/sflight [connid=i_connid, fldate=i_fldate]' #27
 
 v2.1.10, 2021-04-22
 -------------------

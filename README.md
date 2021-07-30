@@ -97,7 +97,11 @@ On-the-fly data filtering is supported. For more information see [REFERENCE.md](
 
 Since 2.0.0 mockup loader supports generating of interface stubs. :tada:
 
-It creates an instance object which implements the given interface where one or more methods retrieve the data from the mockup. Optional filtering is supported, thus one of the method parameters is treated as the value to filter the mockup data by the given key field.
+It creates an instance object which implements the given interface where one or more methods retrieve the data from the mockup.
+- Optional filtering is supported:
+  - thus one of the method parameters is treated as the value to filter the mockup data by the given key field
+  - Multiple field filtering also supported
+  - Single-value and ranges are supported, as well as addressing structure attribute!
 
 ```abap
   data lo_factory type ref to zcl_mockup_loader_stub_factory.
@@ -162,6 +166,8 @@ The above `connect_method/proxy` configuration can be also done with a single st
   ...
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight' ).
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight [connid = i_connid]' ).
+  lo_factory->connect( 'tab_return -> EXAMPLE/sflight [connid = "XYZ_ID"]' ).
+  lo_factory->connect( 'tab_return -> EXAMPLE/sflight [connid = i_connid, fldate = i_fldate]' ).
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight(this_field_only) [connid = i_connid]' ).
   lo_factory->connect( 'tab_return -> ~EXAMPLE/sflight [connid = i_connid]' ). " corresponding only
   lo_factory->connect( 'tab_return -> =exact_value' ).
