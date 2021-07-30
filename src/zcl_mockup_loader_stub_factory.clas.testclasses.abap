@@ -26,6 +26,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods parse_string_positive for testing raising zcx_mockup_loader_error.
     methods connect_string_multi for testing raising zcx_mockup_loader_error.
     methods connect_string_multi_const for testing raising zcx_mockup_loader_error.
+    methods connect_string_multi_1value for testing raising zcx_mockup_loader_error.
 
     " HELPERS
     methods get_ml
@@ -84,6 +85,8 @@ class lcl_test_proxy_target implementation.
   method zif_mockup_loader_stub_dummy~gen_param_target.
   endmethod.
   method zif_mockup_loader_stub_dummy~return_value.
+  endmethod.
+  method zif_mockup_loader_stub_dummy~return_value_w_date.
   endmethod.
   method zif_mockup_loader_stub_dummy~return_deep.
   endmethod.
@@ -1231,6 +1234,38 @@ class ltcl_mockup_stub_factory_test implementation.
     cl_abap_unit_assert=>assert_equals(
       act = lt_act
       exp = lt_exp ).
+
+  endmethod.
+
+  method connect_string_multi_1value.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+
+    ml = get_ml( ).
+
+    factory = get_factory( ml ).
+    factory->connect( 'return_value_w_date->example/sflight(price) [connid=i_connid, fldate=i_fldate]' ).
+
+    stub ?= factory->generate_stub( ).
+    cl_abap_unit_assert=>assert_equals(
+      act = stub->return_value_w_date(
+        i_connid = '2000'
+        i_fldate = '20150102' )
+      exp = '300.00' ).
+
+    factory = get_factory( ml ).
+    factory->connect( 'return_value_w_date->example/sflight(price) [connid=i_connid, fldate="02.01.2015"]' ).
+    " NB: this is a bit tricky, dates in text are formatted and if we don't specify the method param
+    " we don't know the type of it and so we don't know how to convert value. So contstant filters are always string
+
+    stub ?= factory->generate_stub( ).
+    cl_abap_unit_assert=>assert_equals(
+      act = stub->return_value_w_date(
+        i_connid = '2000'
+        i_fldate = '20150130' )
+      exp = '300.00' ).
 
   endmethod.
 
