@@ -5,34 +5,11 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
 
   public section.
 
-    types:
-      begin of ty_mock_config,
-        method_name     type abap_methname,
-        mock_name       type string,
-        load_strict     type abap_bool,
-        corresponding   type abap_bool,
-        sift_param      type string,
-        sift_const      type string,
-        mock_tab_key    type abap_compname,
-        output_param    type abap_parmname,
-        output_pkind    type abap_parmkind,
-        output_type     type ref to cl_abap_datadescr,
-        as_proxy        type abap_bool,
-        field_only      type abap_parmname,
-        const_value     type string,
-        deep            type abap_bool,
-        filter          type zif_mockup_loader=>tty_stub_filter_params,
-      end of ty_mock_config .
-    types:
-      tt_mock_config type standard table of ty_mock_config with key method_name .
-    types:
-      tty_mock_config_by_methname type sorted table of ty_mock_config with unique key method_name .
-
     interfaces zif_mockup_loader_stub_control.
 
     methods constructor
       importing
-        !it_config type tt_mock_config
+        !it_config type zif_mockup_loader=>tt_mock_config
         !ii_ml type ref to zif_mockup_loader
         !io_proxy_target type ref to object optional .
 
@@ -68,7 +45,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
       importing
         i_method   type abap_methname.
 
-    data mt_config  type tty_mock_config_by_methname.
+    data mt_config  type zif_mockup_loader=>tty_mock_config_by_methname.
     data mt_control type tty_control_by_meth_name.
     data mi_ml      type ref to zif_mockup_loader.
     data mo_proxy_target type ref to object.

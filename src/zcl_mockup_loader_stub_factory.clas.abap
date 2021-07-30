@@ -49,7 +49,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
   protected section.
 
     data mv_interface_name type seoclsname .
-    data mt_config type zcl_mockup_loader_stub_base=>tt_mock_config .
+    data mt_config type zif_mockup_loader=>tt_mock_config .
     data mi_ml type ref to zif_mockup_loader .
     data md_if_desc type ref to cl_abap_objectdescr .
     data mo_proxy_target type ref to object .
@@ -57,9 +57,9 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
     class-methods build_config
       importing
         !id_if_desc type ref to cl_abap_objectdescr
-        !i_config type zcl_mockup_loader_stub_base=>ty_mock_config
+        !i_config type zif_mockup_loader=>ty_mock_config
       returning
-        value(r_config) type zcl_mockup_loader_stub_base=>ty_mock_config
+        value(r_config) type zif_mockup_loader=>ty_mock_config
       raising
         zcx_mockup_loader_error .
 
@@ -82,7 +82,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
     class-methods validate_connect_and_get_types
       importing
         id_if_desc type ref to cl_abap_objectdescr
-        !i_config type zcl_mockup_loader_stub_base=>ty_mock_config
+        !i_config type zif_mockup_loader=>ty_mock_config
       exporting
         ed_sift_type type ref to cl_abap_typedescr
         ed_output_type type ref to cl_abap_typedescr
@@ -94,7 +94,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       importing
         id_output_type type ref to cl_abap_typedescr
         id_sift_type type ref to cl_abap_typedescr
-        i_config type zcl_mockup_loader_stub_base=>ty_mock_config
+        i_config type zif_mockup_loader=>ty_mock_config
       returning
         value(rd_type) type ref to cl_abap_structdescr.
 
@@ -102,7 +102,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       importing
         i_connect_string type string
       returning
-        value(rs_parsed) type zcl_mockup_loader_stub_base=>ty_mock_config
+        value(rs_parsed) type zif_mockup_loader=>ty_mock_config
       raising
         zcx_mockup_loader_error .
 
@@ -167,7 +167,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
   method connect.
 
-    data ls_params type zcl_mockup_loader_stub_base=>ty_mock_config.
+    data ls_params type zif_mockup_loader=>ty_mock_config.
 
     ls_params = parse_connect_string( i_connect_string ).
 

@@ -253,8 +253,8 @@ class ltcl_mockup_stub_factory_test implementation.
 
   method build_config.
     data ld_if       type ref to cl_abap_objectdescr.
-    data ls_conf     type zcl_mockup_loader_stub_base=>ty_mock_config.
-    data ls_conf_act type zcl_mockup_loader_stub_base=>ty_mock_config.
+    data ls_conf     type zif_mockup_loader=>ty_mock_config.
+    data ls_conf_act type zif_mockup_loader=>ty_mock_config.
     data lo_ex type ref to zcx_mockup_loader_error.
 
     ld_if ?= cl_abap_typedescr=>describe_by_name( 'ZIF_MOCKUP_LOADER_STUB_DUMMY' ).
@@ -1030,7 +1030,7 @@ class ltcl_mockup_stub_factory_test implementation.
 
   method parse_string_positive.
 
-    data ls_exp type zcl_mockup_loader_stub_base=>ty_mock_config.
+    data ls_exp type zif_mockup_loader=>ty_mock_config.
 
     clear ls_exp.
     ls_exp-method_name   = 'methodX'.

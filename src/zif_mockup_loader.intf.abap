@@ -59,6 +59,29 @@ interface zif_mockup_loader
   types:
     tty_stub_sift_values type standard table of ref to data with default key.
 
+  types:
+    begin of ty_mock_config,
+      method_name     type abap_methname,
+      mock_name       type string,
+      load_strict     type abap_bool,
+      corresponding   type abap_bool,
+      sift_param      type string,
+      sift_const      type string,
+      mock_tab_key    type abap_compname,
+      output_param    type abap_parmname,
+      output_pkind    type abap_parmkind,
+      output_type     type ref to cl_abap_datadescr,
+      as_proxy        type abap_bool,
+      field_only      type abap_parmname,
+      const_value     type string,
+      deep            type abap_bool,
+      filter          type zif_mockup_loader=>tty_stub_filter_params,
+    end of ty_mock_config .
+  types:
+    tt_mock_config type standard table of ty_mock_config with key method_name .
+  types:
+    tty_mock_config_by_methname type sorted table of ty_mock_config with unique key method_name .
+
 **********************************************************************
 * METHODS
 **********************************************************************

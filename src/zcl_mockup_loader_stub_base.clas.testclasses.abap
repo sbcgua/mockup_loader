@@ -53,7 +53,7 @@ class ltcl_mockup_stub_base_test implementation.
 
   method setup.
 
-    data lt_config type lcl_mockup_loader_stub_final=>tt_mock_config.
+    data lt_config type zif_mockup_loader=>tt_mock_config.
     data ls_conf like line of lt_config.
     data lt_dummy type flighttab.
     field-symbols <filter> like line of ls_conf-filter.
