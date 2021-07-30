@@ -75,7 +75,7 @@ interface zif_mockup_loader
       field_only      type abap_parmname,
       const_value     type string,
       deep            type abap_bool,
-      filter          type zif_mockup_loader=>tty_stub_filter_params,
+      filter          type tty_stub_filter_params,
     end of ty_mock_config .
   types:
     tt_mock_config type standard table of ty_mock_config with key method_name .
