@@ -106,6 +106,14 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       raising
         zcx_mockup_loader_error .
 
+    class-methods parse_filter_item
+      importing
+        i_filter type string
+      returning
+        value(rs_filter_param) type zif_mockup_loader=>ty_stub_filter_param
+      raising
+        zcx_mockup_loader_error .
+
 ENDCLASS.
 
 
@@ -181,7 +189,8 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
         i_method_name     = ls_params-method_name
         i_corresponding   = ls_params-corresponding
         i_const_value     = ls_params-const_value
-        i_mock_name       = ls_params-mock_name ).
+        i_mock_name       = ls_params-mock_name
+        i_filter          = ls_params-filter ).
     endif.
 
   endmethod.
@@ -201,6 +210,12 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     ls_config-const_value   = i_const_value.
     ls_config-deep          = i_deep.
     ls_config-filter        = i_filter.
+
+    field-symbols <f> like line of ls_config-filter.
+    loop at ls_config-filter assigning <f>.
+      <f>-mock_tab_key = to_upper( <f>-mock_tab_key ).
+      <f>-sift_param   = to_upper( <f>-sift_param ).
+    endloop.
 
     read table mt_config with key method_name = ls_config-method_name transporting no fields.
     if sy-subrc is initial.
@@ -383,6 +398,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
   method parse_connect_string.
     " for mock          `METHOD -> file`
     " for mock w/params `METHOD -> file [param = key]`
+    " for mock w/params `METHOD -> file [param = key, param2 = key2]`
     " for mock w/params `METHOD -> file [param = "const"]`
     " for proxy         `METHOD -> *`
     " for corresponding `METHOD -> ~file`
@@ -395,6 +411,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     data l_filter type string.
     data lv_len type i.
 
+    " Pair and filter ======================================
     split i_connect_string at '[' into l_pair l_filter.
     if l_filter is not initial.
       lv_len = strlen( l_filter ).
@@ -404,9 +421,10 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       l_filter = substring( val = l_filter len = lv_len - 1 ).
     endif.
 
+    " Method and mock target ===============================
     split l_pair at '->' into rs_parsed-method_name rs_parsed-mock_name.
-    split l_filter at '=' into rs_parsed-mock_tab_key rs_parsed-sift_param.
 
+    " Field only
     split rs_parsed-mock_name at '(' into rs_parsed-mock_name rs_parsed-field_only.
     if rs_parsed-field_only is not initial.
       lv_len = strlen( rs_parsed-field_only ).
@@ -416,22 +434,10 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       rs_parsed-field_only = substring( val = rs_parsed-field_only len = lv_len - 1 ).
     endif.
 
-    condense rs_parsed-sift_param.
-
-    if rs_parsed-sift_param is not initial and rs_parsed-sift_param+0(1) = '"'.
-      lv_len = strlen( rs_parsed-sift_param ).
-      if substring( val = rs_parsed-sift_param off = lv_len - 1 ) <> '"'.
-        zcx_mockup_loader_error=>raise( msg = 'incorrect connect string format' code = 'SF' ).
-      endif.
-      rs_parsed-sift_const = substring( val = rs_parsed-sift_param len = lv_len - 2 off = 1 ).
-      clear rs_parsed-sift_param.
-    endif.
-
     condense rs_parsed-method_name.
     condense rs_parsed-mock_name.
-    condense rs_parsed-sift_const.
-    condense rs_parsed-mock_tab_key.
 
+    " Corresponding
     if rs_parsed-mock_name cp '*/~*'.
       rs_parsed-mock_name = replace( val = rs_parsed-mock_name sub = '/~' with = '/' ).
       rs_parsed-corresponding = abap_true.
@@ -445,11 +451,52 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       condense rs_parsed-const_value.
     endif.
 
+    " Deep
     if rs_parsed-mock_name cp ':deep:*'.
       rs_parsed-mock_name = replace( val = rs_parsed-mock_name sub = ':deep:' with = '' ).
       rs_parsed-deep = abap_true.
       condense rs_parsed-mock_name.
     endif.
+
+    " Filter ========================================
+    data ls_filter_param type zif_mockup_loader=>ty_stub_filter_param.
+
+    " detect multi filter
+    find first occurrence of ',' in l_filter.
+
+    if sy-subrc = 0.
+      data lt_filter_items type string_table.
+      split l_filter at ',' into table lt_filter_items.
+      loop at lt_filter_items into l_filter.
+        ls_filter_param = parse_filter_item( l_filter ).
+        append ls_filter_param to rs_parsed-filter.
+      endloop.
+    else.
+      ls_filter_param = parse_filter_item( l_filter ).
+      move-corresponding ls_filter_param to rs_parsed.
+    endif.
+
+  endmethod.
+
+
+  method parse_filter_item.
+
+    data lv_len type i.
+
+    split i_filter at '=' into rs_filter_param-mock_tab_key rs_filter_param-sift_param.
+    condense rs_filter_param-sift_param.
+
+    if rs_filter_param-sift_param is not initial and rs_filter_param-sift_param+0(1) = '"'.
+      lv_len = strlen( rs_filter_param-sift_param ).
+      if substring( val = rs_filter_param-sift_param off = lv_len - 1 ) <> '"'.
+        zcx_mockup_loader_error=>raise( msg = 'incorrect connect string format' code = 'SF' ).
+      endif.
+      rs_filter_param-sift_const = substring( val = rs_filter_param-sift_param len = lv_len - 2 off = 1 ).
+      clear rs_filter_param-sift_param.
+    endif.
+
+    condense rs_filter_param-sift_const.
+    condense rs_filter_param-mock_tab_key.
 
   endmethod.
 

@@ -24,6 +24,8 @@ class ltcl_mockup_stub_factory_test definition final
     methods connect_string_positive for testing raising zcx_mockup_loader_error.
     methods parse_string_negative for testing.
     methods parse_string_positive for testing raising zcx_mockup_loader_error.
+    methods connect_string_multi for testing raising zcx_mockup_loader_error.
+    methods connect_string_multi_const for testing raising zcx_mockup_loader_error.
 
     " HELPERS
     methods get_ml
@@ -1179,6 +1181,56 @@ class ltcl_mockup_stub_factory_test implementation.
     cl_abap_unit_assert=>assert_equals(
       act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> xxx:deep:mock_path' )
       exp = ls_exp ).
+
+  endmethod.
+
+  method connect_string_multi.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data lt_exp type flighttab.
+    data lt_act type flighttab.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    lt_exp  = get_sflights( ml ).
+    delete lt_exp where not ( connid = '2000' and fldate = '20150102' ).
+
+    factory->connect( 'tab_return_w_date->example/sflight [connid = i_connid , fldate = i_fldate]' ).
+
+    stub ?= factory->generate_stub( ).
+    lt_act = stub->tab_return_w_date(
+      i_connid = '2000'
+      i_fldate = '20150102' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
+      exp = lt_exp ).
+
+  endmethod.
+
+  method connect_string_multi_const.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data lt_exp type flighttab.
+    data lt_act type flighttab.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    lt_exp  = get_sflights( ml ).
+    delete lt_exp where not ( connid = '2000' and fldate = '20150102' ).
+
+    factory->connect( 'tab_return_w_date->example/sflight [connid = i_connid , fldate = "20150102"]' ).
+
+    stub ?= factory->generate_stub( ).
+    lt_act = stub->tab_return_w_date(
+      i_connid = '2000'
+      i_fldate = '20150130' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
+      exp = lt_exp ).
 
   endmethod.
 
