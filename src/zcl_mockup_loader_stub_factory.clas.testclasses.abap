@@ -6,8 +6,9 @@ class ltcl_mockup_stub_factory_test definition final
   private section.
     methods main_test_stub for testing.
     methods connect_deep_corresponding for testing raising zcx_mockup_loader_error.
-    methods connect_method for testing.
-    methods build_config for testing.
+    methods connect_method for testing raising zcx_mockup_loader_error.
+    methods build_config for testing raising zcx_mockup_loader_error.
+    methods build_config_multi_filter_neg for testing raising zcx_mockup_loader_error.
     methods instantiation for testing.
     methods forward_method for testing.
     methods proxy_forwarding for testing raising zcx_mockup_loader_error.
@@ -229,30 +230,32 @@ class ltcl_mockup_stub_factory_test implementation.
   endmethod.
 
   method connect_method.
+
     data lo_dc type ref to zcl_mockup_loader_stub_factory.
     data lo_ml type ref to zcl_mockup_loader.
     data lo_ex type ref to zcx_mockup_loader_error.
 
-    try.
-      lo_ml  = zcl_mockup_loader=>create(
-        i_type = 'MIME'
-        i_path = 'ZMOCKUP_LOADER_EXAMPLE'
-        i_encoding = zif_mockup_loader_constants=>encoding_utf16 ).
+    lo_ml  = zcl_mockup_loader=>create(
+      i_type = 'MIME'
+      i_path = 'ZMOCKUP_LOADER_EXAMPLE'
+      i_encoding = zif_mockup_loader_constants=>encoding_utf16 ).
 
-      create object lo_dc
-        exporting
-          ii_ml_instance = lo_ml
-          i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+    create object lo_dc
+      exporting
+        ii_ml_instance = lo_ml
+        i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
 
+    try. " Multiple connect
       lo_dc->connect_method(
         i_method_name     = 'TAB_RETURN'
         i_mock_name       = 'EXAMPLE/sflight' ).
       lo_dc->connect_method(
         i_method_name     = 'TAB_RETURN'
         i_mock_name       = 'EXAMPLE/sflight' ).
+      cl_abap_unit_assert=>fail( ).
     catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>assert_equals( exp = 'MC' act = lo_ex->code ).
     endtry.
-    assert_excode 'MC'.
 
   endmethod.
 
@@ -281,7 +284,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " method missing
       clear: lo_ex, ls_conf.
       ls_conf-mock_name   = 'EXAMPLE/sflight'.
-      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -291,7 +294,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " mock missing
       clear: lo_ex, ls_conf.
       ls_conf-method_name = 'TAB_RETURN'.
-      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -303,7 +306,7 @@ class ltcl_mockup_stub_factory_test implementation.
       ls_conf-method_name = 'TAB_RETURN'.
       ls_conf-mock_name   = 'EXAMPLE/sflight'.
       ls_conf-sift_param  = 'I_CONNID'.
-      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -315,7 +318,7 @@ class ltcl_mockup_stub_factory_test implementation.
       ls_conf-method_name  = 'TAB_RETURN'.
       ls_conf-mock_name    = 'EXAMPLE/sflight'.
       ls_conf-mock_tab_key = 'CONNID'.
-      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -326,7 +329,7 @@ class ltcl_mockup_stub_factory_test implementation.
       clear: lo_ex, ls_conf.
       ls_conf-method_name  = '???'.
       ls_conf-mock_name    = 'EXAMPLE/sflight'.
-      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -339,7 +342,7 @@ class ltcl_mockup_stub_factory_test implementation.
       ls_conf-mock_name    = 'EXAMPLE/sflight'.
       ls_conf-sift_param   = 'X_CONNID'.
       ls_conf-mock_tab_key = 'CONNID'.
-      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -352,7 +355,7 @@ class ltcl_mockup_stub_factory_test implementation.
       ls_conf-mock_name    = 'EXAMPLE/sflight'.
       ls_conf-sift_param   = 'I_CONNID'.
       ls_conf-mock_tab_key = 'CONNID'.
-      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -363,7 +366,7 @@ class ltcl_mockup_stub_factory_test implementation.
       clear: lo_ex, ls_conf.
       ls_conf-method_name = 'TAB_EXPORT'.
       ls_conf-mock_name   = 'EXAMPLE/sflight'.
-      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -375,7 +378,7 @@ class ltcl_mockup_stub_factory_test implementation.
       ls_conf-method_name  = 'TAB_RETURN'.
       ls_conf-mock_name    = 'EXAMPLE/sflight'.
       ls_conf-output_param = '???'.
-      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -387,7 +390,7 @@ class ltcl_mockup_stub_factory_test implementation.
       ls_conf-method_name  = 'TAB_RETURN'.
       ls_conf-mock_name    = 'EXAMPLE/sflight'.
       ls_conf-output_param = 'I_CONNID'.
-      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -398,7 +401,7 @@ class ltcl_mockup_stub_factory_test implementation.
       clear: lo_ex, ls_conf.
       ls_conf-method_name  = 'WRONG_RETURN'.
       ls_conf-mock_name    = 'EXAMPLE/sflight'.
-      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -410,7 +413,7 @@ class ltcl_mockup_stub_factory_test implementation.
       ls_conf-method_name  = 'TAB_RETURN'.
       ls_conf-mock_name    = 'EXAMPLE/sflight'.
       ls_conf-field_only   = 'PRICE'.
-      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -423,7 +426,7 @@ class ltcl_mockup_stub_factory_test implementation.
       ls_conf-mock_name    = 'EXAMPLE/sflight'.
       ls_conf-corresponding = abap_true.
       ls_conf-field_only   = 'PRICE'.
-      ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
     catch zcx_mockup_loader_error into lo_ex.
@@ -431,6 +434,56 @@ class ltcl_mockup_stub_factory_test implementation.
     assert_excode 'PC'.
 
   endmethod.
+
+  method build_config_multi_filter_neg.
+
+    data ld_if       type ref to cl_abap_objectdescr.
+    data ls_conf     type zif_mockup_loader=>ty_mock_config.
+    data ls_conf_act type zif_mockup_loader=>ty_mock_config.
+    data lx type ref to zcx_mockup_loader_error.
+    field-symbols <f> like line of ls_conf-filter.
+
+    ld_if ?= cl_abap_typedescr=>describe_by_name( 'ZIF_MOCKUP_LOADER_STUB_DUMMY' ).
+
+    try. " both filters passed
+      clear ls_conf.
+      ls_conf-method_name  = 'TAB_RETURN_W_DATE'.
+      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      ls_conf-mock_tab_key = 'CONNID'.
+      ls_conf-sift_param   = 'I_CONNID'.
+      append initial line to ls_conf-filter assigning <f>.
+      <f>-mock_tab_key = 'CONNID'.
+      <f>-sift_param   = 'I_CONNID'.
+
+      zcl_mockup_loader_stub_factory=>build_config(
+        id_if_desc = ld_if
+        i_config   = ls_conf ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( exp = 'BF' act = lx->code ).
+    endtry.
+
+    try. " duplication
+      clear ls_conf.
+      ls_conf-method_name  = 'TAB_RETURN_W_DATE'.
+      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      append initial line to ls_conf-filter assigning <f>.
+      <f>-mock_tab_key = 'CONNID'.
+      <f>-sift_param   = 'I_CONNID'.
+      append initial line to ls_conf-filter assigning <f>.
+      <f>-mock_tab_key = 'CONNID'.
+      <f>-sift_param   = 'I_CONNID'.
+
+      zcl_mockup_loader_stub_factory=>build_config(
+        id_if_desc = ld_if
+        i_config   = ls_conf ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( exp = 'DF' act = lx->code ).
+    endtry.
+
+  endmethod.
+
 
   method instantiation.
     data lo type ref to zcl_mockup_loader_stub_factory.

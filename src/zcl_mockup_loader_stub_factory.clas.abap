@@ -155,6 +155,8 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     data ls_output_param type abap_parmdescr.
     data lt_sift_types type tty_filter_types.
 
+    " TODO: unify filters: merge single filter params into filter tab
+
     validate_connect_and_get_types(
       exporting
         i_config   = i_config
@@ -576,45 +578,63 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
   method validate_filter_and_get_ftype.
 
-    " check filters
-    if boolc( i_config-sift_param is initial and i_config-sift_const is initial )
-      <> boolc( i_config-mock_tab_key is initial ). " XOR
+    " Normalize filters data
+    data lt_filter like i_config-filter.
+    field-symbols <f> like line of lt_filter.
+
+    append initial line to lt_filter assigning <f>.
+    move-corresponding i_config to <f>. " key, param, const
+    if <f> is initial and i_config-filter is initial.
+      return.
+    endif.
+    if <f> is not initial and i_config-filter is not initial.
       zcx_mockup_loader_error=>raise(
-        msg  = 'Specify both i_sift_param/const and i_mock_tab_key'
-        code = 'MS' ). "#EC NOTEXT
-    elseif i_config-sift_param is not initial and i_config-sift_const is not initial.
-      zcx_mockup_loader_error=>raise(
-        msg  = 'Cannot combine sift_param and sift_const'
-        code = 'CS' ). "#EC NOTEXT
+        msg  = 'Cannot specify single and multi filter at the same time'
+        code = 'BF' ). "#EC NOTEXT
+    endif.
+    if <f> is initial.
+      lt_filter = i_config-filter.
     endif.
 
-    data ls_filter_type like line of rt_sift_types.
-    if i_config-sift_param is not initial.
-      ls_filter_type-type = validate_sift_and_get_type(
-        id_if_desc     = id_if_desc
-        iv_method_name = i_config-method_name
-        iv_param_name  = i_config-sift_param ).
-      ls_filter_type-mock_tab_key = i_config-mock_tab_key.
+    " Get filter types
+    loop at lt_filter assigning <f>.
+
+      " check filters
+      if boolc( <f>-sift_param is initial and <f>-sift_const is initial )
+        <> boolc( <f>-mock_tab_key is initial ). " XOR
+        zcx_mockup_loader_error=>raise(
+          msg  = 'Specify both sift_param/const and mock_tab_key'
+          code = 'MS' ). "#EC NOTEXT
+      elseif <f>-sift_param is not initial and <f>-sift_const is not initial.
+        zcx_mockup_loader_error=>raise(
+          msg  = 'Cannot combine sift_param and sift_const'
+          code = 'CS' ). "#EC NOTEXT
+      endif.
+
+      " duplication check
+      read table rt_sift_types transporting no fields with key mock_tab_key = <f>-mock_tab_key.
+      if sy-subrc = 0.
+        zcx_mockup_loader_error=>raise(
+          msg  = |Filter duplication for field { <f>-mock_tab_key }|
+          code = 'DF' ). "#EC NOTEXT
+      endif.
+
+      " get types
+      data ls_filter_type like line of rt_sift_types.
+      if <f>-sift_param is not initial.
+        ls_filter_type-type = validate_sift_and_get_type(
+          id_if_desc     = id_if_desc
+          iv_method_name = i_config-method_name
+          iv_param_name  = <f>-sift_param ).
+      else.
+        ls_filter_type-type = cl_abap_typedescr=>describe_by_name( 'STRING' ).
+      endif.
+      ls_filter_type-mock_tab_key = <f>-mock_tab_key.
       append ls_filter_type to rt_sift_types.
-    elseif i_config-filter is not initial.
-      field-symbols <f> like line of i_config-filter.
-      loop at i_config-filter assigning <f>.
-        if <f>-sift_param is not initial.
-          ls_filter_type-type = validate_sift_and_get_type(
-            id_if_desc     = id_if_desc
-            iv_method_name = i_config-method_name
-            iv_param_name  = <f>-sift_param ).
-        else.
-          ls_filter_type-type = cl_abap_typedescr=>describe_by_name( 'STRING' ). " TODO refactor
-        endif.
-        ls_filter_type-mock_tab_key = <f>-mock_tab_key.
-        append ls_filter_type to rt_sift_types.
-      endloop.
-    endif.
+
+    endloop.
 
   endmethod.
-
-
 
   method validate_method_and_get_otype.
 
