@@ -91,11 +91,31 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
     class-methods validate_connect_and_get_types
       importing
         id_if_desc type ref to cl_abap_objectdescr
-        !i_config type zif_mockup_loader=>ty_mock_config
+        i_config type zif_mockup_loader=>ty_mock_config
       exporting
         et_sift_types type tty_filter_types
         ed_output_type type ref to cl_abap_typedescr
         es_output_param type abap_parmdescr
+      raising
+        zcx_mockup_loader_error .
+
+    class-methods validate_method_and_get_otype
+      importing
+        id_if_desc type ref to cl_abap_objectdescr
+        i_config type zif_mockup_loader=>ty_mock_config
+        i_method type abap_methdescr
+      exporting
+        ed_output_type type ref to cl_abap_typedescr
+        es_output_param type abap_parmdescr
+      raising
+        zcx_mockup_loader_error .
+
+    class-methods validate_filter_and_get_ftype
+      importing
+        id_if_desc type ref to cl_abap_objectdescr
+        i_config type zif_mockup_loader=>ty_mock_config
+      returning
+        value(rt_sift_types) type tty_filter_types
       raising
         zcx_mockup_loader_error .
 
@@ -524,19 +544,10 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       zcx_mockup_loader_error=>raise(
         msg  = 'Either mock or const value is allowed'
         code = 'CV' ). "#EC NOTEXT
-    elseif boolc( i_config-sift_param is initial and i_config-sift_const is initial )
-      <> boolc( i_config-mock_tab_key is initial ). " XOR
-      zcx_mockup_loader_error=>raise(
-        msg  = 'Specify both i_sift_param/const and i_mock_tab_key'
-        code = 'MS' ). "#EC NOTEXT
     elseif i_config-corresponding = abap_true and i_config-field_only is not initial.
       zcx_mockup_loader_error=>raise(
         msg  = 'Cannot combine field_only and corresponding'
         code = 'PC' ). "#EC NOTEXT
-    elseif i_config-sift_param is not initial and i_config-sift_const is not initial.
-      zcx_mockup_loader_error=>raise(
-        msg  = 'Cannot combine sift_param and sift_const'
-        code = 'CS' ). "#EC NOTEXT
     endif.
 
     " find method, check if exists
@@ -548,16 +559,43 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
         code = 'MF' ). "#EC NOTEXT
     endif.
 
-    " check if sift param
-    clear et_sift_types.
-    data ls_filter_type like line of et_sift_types.
+    validate_method_and_get_otype(
+      exporting
+        id_if_desc = id_if_desc
+        i_config   = i_config
+        i_method   = <method>
+      importing
+        ed_output_type  = ed_output_type
+        es_output_param = es_output_param ).
+
+    et_sift_types = validate_filter_and_get_ftype(
+      id_if_desc = id_if_desc
+      i_config   = i_config ).
+
+  endmethod.
+
+  method validate_filter_and_get_ftype.
+
+    " check filters
+    if boolc( i_config-sift_param is initial and i_config-sift_const is initial )
+      <> boolc( i_config-mock_tab_key is initial ). " XOR
+      zcx_mockup_loader_error=>raise(
+        msg  = 'Specify both i_sift_param/const and i_mock_tab_key'
+        code = 'MS' ). "#EC NOTEXT
+    elseif i_config-sift_param is not initial and i_config-sift_const is not initial.
+      zcx_mockup_loader_error=>raise(
+        msg  = 'Cannot combine sift_param and sift_const'
+        code = 'CS' ). "#EC NOTEXT
+    endif.
+
+    data ls_filter_type like line of rt_sift_types.
     if i_config-sift_param is not initial.
       ls_filter_type-type = validate_sift_and_get_type(
         id_if_desc     = id_if_desc
         iv_method_name = i_config-method_name
         iv_param_name  = i_config-sift_param ).
       ls_filter_type-mock_tab_key = i_config-mock_tab_key.
-      append ls_filter_type to et_sift_types.
+      append ls_filter_type to rt_sift_types.
     elseif i_config-filter is not initial.
       field-symbols <f> like line of i_config-filter.
       loop at i_config-filter assigning <f>.
@@ -570,20 +608,26 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
           ls_filter_type-type = cl_abap_typedescr=>describe_by_name( 'STRING' ). " TODO refactor
         endif.
         ls_filter_type-mock_tab_key = <f>-mock_tab_key.
-        append ls_filter_type to et_sift_types.
+        append ls_filter_type to rt_sift_types.
       endloop.
     endif.
 
+  endmethod.
+
+
+
+  method validate_method_and_get_otype.
+
     " Check output param
     if i_config-output_param is initial.
-      read table <method>-parameters with key parm_kind = 'R' into es_output_param. " returning
+      read table i_method-parameters with key parm_kind = 'R' into es_output_param. " returning
       if sy-subrc is not initial.
         zcx_mockup_loader_error=>raise(
           msg  = 'Method has no returning params and output_param was not specified'
           code = 'MR' ). "#EC NOTEXT
       endif.
     else.
-      read table <method>-parameters with key name = i_config-output_param into es_output_param.
+      read table i_method-parameters with key name = i_config-output_param into es_output_param.
       if sy-subrc is not initial.
         zcx_mockup_loader_error=>raise(
           msg  = |Param { i_config-output_param } not found|
@@ -598,7 +642,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     endif.
 
     ed_output_type = id_if_desc->get_method_parameter_type(
-      p_method_name    = <method>-name
+      p_method_name    = i_method-name
       p_parameter_name = es_output_param-name ).
 
     if i_config-field_only is not initial.
@@ -622,7 +666,6 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     endif.
 
   endmethod.
-
 
   method validate_sift_and_get_type.
 
