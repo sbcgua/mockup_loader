@@ -8,7 +8,7 @@ Legend
 + : added
 - : removed
 
-v2.2.0, 2021-08-??
+v2.2.0, 2021-08-??, maybe 3.0 as a lot of breaking ?
 -------------------
 ! [BREAKING] version constant moved to zif_mockup_loader
 ! [BREAKING] types and constants moved from utils class to zif_mockup_loader #30
