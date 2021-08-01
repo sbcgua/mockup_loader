@@ -8,6 +8,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods connect_deep_corresponding for testing raising zcx_mockup_loader_error.
     methods connect_method for testing raising zcx_mockup_loader_error.
     methods build_config for testing raising zcx_mockup_loader_error.
+    methods build_config_filter_type for testing raising zcx_mockup_loader_error.
     methods build_config_multi_filter_neg for testing raising zcx_mockup_loader_error.
     methods instantiation for testing.
     methods forward_method for testing.
@@ -435,11 +436,55 @@ class ltcl_mockup_stub_factory_test implementation.
 
   endmethod.
 
-  method build_config_multi_filter_neg.
+  method build_config_filter_type.
 
     data ld_if       type ref to cl_abap_objectdescr.
     data ls_conf     type zif_mockup_loader=>ty_mock_config.
     data ls_conf_act type zif_mockup_loader=>ty_mock_config.
+    data lx type ref to zcx_mockup_loader_error.
+    data ld_otype    type ref to cl_abap_structdescr.
+
+    ld_if ?= cl_abap_typedescr=>describe_by_name( 'ZIF_MOCKUP_LOADER_STUB_DUMMY' ).
+
+    " Type from param
+    clear ls_conf.
+    ls_conf-method_name  = 'RETURN_VALUE_W_DATE'.
+    ls_conf-mock_name    = 'EXAMPLE/sflight'.
+    ls_conf-mock_tab_key = 'CONNID'.
+    ls_conf-sift_param   = 'I_CONNID'.
+    ls_conf-field_only   = 'PRICE'.
+    ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      id_if_desc = ld_if
+      i_config   = ls_conf ).
+
+    ld_otype ?= ls_conf_act-output_type.
+    cl_abap_unit_assert=>assert_equals(
+      exp = 'S_CONN_ID'
+      act = ld_otype->get_component_type( p_name = 'CONNID' )->get_relative_name( ) ).
+
+    " Type from const
+    clear ls_conf.
+    ls_conf-method_name  = 'RETURN_VALUE_W_DATE'.
+    ls_conf-mock_name    = 'EXAMPLE/sflight'.
+    ls_conf-mock_tab_key = 'CONNID'.
+    ls_conf-sift_const   = '123'.
+    ls_conf-field_only   = 'PRICE'.
+    ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
+      id_if_desc = ld_if
+      i_config   = ls_conf ).
+
+    ld_otype ?= ls_conf_act-output_type.
+    cl_abap_unit_assert=>assert_equals(
+      exp = 'STRING'
+      act = ld_otype->get_component_type( p_name = 'CONNID' )->get_relative_name( ) ).
+
+  endmethod.
+
+
+  method build_config_multi_filter_neg.
+
+    data ld_if       type ref to cl_abap_objectdescr.
+    data ls_conf     type zif_mockup_loader=>ty_mock_config.
     data lx type ref to zcx_mockup_loader_error.
     field-symbols <f> like line of ls_conf-filter.
 

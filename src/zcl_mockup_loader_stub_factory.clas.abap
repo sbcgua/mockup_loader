@@ -571,8 +571,8 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
         es_output_param = es_output_param ).
 
     et_sift_types = validate_filter_and_get_ftype(
-      id_if_desc = id_if_desc
-      i_config   = i_config ).
+      id_if_desc     = id_if_desc
+      i_config       = i_config ).
 
   endmethod.
 
