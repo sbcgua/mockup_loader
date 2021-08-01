@@ -9,6 +9,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         !i_interface_name type seoclsname
         !ii_ml_instance type ref to zif_mockup_loader
         !io_proxy_target type ref to object optional
+        !i_allow_overrides type abap_bool default abap_false
       raising
         zcx_mockup_loader_error .
     methods connect_method
@@ -53,6 +54,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
     data mi_ml type ref to zif_mockup_loader .
     data md_if_desc type ref to cl_abap_objectdescr .
     data mo_proxy_target type ref to object .
+    data mv_allow_overrides type abap_bool.
 
     class-methods build_config
       importing
@@ -248,10 +250,14 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     endloop.
 
     read table mt_config with key method_name = ls_config-method_name transporting no fields.
-    if sy-subrc is initial.
-      zcx_mockup_loader_error=>raise(
-        msg  = |Method { ls_config-method_name } is already connected|
-        code = 'MC' ). "#EC NOTEXT
+    if sy-subrc = 0. " already connected
+      if mv_allow_overrides = abap_true.
+        delete mt_config index sy-tabix.
+      else.
+        zcx_mockup_loader_error=>raise(
+          msg  = |Method { ls_config-method_name } is already connected|
+          code = 'MC' ). "#EC NOTEXT
+      endif.
     endif.
 
     " Validate and save config
@@ -277,6 +283,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     me->mi_ml             = ii_ml_instance.
     me->mv_interface_name = i_interface_name.
     me->mo_proxy_target   = io_proxy_target.
+    me->mv_allow_overrides = i_allow_overrides.
 
     if io_proxy_target is bound.
       data ld_obj type ref to cl_abap_objectdescr.

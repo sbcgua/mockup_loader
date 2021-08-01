@@ -235,6 +235,7 @@ class ltcl_mockup_stub_factory_test implementation.
     data lo_dc type ref to zcl_mockup_loader_stub_factory.
     data lo_ml type ref to zcl_mockup_loader.
     data lo_ex type ref to zcx_mockup_loader_error.
+    data ls_config like line of lo_dc->mt_config.
 
     lo_ml  = zcl_mockup_loader=>create(
       i_type = 'MIME'
@@ -257,6 +258,27 @@ class ltcl_mockup_stub_factory_test implementation.
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>assert_equals( exp = 'MC' act = lo_ex->code ).
     endtry.
+
+    " Override
+    create object lo_dc
+      exporting
+        ii_ml_instance    = lo_ml
+        i_allow_overrides = abap_true
+        i_interface_name  = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+
+    lo_dc->connect_method(
+      i_method_name     = 'TAB_RETURN'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+    lo_dc->connect_method(
+      i_method_name     = 'TAB_RETURN'
+      i_mock_name       = 'EXAMPLE/override' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( lo_dc->mt_config )
+      exp = 1 ).
+    read table lo_dc->mt_config index 1 into ls_config.
+    cl_abap_unit_assert=>assert_equals(
+      act = ls_config-mock_name
+      exp = 'EXAMPLE/override' ).
 
   endmethod.
 
