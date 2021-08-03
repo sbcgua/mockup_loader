@@ -80,6 +80,12 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       importing
         iv_src_line type string.
 
+    methods handle_duplicates
+      importing
+        is_config like line of mt_config
+      raising
+        zcx_mockup_loader_error .
+
     class-methods validate_sift_and_get_type
       importing
         id_if_desc type ref to cl_abap_objectdescr
@@ -249,16 +255,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       <f>-sift_param   = to_upper( <f>-sift_param ).
     endloop.
 
-    read table mt_config with key method_name = ls_config-method_name transporting no fields.
-    if sy-subrc = 0. " already connected
-      if mv_allow_overrides = abap_true.
-        delete mt_config index sy-tabix.
-      else.
-        zcx_mockup_loader_error=>raise(
-          msg  = |Method { ls_config-method_name } is already connected|
-          code = 'MC' ). "#EC NOTEXT
-      endif.
-    endif.
+    handle_duplicates( ls_config ).
 
     " Validate and save config
     ls_config = build_config(
@@ -317,12 +314,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
         code = 'MF' ). "#EC NOTEXT
     endif.
 
-    read table mt_config with key method_name = ls_config-method_name transporting no fields.
-    if sy-subrc is initial.
-      zcx_mockup_loader_error=>raise(
-        msg  = |Method { ls_config-method_name } is already connected|
-        code = 'MC' ). "#EC NOTEXT
-    endif.
+    handle_duplicates( ls_config ).
 
     append ls_config to mt_config.
 
@@ -428,6 +420,22 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
         it_config       = mt_config
         io_proxy_target = mo_proxy_target
         ii_ml           = mi_ml.
+
+  endmethod.
+
+
+  method handle_duplicates.
+
+    read table mt_config with key method_name = is_config-method_name transporting no fields.
+    if sy-subrc = 0. " already connected
+      if mv_allow_overrides = abap_true.
+        delete mt_config index sy-tabix.
+      else.
+        zcx_mockup_loader_error=>raise(
+          msg  = |Method { is_config-method_name } is already connected|
+          code = 'MC' ). "#EC NOTEXT
+      endif.
+    endif.
 
   endmethod.
 
@@ -583,6 +591,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
   endmethod.
 
+
   method validate_filter_and_get_ftype.
 
     " Normalize filters data
@@ -643,6 +652,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
   endmethod.
 
+
   method validate_method_and_get_otype.
 
     " Check output param
@@ -693,6 +703,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     endif.
 
   endmethod.
+
 
   method validate_sift_and_get_type.
 

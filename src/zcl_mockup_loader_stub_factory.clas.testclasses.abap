@@ -6,7 +6,7 @@ class ltcl_mockup_stub_factory_test definition final
   private section.
     methods main_test_stub for testing.
     methods connect_deep_corresponding for testing raising zcx_mockup_loader_error.
-    methods connect_method for testing raising zcx_mockup_loader_error.
+    methods connect_and_overrides for testing raising zcx_mockup_loader_error.
     methods build_config for testing raising zcx_mockup_loader_error.
     methods build_config_filter_type for testing raising zcx_mockup_loader_error.
     methods build_config_multi_filter_neg for testing raising zcx_mockup_loader_error.
@@ -230,7 +230,7 @@ class ltcl_mockup_stub_factory_test implementation.
 
   endmethod.
 
-  method connect_method.
+  method connect_and_overrides.
 
     data lo_dc type ref to zcl_mockup_loader_stub_factory.
     data lo_ml type ref to zcl_mockup_loader.
@@ -244,16 +244,26 @@ class ltcl_mockup_stub_factory_test implementation.
 
     create object lo_dc
       exporting
+        io_proxy_target = lcl_test_proxy_target=>create( )
         ii_ml_instance = lo_ml
         i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
 
-    try. " Multiple connect
+    lo_dc->connect_method(
+      i_method_name     = 'TAB_RETURN'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+
+    " Multiple connect
+    try.
       lo_dc->connect_method(
         i_method_name     = 'TAB_RETURN'
         i_mock_name       = 'EXAMPLE/sflight' ).
-      lo_dc->connect_method(
-        i_method_name     = 'TAB_RETURN'
-        i_mock_name       = 'EXAMPLE/sflight' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lo_ex.
+      cl_abap_unit_assert=>assert_equals( exp = 'MC' act = lo_ex->code ).
+    endtry.
+
+    try. " Multiple forward
+      lo_dc->forward_method( 'TAB_RETURN' ).
       cl_abap_unit_assert=>fail( ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>assert_equals( exp = 'MC' act = lo_ex->code ).
@@ -263,12 +273,14 @@ class ltcl_mockup_stub_factory_test implementation.
     create object lo_dc
       exporting
         ii_ml_instance    = lo_ml
+        io_proxy_target   = lcl_test_proxy_target=>create( )
         i_allow_overrides = abap_true
         i_interface_name  = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
 
     lo_dc->connect_method(
       i_method_name     = 'TAB_RETURN'
       i_mock_name       = 'EXAMPLE/sflight' ).
+
     lo_dc->connect_method(
       i_method_name     = 'TAB_RETURN'
       i_mock_name       = 'EXAMPLE/override' ).
@@ -279,6 +291,15 @@ class ltcl_mockup_stub_factory_test implementation.
     cl_abap_unit_assert=>assert_equals(
       act = ls_config-mock_name
       exp = 'EXAMPLE/override' ).
+
+    lo_dc->forward_method( 'TAB_RETURN' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( lo_dc->mt_config )
+      exp = 1 ).
+    read table lo_dc->mt_config index 1 into ls_config.
+    cl_abap_unit_assert=>assert_equals(
+      act = ls_config-as_proxy
+      exp = abap_true ).
 
   endmethod.
 
