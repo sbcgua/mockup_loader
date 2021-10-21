@@ -47,6 +47,9 @@ interface zif_mockup_loader
   types:
     tt_where type standard table of ty_where with key name .
 
+  types:
+    tty_conv_exits type standard table of abap_editmask with default key.
+
 **********************************************************************
 * STUB RELATED TYPES
 **********************************************************************
@@ -115,7 +118,8 @@ interface zif_mockup_loader
       !i_amt_format type ty_amt_format optional
       !i_encoding type abap_encoding optional
       !i_date_format type ty_date_format optional
-      !i_begin_comment type ty_comment_char optional .
+      !i_begin_comment type ty_comment_char optional
+      !it_ignore_conv_exits type tty_conv_exits optional .
 
   methods is_redirected
     returning

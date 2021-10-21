@@ -54,6 +54,7 @@ class ZCL_MOCKUP_LOADER definition
         !i_encoding type abap_encoding optional
         !i_date_format type zif_mockup_loader=>ty_date_format optional
         !i_begin_comment type zif_mockup_loader=>ty_comment_char optional
+        !it_ignore_conv_exits type zif_mockup_loader=>tty_conv_exits optional
       returning
         value(ro_instance) type ref to zcl_mockup_loader
       raising
@@ -89,6 +90,7 @@ class ZCL_MOCKUP_LOADER definition
     data mv_date_format type zif_mockup_loader=>ty_date_format .
     data mv_begin_comment type zif_mockup_loader=>ty_comment_char.
     data mv_is_redirected type abap_bool.
+    data mt_ignore_conv_exits type zif_mockup_loader=>tty_conv_exits.
 
     methods initialize
       importing
@@ -249,7 +251,8 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       i_amt_format  = i_amt_format
       i_encoding    = i_encoding
       i_date_format = i_date_format
-      i_begin_comment = i_begin_comment ).
+      i_begin_comment = i_begin_comment
+      it_ignore_conv_exits = it_ignore_conv_exits ).
 
     data l_src_type type zif_mockup_loader=>ty_src_type.
     data l_src_path type string.
@@ -391,6 +394,11 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         i_date_format   = mv_date_format
         i_deep_provider = lo_deep_provider
         i_begin_comment = mv_begin_comment ).
+
+      field-symbols <convexit> like line of mt_ignore_conv_exits.
+      loop at mt_ignore_conv_exits assigning <convexit>.
+        lo_parser->ignore_conv_exit( <convexit> ).
+      endloop.
 
       lo_parser->parse(
         exporting
@@ -643,6 +651,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     endif.
 
     me->mv_begin_comment = i_begin_comment.
+    me->mt_ignore_conv_exits = it_ignore_conv_exits.
 
   endmethod.
 ENDCLASS.
