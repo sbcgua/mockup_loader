@@ -80,6 +80,34 @@ define assert_excode.
 end-of-definition.
 
 **********************************************************************
+* DEPENDENCIES CHECK
+**********************************************************************
+
+class ltcl_dependencies_version definition final
+  for testing
+  duration short
+  risk level harmless.
+
+  private section.
+    methods check_text2tab_version for testing.
+endclass.
+
+class ltcl_dependencies_version implementation.
+  method check_text2tab_version.
+
+    constants cv_required_ver type string value zif_mockup_loader=>c_required_text2tab_ver.
+
+    if abap_false = zcl_text2tab_parser=>check_version_fits( cv_required_ver ).
+       cl_abap_unit_assert=>fail( |data parser version ({
+         zif_text2tab_constants=>version }) is lower than required ({
+         cv_required_ver })| ). "#EC NOTEXT
+    endif.
+
+  endmethod.
+endclass.
+
+
+**********************************************************************
 * Test Class definition
 **********************************************************************
 
