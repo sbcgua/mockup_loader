@@ -579,31 +579,31 @@ endclass.
 *&      Selection screen
 *&---------------------------------------------------------------------*
 selection-screen begin of block b1 with frame title txt_b1.
-selection-screen begin of line.
-parameters p_undef type char1 radiobutton group gr1 user-command gr1.
-selection-screen comment (12) txt_und  for field p_undef.
-selection-screen end of line.
+  selection-screen begin of line.
+  parameters p_undef type char1 radiobutton group gr1 user-command gr1.
+  selection-screen comment (12) txt_und  for field p_undef.
+  selection-screen end of line.
 
-selection-screen begin of line.
-parameters p_mime type char1 radiobutton group gr1.
-selection-screen comment (10) txt_mime for field p_mime.
-selection-screen end of line.
+  selection-screen begin of line.
+  parameters p_mime type char1 radiobutton group gr1.
+  selection-screen comment (10) txt_mime for field p_mime.
+  selection-screen end of line.
 
-selection-screen begin of line.
-parameters p_file type char1 radiobutton group gr1.
-selection-screen comment (10) txt_file for field p_file.
-selection-screen end of line.
+  selection-screen begin of line.
+  parameters p_file type char1 radiobutton group gr1.
+  selection-screen comment (10) txt_file for field p_file.
+  selection-screen end of line.
 
-selection-screen begin of line.
-selection-screen comment (15) txt_fp for field p_file.
-parameters p_fpath type char128.
-selection-screen end of line.
+  selection-screen begin of line.
+  selection-screen comment (15) txt_fp for field p_file.
+  parameters p_fpath type char128.
+  selection-screen end of line.
 
-selection-screen begin of line.
-selection-screen comment (15) txt_mp for field p_file .
-parameters: p_mpath type char40.
-selection-screen comment (17) txt_mp2 for field p_file .
-selection-screen end of line.
+  selection-screen begin of line.
+  selection-screen comment (15) txt_mp for field p_file .
+  parameters: p_mpath type char40.
+  selection-screen comment (17) txt_mp2 for field p_file .
+  selection-screen end of line.
 selection-screen end of block b1.
 
 selection-screen: function key 1.

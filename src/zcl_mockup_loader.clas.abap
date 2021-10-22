@@ -231,12 +231,12 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
   method constructor.
 
-    constants cv_required type string value zif_mockup_loader=>c_required_text2tab_ver.
+    constants lc_required_ver type string value zif_mockup_loader=>c_required_text2tab_ver.
 
-    if zcl_text2tab_parser=>check_version_fits( cv_required ) = abap_false.
+    if zcl_text2tab_parser=>check_version_fits( lc_required_ver ) = abap_false.
       zcx_mockup_loader_error=>raise(
         msg  = |text2tab version ({ zif_text2tab_constants=>version
-          }) is lower than required ({ cv_required })|
+          }) is lower than required ({ lc_required_ver })|
         code = 'VL' ). "#EC NOTEXT
     endif.
 
