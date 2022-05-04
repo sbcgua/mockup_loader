@@ -180,6 +180,7 @@ class ltcl_test_mockup_loader definition for testing
     methods load_w_renames           for testing raising zcx_mockup_loader_error.
 
     methods assert_version           for testing.
+    methods zip_cache                for testing raising zcx_mockup_loader_error.
 
     methods get_dummy_data
       importing
@@ -998,6 +999,49 @@ class ltcl_test_mockup_loader implementation.
     cl_abap_unit_assert=>assert_equals(
       act = dummy_act
       exp = dummy_exp ).
+
+  endmethod.
+
+  method zip_cache.
+
+    data ls_cache like line of zcl_mockup_loader=>gt_zip_cache.
+    data lv_reuse_count_at_step1 type i.
+
+    cl_abap_unit_assert=>assert_initial( zcl_mockup_loader=>gt_zip_cache ).
+
+    zcl_mockup_loader=>create(
+      i_type       = 'MIME'
+      i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
+      i_cache_timeout = 5
+      i_amt_format = ''     " default
+      i_encoding   = zif_mockup_loader_constants=>encoding_utf8 ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( zcl_mockup_loader=>gt_zip_cache )
+      exp = 1 ).
+    read table zcl_mockup_loader=>gt_zip_cache
+      with key key = 'MIME:ZMOCKUP_LOADER_UNIT_TEST'
+      into ls_cache.
+    cl_abap_unit_assert=>assert_subrc( ).
+    lv_reuse_count_at_step1 = zcl_mockup_loader=>gv_cache_reuse_count.
+
+    zcl_mockup_loader=>create(
+      i_type       = 'MIME'
+      i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
+      i_cache_timeout = 5
+      i_amt_format = ''     " default
+      i_encoding   = zif_mockup_loader_constants=>encoding_utf8 ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( zcl_mockup_loader=>gt_zip_cache )
+      exp = 1 ).
+    read table zcl_mockup_loader=>gt_zip_cache
+      with key key = 'MIME:ZMOCKUP_LOADER_UNIT_TEST'
+      into ls_cache.
+    cl_abap_unit_assert=>assert_subrc( ).
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader=>gv_cache_reuse_count - lv_reuse_count_at_step1
+      exp = 1 ).
 
   endmethod.
 

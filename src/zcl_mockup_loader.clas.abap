@@ -55,6 +55,7 @@ class ZCL_MOCKUP_LOADER definition
         !i_date_format type zif_mockup_loader=>ty_date_format optional
         !i_begin_comment type zif_mockup_loader=>ty_comment_char optional
         !it_ignore_conv_exits type zif_mockup_loader=>tty_conv_exits optional
+        !i_cache_timeout type i optional " Experimental feature, do not use yet
       returning
         value(ro_instance) type ref to zcl_mockup_loader
       raising
@@ -81,8 +82,18 @@ class ZCL_MOCKUP_LOADER definition
       raising
         zcx_mockup_loader_error .
 
+    class-data gv_cache_reuse_count type i read-only.
+
   protected section.
   private section.
+
+    types:
+      begin of ty_zip_cache,
+        key type string,
+        zip_blob type xstring,
+      end of ty_zip_cache.
+
+    class-data gt_zip_cache type standard table of ty_zip_cache.
 
     data mo_zip type ref to cl_abap_zip .
     data mv_amt_format type zif_mockup_loader=>ty_amt_format .
@@ -92,9 +103,11 @@ class ZCL_MOCKUP_LOADER definition
     data mv_is_redirected type abap_bool.
     data mt_ignore_conv_exits type zif_mockup_loader=>tty_conv_exits.
 
-    methods initialize
+    class-methods create_zip_instance
       importing
         !i_zip_blob type xstring
+      returning
+        value(ro_zip) type ref to cl_abap_zip
       raising
         zcx_mockup_loader_error .
     class-methods read_zip_blob
@@ -267,11 +280,71 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         c_src_path = l_src_path ).
 
     data lv_xdata type xstring.
-    lv_xdata = read_zip_blob(
-      i_type = l_src_type
-      i_path = l_src_path ).
+    data lv_zip_cache_key type string.
+    data lv_cache_timestamp type timestamp.
+    data lv_now_timestamp type timestamp.
+    constants c_zip_cache_ts_mem_id type c length 40 value 'zcl_mockup_loader:zip_cache:ts'.
+    constants c_zip_cache_mem_id type c length 40 value 'zcl_mockup_loader:zip_cache'.
+    field-symbols <zip_cache> like line of gt_zip_cache.
 
-    ro_instance->initialize( lv_xdata ).
+    if i_cache_timeout > 0.
+      lv_zip_cache_key = l_src_type && ':' && l_src_path.
+      get time stamp field lv_now_timestamp.
+
+      if lines( gt_zip_cache ) = 0.
+        import
+          ts = lv_cache_timestamp
+          rc = gv_cache_reuse_count
+          from memory id c_zip_cache_ts_mem_id.
+        if sy-subrc = 0.
+          data lv_diff type i.
+          lv_diff = cl_abap_tstmp=>subtract(
+            tstmp1 = lv_now_timestamp
+            tstmp2 = lv_cache_timestamp ).
+          if lv_diff < i_cache_timeout.
+            import cache = gt_zip_cache from memory id c_zip_cache_mem_id.
+            if sy-subrc = 0.
+              " confirm actuality
+              export
+                ts = lv_now_timestamp
+                rc = gv_cache_reuse_count
+                to memory id c_zip_cache_ts_mem_id.
+            endif.
+          else.
+            clear gv_cache_reuse_count.
+          endif.
+        endif.
+      endif.
+
+      read table gt_zip_cache assigning <zip_cache> with key key = lv_zip_cache_key.
+      if sy-subrc = 0.
+        lv_xdata = <zip_cache>-zip_blob.
+        gv_cache_reuse_count = gv_cache_reuse_count + 1.
+        export
+          ts = lv_now_timestamp
+          rc = gv_cache_reuse_count
+          to memory id c_zip_cache_ts_mem_id.
+      endif.
+    endif.
+
+    if <zip_cache> is not assigned. " Cache not found
+      lv_xdata = read_zip_blob(
+        i_type = l_src_type
+        i_path = l_src_path ).
+      if i_cache_timeout > 0.
+        append initial line to gt_zip_cache assigning <zip_cache>.
+        <zip_cache>-key = lv_zip_cache_key.
+        <zip_cache>-zip_blob = lv_xdata.
+        get time stamp field lv_now_timestamp.
+        export
+          ts = lv_now_timestamp
+          rc = gv_cache_reuse_count
+          to memory id c_zip_cache_ts_mem_id.
+        export cache = gt_zip_cache to memory id c_zip_cache_mem_id.
+      endif.
+    endif.
+
+    ro_instance->mo_zip = create_zip_instance( lv_xdata ).
 
   endmethod.
 
@@ -327,19 +400,17 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   endmethod.
 
 
-  method initialize.
+  method create_zip_instance.
 
-    if mo_zip is not bound.
-      create object mo_zip.
-    endif.
+    create object ro_zip.
 
-    mo_zip->load(
+    ro_zip->load(
       exporting
         zip    = i_zip_blob
       exceptions
         others = 4 ).
 
-    if sy-subrc is not initial or lines( mo_zip->files ) = 0.
+    if sy-subrc <> 0 or lines( ro_zip->files ) = 0.
       zcx_mockup_loader_error=>raise( msg = 'ZIP load failed' code = 'ZE' ).  "#EC NOTEXT
     endif.
 
