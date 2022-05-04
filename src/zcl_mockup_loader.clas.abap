@@ -283,8 +283,8 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     data lv_zip_cache_key type string.
     data lv_cache_timestamp type timestamp.
     data lv_now_timestamp type timestamp.
-    constants c_zip_cache_ts_mem_id type c length 40 value 'zcl_mockup_loader:zip_cache:ts'.
-    constants c_zip_cache_mem_id type c length 40 value 'zcl_mockup_loader:zip_cache'.
+    constants lc_zip_cache_ts_mem_id type c length 40 value 'zcl_mockup_loader:zip_cache:ts'.
+    constants lc_zip_cache_mem_id type c length 40 value 'zcl_mockup_loader:zip_cache'.
     field-symbols <zip_cache> like line of gt_zip_cache.
 
     if i_cache_timeout > 0.
@@ -295,20 +295,20 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         import
           ts = lv_cache_timestamp
           rc = gv_cache_reuse_count
-          from memory id c_zip_cache_ts_mem_id.
+          from memory id lc_zip_cache_ts_mem_id.
         if sy-subrc = 0.
           data lv_diff type i.
           lv_diff = cl_abap_tstmp=>subtract(
             tstmp1 = lv_now_timestamp
             tstmp2 = lv_cache_timestamp ).
           if lv_diff < i_cache_timeout.
-            import cache = gt_zip_cache from memory id c_zip_cache_mem_id.
+            import cache = gt_zip_cache from memory id lc_zip_cache_mem_id.
             if sy-subrc = 0.
               " confirm actuality
               export
                 ts = lv_now_timestamp
                 rc = gv_cache_reuse_count
-                to memory id c_zip_cache_ts_mem_id.
+                to memory id lc_zip_cache_ts_mem_id.
             endif.
           else.
             clear gv_cache_reuse_count.
@@ -323,7 +323,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         export
           ts = lv_now_timestamp
           rc = gv_cache_reuse_count
-          to memory id c_zip_cache_ts_mem_id.
+          to memory id lc_zip_cache_ts_mem_id.
       endif.
     endif.
 
@@ -339,8 +339,8 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         export
           ts = lv_now_timestamp
           rc = gv_cache_reuse_count
-          to memory id c_zip_cache_ts_mem_id.
-        export cache = gt_zip_cache to memory id c_zip_cache_mem_id.
+          to memory id lc_zip_cache_ts_mem_id.
+        export cache = gt_zip_cache to memory id lc_zip_cache_mem_id.
       endif.
     endif.
 
