@@ -6,20 +6,14 @@
    <TEXT>Test data for mockup loader unit test</TEXT>
    <PARAMS>
     <WWWPARAMS>
-     <RELID>MI</RELID>
-     <OBJID>ZMOCKUP_LOADER_UNIT_TEST</OBJID>
      <NAME>fileextension</NAME>
      <VALUE>.zip</VALUE>
     </WWWPARAMS>
     <WWWPARAMS>
-     <RELID>MI</RELID>
-     <OBJID>ZMOCKUP_LOADER_UNIT_TEST</OBJID>
      <NAME>filename</NAME>
      <VALUE>ZMOCKUP_LOADER_UNIT_TEST.zip</VALUE>
     </WWWPARAMS>
     <WWWPARAMS>
-     <RELID>MI</RELID>
-     <OBJID>ZMOCKUP_LOADER_UNIT_TEST</OBJID>
      <NAME>mimetype</NAME>
      <VALUE>ZIP</VALUE>
     </WWWPARAMS>

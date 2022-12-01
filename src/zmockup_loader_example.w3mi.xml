@@ -6,20 +6,14 @@
    <TEXT>Mockup slug for ZMOCKUP_LOADER_EXAMPLE prog</TEXT>
    <PARAMS>
     <WWWPARAMS>
-     <RELID>MI</RELID>
-     <OBJID>ZMOCKUP_LOADER_EXAMPLE</OBJID>
      <NAME>fileextension</NAME>
      <VALUE>.zip</VALUE>
     </WWWPARAMS>
     <WWWPARAMS>
-     <RELID>MI</RELID>
-     <OBJID>ZMOCKUP_LOADER_EXAMPLE</OBJID>
      <NAME>filename</NAME>
      <VALUE>example.zip</VALUE>
     </WWWPARAMS>
     <WWWPARAMS>
-     <RELID>MI</RELID>
-     <OBJID>ZMOCKUP_LOADER_EXAMPLE</OBJID>
      <NAME>mimetype</NAME>
      <VALUE>application/zip</VALUE>
     </WWWPARAMS>
