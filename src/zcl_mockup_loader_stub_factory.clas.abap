@@ -421,6 +421,8 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
         io_proxy_target = mo_proxy_target
         ii_ml           = mi_ml.
 
+    clear mt_src. " for memory
+
   endmethod.
 
 
