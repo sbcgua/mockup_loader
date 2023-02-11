@@ -48,8 +48,18 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
     methods generate_stub
       returning
         value(r_stub) type ref to object .
-  protected section.
 
+  protected section.
+  private section.
+
+    types:
+      begin of ty_filter_type,
+        mock_tab_key type abap_compname,
+        type type ref to cl_abap_typedescr,
+      end of ty_filter_type,
+      tty_filter_types type standard table of ty_filter_type with key mock_tab_key.
+
+    data mt_src type string_table.
     data mv_interface_name type seoclsname .
     data mt_config type zif_mockup_loader=>tt_mock_config .
     data mi_ml type ref to zif_mockup_loader .
@@ -65,17 +75,6 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         value(r_config) type zif_mockup_loader=>ty_mock_config
       raising
         zcx_mockup_loader_error .
-
-  private section.
-
-    types:
-      begin of ty_filter_type,
-        mock_tab_key type abap_compname,
-        type type ref to cl_abap_typedescr,
-      end of ty_filter_type,
-      tty_filter_types type standard table of ty_filter_type with key mock_tab_key.
-
-    data mt_src type string_table.
 
     methods _src
       importing
