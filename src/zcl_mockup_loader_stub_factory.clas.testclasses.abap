@@ -26,6 +26,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods connect_string_positive for testing raising zcx_mockup_loader_error.
     methods parse_string_negative for testing.
     methods parse_string_positive for testing raising zcx_mockup_loader_error.
+    methods parse_string_multi for testing raising zcx_mockup_loader_error.
     methods connect_w_default_mock for testing raising zcx_mockup_loader_error.
     methods connect_string_multi for testing raising zcx_mockup_loader_error.
     methods connect_string_multi_const for testing raising zcx_mockup_loader_error.
@@ -1337,6 +1338,39 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-deep          = abap_false.
     cl_abap_unit_assert=>assert_equals(
       act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> xxx:deep:mock_path' )
+      exp = ls_exp ).
+
+  endmethod.
+
+  method parse_string_multi.
+
+    data ls_exp type zif_mockup_loader=>ty_mock_config.
+    field-symbols <f> like line of ls_exp-filter.
+
+    clear ls_exp.
+    ls_exp-method_name   = 'method'.
+    ls_exp-mock_name     = 'path'.
+    append initial line to ls_exp-filter assigning <f>.
+    <f>-mock_tab_key = 'f1'.
+    <f>-sift_param   = 'p1'.
+    append initial line to ls_exp-filter assigning <f>.
+    <f>-mock_tab_key = 'f2'.
+    <f>-sift_param   = 'p2'.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'method->path [ f1 = p1, f2 = p2 ]' )
+      exp = ls_exp ).
+
+    clear ls_exp.
+    ls_exp-method_name   = 'method'.
+    ls_exp-mock_name     = 'path'.
+    append initial line to ls_exp-filter assigning <f>.
+    <f>-mock_tab_key = 'f1'.
+    <f>-sift_param   = 'p1'.
+    append initial line to ls_exp-filter assigning <f>.
+    <f>-mock_tab_key = 'f2'.
+    <f>-sift_param   = 'p2'.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'method->path [ f1 = p1 & f2 = p2 ]' )
       exp = ls_exp ).
 
   endmethod.

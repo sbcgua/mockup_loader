@@ -519,13 +519,16 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
     " Filter ========================================
     data ls_filter_param type zif_mockup_loader=>ty_stub_filter_param.
+    data lv_offs type i.
 
     " detect multi filter
-    find first occurrence of ',' in l_filter.
+    find first occurrence of regex '[,&]' in l_filter match offset lv_offs.
 
     if sy-subrc = 0.
       data lt_filter_items type string_table.
-      split l_filter at ',' into table lt_filter_items.
+      data lv_sep type c.
+      lv_sep = l_filter+lv_offs(1).
+      split l_filter at lv_sep into table lt_filter_items.
       loop at lt_filter_items into l_filter.
         ls_filter_param = parse_filter_item( l_filter ).
         append ls_filter_param to rs_parsed-filter.
