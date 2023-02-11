@@ -16,6 +16,10 @@ v2.2.0, 2021-08-??, maybe 3.0 as a lot of breaking ?
 ! [BREAKING] switch default file encoding to UTF8 (from UTF16) #31
 + allow flat key-value structures in "where" #28
 + [MAJOR] multi filtering in stub, allows specifying multiple filter params in connect e.g. 'my_method->example/sflight [connid=i_connid, fldate=i_fldate]' #27
++ param to ignore conv exits
+* method override fix
+* better version check
+
 
 v2.1.10, 2021-04-22
 -------------------
