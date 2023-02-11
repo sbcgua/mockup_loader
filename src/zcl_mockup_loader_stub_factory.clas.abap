@@ -1,5 +1,6 @@
 class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
   public
+  final
   create public .
 
   public section.
