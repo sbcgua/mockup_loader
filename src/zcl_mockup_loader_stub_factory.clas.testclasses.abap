@@ -1154,21 +1154,21 @@ class ltcl_mockup_stub_factory_test implementation.
     data lx type ref to zcx_mockup_loader_error.
 
     try .
-      zcl_mockup_loader_stub_factory=>parse_connect_string( 'tab_return -> mock_dummy (field' ).
+      lcl_connect_string_parser=>parse( 'tab_return -> mock_dummy (field' ).
       cl_abap_unit_assert=>fail( ).
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'SF' ).
     endtry.
 
     try .
-      zcl_mockup_loader_stub_factory=>parse_connect_string( 'tab_return -> mock_dummy [filter' ).
+      lcl_connect_string_parser=>parse( 'tab_return -> mock_dummy [filter' ).
       cl_abap_unit_assert=>fail( ).
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'SF' ).
     endtry.
 
     try .
-      zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> mock_path [ field = "const ]' ).
+      lcl_connect_string_parser=>parse( 'methodX -> mock_path [ field = "const ]' ).
       cl_abap_unit_assert=>fail( ).
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'SF' ).
@@ -1189,7 +1189,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-field_only    = ''.
     ls_exp-const_value   = ''.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> mock_path' )
+      act = lcl_connect_string_parser=>parse( 'methodX -> mock_path' )
       exp = ls_exp ).
 
     clear ls_exp.
@@ -1201,7 +1201,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-field_only    = ''.
     ls_exp-const_value   = ''.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> ~mock_path~txt' )
+      act = lcl_connect_string_parser=>parse( 'methodX -> ~mock_path~txt' )
       exp = ls_exp ).
 
     clear ls_exp.
@@ -1213,7 +1213,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-field_only    = ''.
     ls_exp-const_value   = ''.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> dir/~mock_path' )
+      act = lcl_connect_string_parser=>parse( 'methodX -> dir/~mock_path' )
       exp = ls_exp ).
 
     clear ls_exp.
@@ -1225,7 +1225,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-field_only    = ''.
     ls_exp-const_value   = ''.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> ~./mock_path' )
+      act = lcl_connect_string_parser=>parse( 'methodX -> ~./mock_path' )
       exp = ls_exp ).
 
     clear ls_exp.
@@ -1237,7 +1237,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-field_only    = 'result'.
     ls_exp-const_value   = ''.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> mock_path (result)' )
+      act = lcl_connect_string_parser=>parse( 'methodX -> mock_path (result)' )
       exp = ls_exp ).
 
     clear ls_exp.
@@ -1249,7 +1249,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-field_only    = ''.
     ls_exp-const_value   = ''.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> mock_path [ field = param ]' )
+      act = lcl_connect_string_parser=>parse( 'methodX -> mock_path [ field = param ]' )
       exp = ls_exp ).
 
     clear ls_exp.
@@ -1261,7 +1261,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-field_only    = ''.
     ls_exp-const_value   = ''.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> mock_path [ field = "const" ]' )
+      act = lcl_connect_string_parser=>parse( 'methodX -> mock_path [ field = "const" ]' )
       exp = ls_exp ).
 
     clear ls_exp.
@@ -1273,7 +1273,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-field_only    = ''.
     ls_exp-const_value   = 'value'.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> =value' )
+      act = lcl_connect_string_parser=>parse( 'methodX -> =value' )
       exp = ls_exp ).
 
     clear ls_exp.
@@ -1285,7 +1285,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-field_only    = ''.
     ls_exp-const_value   = ''.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> *' )
+      act = lcl_connect_string_parser=>parse( 'methodX -> *' )
       exp = ls_exp ).
 
     clear ls_exp.
@@ -1298,7 +1298,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-const_value   = ''.
     ls_exp-deep          = abap_true.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> :deep:mock_path' )
+      act = lcl_connect_string_parser=>parse( 'methodX -> :deep:mock_path' )
       exp = ls_exp ).
 
     clear ls_exp.
@@ -1311,7 +1311,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-const_value   = ''.
     ls_exp-deep          = abap_true.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> :deep: mock_path' )
+      act = lcl_connect_string_parser=>parse( 'methodX -> :deep: mock_path' )
       exp = ls_exp ).
 
     clear ls_exp.
@@ -1324,7 +1324,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-const_value   = ''.
     ls_exp-deep          = abap_true.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> ~:deep:mock_path' )
+      act = lcl_connect_string_parser=>parse( 'methodX -> ~:deep:mock_path' )
       exp = ls_exp ).
 
     clear ls_exp.
@@ -1337,7 +1337,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-const_value   = ''.
     ls_exp-deep          = abap_false.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> xxx:deep:mock_path' )
+      act = lcl_connect_string_parser=>parse( 'methodX -> xxx:deep:mock_path' )
       exp = ls_exp ).
 
   endmethod.
@@ -1357,7 +1357,7 @@ class ltcl_mockup_stub_factory_test implementation.
     <f>-mock_tab_key = 'f2'.
     <f>-sift_param   = 'p2'.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'method->path [ f1 = p1, f2 = p2 ]' )
+      act = lcl_connect_string_parser=>parse( 'method->path [ f1 = p1, f2 = p2 ]' )
       exp = ls_exp ).
 
     clear ls_exp.
@@ -1370,7 +1370,7 @@ class ltcl_mockup_stub_factory_test implementation.
     <f>-mock_tab_key = 'f2'.
     <f>-sift_param   = 'p2'.
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'method->path [ f1 = p1 & f2 = p2 ]' )
+      act = lcl_connect_string_parser=>parse( 'method->path [ f1 = p1 & f2 = p2 ]' )
       exp = ls_exp ).
 
   endmethod.
