@@ -693,7 +693,7 @@ lo_factory->forward_method( " Pass through, call lcl_custom_accessor->get_x
 A more readable alternative of `connect_method` and `connect_proxy`. Allows to connect replace them with a single properly formatted string that defines connections. For example, connect `get_my_data` method to `mock_path` mock file:
 
 ```abap
-lo_factory->connect( 'get_my_data -> mock_path' ).
+lo_factory->connect( 'get_my_data -> mock_path/sheet' ).
 ```
 
 Supports:
@@ -737,12 +737,37 @@ Supports:
 'get_my_data -> :deep: value'
 ```
 
-
 The string is case **in**sensitive so you can specify most of parameters using the case you prefer. Also spaces are trimmed. The following strings would give the same result:
 - `'get_my_data -> mock_path [a = i_a]'`
 - `'GET_MY_DATA -> mock_path [A = I_A]'`
 - `'get_my_data->mock_path[a=i_a]'`
 
+Check also `set_default_mock` method to shorten the connection strings.
+```abap
+lo_factory->( 'set_default_mock' ).
+lo_factory->connect( 'get_my_data -> ./sheet' ).
+```
+
+### SET_DEFAULT_MOCK
+
+```abap
+  importing
+    iv_path type csequence
+```
+
+Sets the default mock path to a replacement for `'./'` placeholder. E.g. 
+
+```abap
+lo_factory->( 'set_default_mock' ).
+lo_factory->connect( 'get_my_data -> ./sheet' ).
+```
+
+This can be useful if you have  
+  a) many and/or  
+  b) long connections and/or  
+  b) repeated in several classes
+
+Just a syntaxic sugar.
 
 ### GENERATE_STUB
 

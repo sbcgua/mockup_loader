@@ -160,7 +160,7 @@ And finally a feature that is not related to mocks - passing `I_CONST_VALUE` wou
 
 Available since v2.1.6.
 
-The above `connect_method/proxy` configuration can be also done with a single string. See [REFERENCE.md](docs/REFERENCE.md) for details.
+The above `connect_method/proxy` configuration can be also done with a single string. See [REFERENCE.md](docs/REFERENCE.md#connect) for details.
 
 ```abap
   ...
@@ -172,6 +172,10 @@ The above `connect_method/proxy` configuration can be also done with a single st
   lo_factory->connect( 'tab_return -> ~EXAMPLE/sflight [connid = i_connid]' ). " corresponding only
   lo_factory->connect( 'tab_return -> =exact_value' ).
   lo_factory->connect( 'tab_return -> *' ). " proxy
+
+  " and also a shorter version, using the set_default_mock()
+  lo_factory->set_default_mock( 'EXAMPLE' ).
+  lo_factory->connect( 'tab_return -> ./sflight [connid = i_connid]' ).
 ```
 
 #### Stub control
