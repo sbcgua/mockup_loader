@@ -50,7 +50,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         value(r_stub) type ref to object .
     methods set_default_mock
       importing
-        iv_path type string.
+        iv_path type csequence.
 
   protected section.
   private section.
