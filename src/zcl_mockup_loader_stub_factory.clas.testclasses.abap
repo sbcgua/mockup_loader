@@ -26,6 +26,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods connect_string_positive for testing raising zcx_mockup_loader_error.
     methods parse_string_negative for testing.
     methods parse_string_positive for testing raising zcx_mockup_loader_error.
+    methods connect_w_default_mock for testing raising zcx_mockup_loader_error.
     methods connect_string_multi for testing raising zcx_mockup_loader_error.
     methods connect_string_multi_const for testing raising zcx_mockup_loader_error.
     methods connect_string_multi_1value for testing raising zcx_mockup_loader_error.
@@ -1216,6 +1217,18 @@ class ltcl_mockup_stub_factory_test implementation.
 
     clear ls_exp.
     ls_exp-method_name   = 'methodX'.
+    ls_exp-mock_name     = './mock_path'.
+    ls_exp-corresponding = 'X'.
+    ls_exp-sift_param    = ''.
+    ls_exp-mock_tab_key  = ''.
+    ls_exp-field_only    = ''.
+    ls_exp-const_value   = ''.
+    cl_abap_unit_assert=>assert_equals(
+      act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> ~./mock_path' )
+      exp = ls_exp ).
+
+    clear ls_exp.
+    ls_exp-method_name   = 'methodX'.
     ls_exp-mock_name     = 'mock_path'.
     ls_exp-corresponding = ''.
     ls_exp-sift_param    = ''.
@@ -1325,6 +1338,35 @@ class ltcl_mockup_stub_factory_test implementation.
     cl_abap_unit_assert=>assert_equals(
       act = zcl_mockup_loader_stub_factory=>parse_connect_string( 'methodX -> xxx:deep:mock_path' )
       exp = ls_exp ).
+
+  endmethod.
+
+  method connect_w_default_mock.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data lt_exp type flighttab.
+    data lt_act type flighttab.
+    data lr_dummy_range type zif_mockup_loader_stub_dummy=>ty_connid_range.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    lt_exp  = get_sflights( ml ).
+
+    factory->set_default_mock( 'example' ).
+    factory->connect( 'tab_return->./sflight' ).
+    factory->connect( 'tab_return_by_range->example/sflight' ). " But full path should also work
+
+    stub ?= factory->generate_stub( ).
+    lt_act = stub->tab_return( i_connid = '0' ). " whatever, we are testing the mock path
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
+      exp = lt_exp ).
+    lt_act = stub->tab_return_by_range( ir_connid = lr_dummy_range ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
+      exp = lt_exp ).
 
   endmethod.
 

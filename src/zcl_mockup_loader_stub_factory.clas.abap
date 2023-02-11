@@ -48,6 +48,9 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
     methods generate_stub
       returning
         value(r_stub) type ref to object .
+    methods set_default_mock
+      importing
+        iv_path type string.
 
   protected section.
   private section.
@@ -59,6 +62,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       end of ty_filter_type,
       tty_filter_types type standard table of ty_filter_type with key mock_tab_key.
 
+    data mv_default_mock_root type string.
     data mt_src type string_table.
     data mv_interface_name type seoclsname .
     data mt_config type zif_mockup_loader=>tt_mock_config .
@@ -248,6 +252,14 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     ls_config-const_value   = i_const_value.
     ls_config-deep          = i_deep.
     ls_config-filter        = i_filter.
+
+    if mv_default_mock_root is not initial and strlen( ls_config-mock_name ) >= 2 and ls_config-mock_name+0(2) = './'.
+      ls_config-mock_name = replace(
+        val  = ls_config-mock_name
+        sub  = `.`
+        with = mv_default_mock_root
+        occ  = 1 ).
+    endif.
 
     field-symbols <f> like line of ls_config-filter.
     loop at ls_config-filter assigning <f>.
@@ -545,6 +557,11 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     condense rs_filter_param-sift_const.
     condense rs_filter_param-mock_tab_key.
 
+  endmethod.
+
+
+  method set_default_mock.
+    mv_default_mock_root = iv_path.
   endmethod.
 
 
