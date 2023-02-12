@@ -68,8 +68,7 @@ interface zif_mockup_loader
       mock_tab_key    type abap_compname,
       sift_param      type string,
       sift_const      type string,
-*      op              type ty_stub_filter_operation, " Internal usage for the moment
-*      args            type ref to data,              " Internal usage for the moment
+      operation       type ty_stub_filter_operation, " Internal usage for the moment
     end of ty_stub_filter_param.
   types:
     tty_stub_filter_params type standard table of ty_stub_filter_param with key mock_tab_key.

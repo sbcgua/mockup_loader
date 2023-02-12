@@ -84,12 +84,12 @@ class lcl_connect_string_parser implementation.
       lv_filter = substring(
         val = lv_filter
         len = lv_len - 1 ).
+      parse_filter( lv_filter ).
     endif.
 
     parse_method_and_mock( lv_pair ).
     detect_corresp_and_const( ).
     detect_deep( ).
-    parse_filter( lv_filter ).
 
   endmethod.
 
@@ -154,11 +154,10 @@ class lcl_connect_string_parser implementation.
 
   method parse_filter.
 
-    data lv_offs type i.
-    data lv_cur type i.
+    data lv_pre type i.
+    data lv_break type i.
     data lv_len type i.
     data lt_filter_items type string_table.
-*    data lv_sep type c.
     data lv_op type zif_mockup_loader=>ty_stub_filter_operation.
     data lv_op_next type zif_mockup_loader=>ty_stub_filter_operation.
     field-symbols <str> like line of lt_filter_items.
@@ -167,20 +166,20 @@ class lcl_connect_string_parser implementation.
     " detect multi filter
     lv_len = strlen( i_filter ).
     do.
-      lv_offs = find(
+      lv_break = find(
         val   = i_filter
         regex = `[,&|]`
-        off   = lv_cur ).
-      if lv_offs < 0.
+        off   = lv_pre ).
+      if lv_break < 0.
         append initial line to lt_filter_items assigning <str>.
         <str> = substring(
           val = i_filter
-          off = lv_cur
-          len = lv_offs - lv_cur - 1 ).
+          off = lv_pre
+          len = lv_len - lv_pre ).
         exit.
       endif.
 
-      lv_op_next = i_filter+lv_offs(1).
+      lv_op_next = i_filter+lv_break(1).
       if lv_op_next = ','.
         lv_op_next = '&'.
       endif.
@@ -193,9 +192,9 @@ class lcl_connect_string_parser implementation.
       append initial line to lt_filter_items assigning <str>.
       <str> = substring(
         val = i_filter
-        off = lv_cur
-        len = lv_len - lv_offs ).
-      lv_cur = lv_offs + 1.
+        off = lv_pre
+        len = lv_break - lv_pre ).
+      lv_pre = lv_break + 1.
     enddo.
 
     if lv_op is initial.
@@ -204,20 +203,9 @@ class lcl_connect_string_parser implementation.
       loop at lt_filter_items assigning <str>.
         append initial line to ms_parsed-filter assigning <f>.
         <f> = parse_filter_item( <str> ).
+        <f>-operation = lv_op.
       endloop.
     endif.
-
-*    if sy-subrc = 0.
-*      lv_sep = i_filter+lv_offs(1).
-*      split i_filter at lv_sep into table lt_filter_items.
-*
-*      loop at lt_filter_items assigning <str>.
-*        append initial line to ms_parsed-filter assigning <f>.
-*        <f> = parse_filter_item( <str> ).
-*      endloop.
-*    else.
-*      move-corresponding parse_filter_item( i_filter ) to ms_parsed.
-*    endif.
 
   endmethod.
 
@@ -226,22 +214,25 @@ class lcl_connect_string_parser implementation.
     data lv_len type i.
 
     split i_filter at '=' into rs_filter_param-mock_tab_key rs_filter_param-sift_param.
+    condense rs_filter_param-mock_tab_key.
     condense rs_filter_param-sift_param.
 
-    if rs_filter_param-sift_param is not initial and rs_filter_param-sift_param+0(1) = '"'.
+    if rs_filter_param-mock_tab_key is initial or rs_filter_param-sift_param is initial.
+      zcx_mockup_loader_error=>raise( msg = 'incorrect connect string format' code = 'SF' ).
+    endif.
+
+    if rs_filter_param-sift_param+0(1) = '"'.
       lv_len = strlen( rs_filter_param-sift_param ).
-      if substring( val = rs_filter_param-sift_param off = lv_len - 1 ) <> '"'.
+      if lv_len < 2 or substring( val = rs_filter_param-sift_param off = lv_len - 1 ) <> '"'.
         zcx_mockup_loader_error=>raise( msg = 'incorrect connect string format' code = 'SF' ).
       endif.
       rs_filter_param-sift_const = substring(
         val = rs_filter_param-sift_param
         len = lv_len - 2
         off = 1 ).
+      condense rs_filter_param-sift_const.
       clear rs_filter_param-sift_param.
     endif.
-
-    condense rs_filter_param-sift_const.
-    condense rs_filter_param-mock_tab_key.
 
   endmethod.
 
