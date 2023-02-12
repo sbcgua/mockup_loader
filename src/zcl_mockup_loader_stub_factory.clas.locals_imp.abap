@@ -21,7 +21,7 @@ class lcl_connect_string_parser definition final.
       importing
         i_connect_string type string
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 
     methods parse_filter_item
       importing
@@ -29,7 +29,7 @@ class lcl_connect_string_parser definition final.
       returning
         value(rs_filter_param) type zif_mockup_loader=>ty_stub_filter_param
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 
     methods parse_method_and_mock
       importing
@@ -155,25 +155,69 @@ class lcl_connect_string_parser implementation.
   method parse_filter.
 
     data lv_offs type i.
+    data lv_cur type i.
+    data lv_len type i.
     data lt_filter_items type string_table.
-    data lv_sep type c.
+*    data lv_sep type c.
+    data lv_op type zif_mockup_loader=>ty_stub_filter_operation.
+    data lv_op_next type zif_mockup_loader=>ty_stub_filter_operation.
     field-symbols <str> like line of lt_filter_items.
     field-symbols <f> like line of ms_parsed-filter.
 
     " detect multi filter
-    find first occurrence of regex '[,&]' in i_filter match offset lv_offs.
+    lv_len = strlen( i_filter ).
+    do.
+      lv_offs = find(
+        val   = i_filter
+        regex = `[,&|]`
+        off   = lv_cur ).
+      if lv_offs < 0.
+        append initial line to lt_filter_items assigning <str>.
+        <str> = substring(
+          val = i_filter
+          off = lv_cur
+          len = lv_offs - lv_cur - 1 ).
+        exit.
+      endif.
 
-    if sy-subrc = 0.
-      lv_sep = i_filter+lv_offs(1).
-      split i_filter at lv_sep into table lt_filter_items.
+      lv_op_next = i_filter+lv_offs(1).
+      if lv_op_next = ','.
+        lv_op_next = '&'.
+      endif.
+      if lv_op is not initial and lv_op <> lv_op_next.
+        zcx_mockup_loader_error=>raise( msg = '& and | at the same time is currently not supported' code = 'OA' ).
+      elseif lv_op is initial.
+        lv_op = lv_op_next.
+      endif.
 
+      append initial line to lt_filter_items assigning <str>.
+      <str> = substring(
+        val = i_filter
+        off = lv_cur
+        len = lv_len - lv_offs ).
+      lv_cur = lv_offs + 1.
+    enddo.
+
+    if lv_op is initial.
+      move-corresponding parse_filter_item( i_filter ) to ms_parsed.
+    else.
       loop at lt_filter_items assigning <str>.
         append initial line to ms_parsed-filter assigning <f>.
         <f> = parse_filter_item( <str> ).
       endloop.
-    else.
-      move-corresponding parse_filter_item( i_filter ) to ms_parsed.
     endif.
+
+*    if sy-subrc = 0.
+*      lv_sep = i_filter+lv_offs(1).
+*      split i_filter at lv_sep into table lt_filter_items.
+*
+*      loop at lt_filter_items assigning <str>.
+*        append initial line to ms_parsed-filter assigning <f>.
+*        <f> = parse_filter_item( <str> ).
+*      endloop.
+*    else.
+*      move-corresponding parse_filter_item( i_filter ) to ms_parsed.
+*    endif.
 
   endmethod.
 
