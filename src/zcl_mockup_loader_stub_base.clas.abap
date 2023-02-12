@@ -129,6 +129,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
         ls_filter = build_filter_item(
           is_filter_param = ls_filter_param
           ir_sift_value   = lr_sift_value ).
+        ls_filter-operation = ls_filter_param-operation.
 
         if ls_filter is not initial.
           append ls_filter to rt_filter.

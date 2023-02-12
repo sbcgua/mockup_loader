@@ -5,6 +5,7 @@ class ltcl_mockup_loader_mock definition final
 
     types:
       begin of ty_data,
+        key  type i,
         data type string,
       end of ty_data.
 
@@ -26,6 +27,7 @@ class ltcl_mockup_loader_mock implementation.
 
   method zif_mockup_loader~load_data.
     data ls_data type ty_data.
+    ls_data-key  = 123.
     ls_data-data = 'RESPONSE'.
 
     if cl_abap_typedescr=>describe_by_data( e_container )->kind = 'T'.
@@ -84,6 +86,7 @@ class ltcl_deep_provider_test implementation.
       importing
         e_container = ls_data ).
 
+    ls_exp_data-key  = 123.
     ls_exp_data-data = 'RESPONSE'.
     cl_abap_unit_assert=>assert_equals(
       act = ls_data

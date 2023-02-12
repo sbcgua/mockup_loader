@@ -158,8 +158,8 @@ class lcl_connect_string_parser implementation.
     data lv_break type i.
     data lv_len type i.
     data lt_filter_items type string_table.
-    data lv_op type zif_mockup_loader=>ty_stub_filter_operation.
-    data lv_op_next type zif_mockup_loader=>ty_stub_filter_operation.
+    data lv_op type zif_mockup_loader=>ty_filter_operation.
+    data lv_op_next type zif_mockup_loader=>ty_filter_operation.
     field-symbols <str> like line of lt_filter_items.
     field-symbols <f> like line of ms_parsed-filter.
 

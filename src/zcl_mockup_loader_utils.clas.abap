@@ -345,31 +345,36 @@ CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
     field-symbols <range> type any table.
     field-symbols <value> type any.
 
-    r_yesno = abap_true.
+    if lines( i_filter ) = 0.
+      r_yesno = abap_true.
+      return.
+    endif.
 
     loop at i_filter into l_filter.
+      unassign: <field>, <range>, <value>.
       assign component l_filter-name of structure i_line to <field>.
       check <field> is assigned. " Just skip irrelevant ranges
 
       if l_filter-type = zif_mockup_loader=>c_filter_type-range.
         assign l_filter-valref->* to <range>.
-        if not <field> in <range>.
-          r_yesno = abap_false.
-        endif.
+        r_yesno = boolc( <field> in <range> ).
       elseif l_filter-type = zif_mockup_loader=>c_filter_type-value.
         assign l_filter-valref->* to <value>.
-        if not <field> = <value>. " cx_sy_conversion_error does not catch that :(
-          r_yesno = abap_false.
-        endif.
+        r_yesno = boolc( <field> = <value> ).
+        " cx_sy_conversion_error does not catch that :(
       else.
         assert 1 = 0.
       endif.
 
-      if r_yesno = abap_false.
+      if l_filter-operation is initial.
+        l_filter-operation = zif_mockup_loader=>c_filter_op-and.
+      endif.
+
+      if ( r_yesno = abap_false and l_filter-operation = zif_mockup_loader=>c_filter_op-and )
+        or ( r_yesno = abap_true and l_filter-operation = zif_mockup_loader=>c_filter_op-or ).
         return.
       endif.
 
-      unassign: <field>, <range>, <value>.
     endloop.
 
   endmethod.
