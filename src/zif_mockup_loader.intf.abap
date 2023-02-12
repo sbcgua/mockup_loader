@@ -23,6 +23,15 @@ interface zif_mockup_loader
 **********************************************************************
 
   types:
+    ty_filter_operation type c length 1.
+
+  constants:
+    begin of c_filter_op,
+      or type ty_filter_operation value '|',
+      and type ty_filter_operation value '&',
+    end of c_filter_op.
+
+  types:
     ty_filter_type type c length 1.
 
   constants:
@@ -36,6 +45,7 @@ interface zif_mockup_loader
       name   type string,
       valref type ref to data,
       type   type ty_filter_type,
+      operation type ty_filter_operation, " Internal usage for the moment
     end of ty_filter .
   types:
     tt_filter type standard table of ty_filter with key name .
@@ -59,6 +69,7 @@ interface zif_mockup_loader
       mock_tab_key    type abap_compname,
       sift_param      type string,
       sift_const      type string,
+      operation       type ty_filter_operation, " Internal usage for the moment
     end of ty_stub_filter_param.
   types:
     tty_stub_filter_params type standard table of ty_stub_filter_param with key mock_tab_key.

@@ -18,6 +18,7 @@ v2.2.0, 2021-08-??, maybe 3.0 as a lot of breaking ?
 + [MAJOR] multi filtering in stub, allows specifying multiple filter params in connect e.g. 'my_method->example/sflight [connid=i_connid, fldate=i_fldate]' #27
 + param to ignore conv exits
 + stub set_default_mock to address mocks with `./` e.g. `connect(x->./page)` #36
++ extend connect syntax to support OR (|) #41
 * method override fix
 * better version check
 

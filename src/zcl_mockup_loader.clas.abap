@@ -486,7 +486,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
     zcl_mockup_loader_utils=>filter_table(
       exporting
-        i_where     = lt_filter
+        i_filter    = lt_filter
         i_tab       = <temp_tab>
         i_corresponding = i_corresponding
       importing
@@ -626,6 +626,36 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   endmethod.
 
 
+  method set_params.
+
+    if i_amt_format is initial or i_amt_format+1(1) is initial. " Empty param or decimal separator
+      me->mv_amt_format = ' ,'. " Defaults
+    else.
+      me->mv_amt_format = i_amt_format.
+    endif.
+
+    if i_encoding is initial.
+      me->mv_encoding = zif_mockup_loader_constants=>encoding_utf8.
+    else.
+      me->mv_encoding = i_encoding.
+    endif.
+
+    if i_date_format is initial
+      or not i_date_format+3(1) co ' ./-'
+      or not ( i_date_format+0(3) = 'DMY'
+        or i_date_format+0(3) = 'MDY'
+        or i_date_format+0(3) = 'YMD' ).
+      me->mv_date_format = 'DMY.'. " DD.MM.YYYY
+    else.
+      me->mv_date_format = i_date_format.
+    endif.
+
+    me->mv_begin_comment = i_begin_comment.
+    me->mt_ignore_conv_exits = it_ignore_conv_exits.
+
+  endmethod.
+
+
   method zif_mockup_loader~is_redirected.
     r_yes = mv_is_redirected.
   endmethod.
@@ -693,36 +723,6 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         i_rename_fields = i_rename_fields
       importing
         e_container = e_container ).
-
-  endmethod.
-
-
-  method set_params.
-
-    if i_amt_format is initial or i_amt_format+1(1) is initial. " Empty param or decimal separator
-      me->mv_amt_format = ' ,'. " Defaults
-    else.
-      me->mv_amt_format = i_amt_format.
-    endif.
-
-    if i_encoding is initial.
-      me->mv_encoding = zif_mockup_loader_constants=>encoding_utf8.
-    else.
-      me->mv_encoding = i_encoding.
-    endif.
-
-    if i_date_format is initial
-      or not i_date_format+3(1) co ' ./-'
-      or not ( i_date_format+0(3) = 'DMY'
-        or i_date_format+0(3) = 'MDY'
-        or i_date_format+0(3) = 'YMD' ).
-      me->mv_date_format = 'DMY.'. " DD.MM.YYYY
-    else.
-      me->mv_date_format = i_date_format.
-    endif.
-
-    me->mv_begin_comment = i_begin_comment.
-    me->mt_ignore_conv_exits = it_ignore_conv_exits.
 
   endmethod.
 ENDCLASS.

@@ -705,8 +705,12 @@ Supports:
 " filter data where `field` of an item = `i_param` passed to the method
 'get_my_data -> my_mock [field = i_param]'
 
-" multiple filter params are supported
+" multiple filter params are supported (both ',' and '&' mean AND)
 'get_my_data -> my_mock [field = i_param, field2 = i_params2]'
+'get_my_data -> my_mock [field = i_param & field2 = i_params2]'
+
+" Also OR multicondition is supported, BUT NOT SIMULTANEOUSLY WITH AND
+'get_my_data -> my_mock [field = i_param | field2 = i_params2]'
 
 " addressing structured method parameters also works
 'get_my_data -> mock_path [a = i_struc-field]'

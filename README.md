@@ -167,7 +167,6 @@ The above `connect_method/proxy` configuration can be also done with a single st
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight' ).
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight [connid = i_connid]' ).
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight [connid = "XYZ_ID"]' ).
-  lo_factory->connect( 'tab_return -> EXAMPLE/sflight [connid = i_connid, fldate = i_fldate]' ).
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight(this_field_only) [connid = i_connid]' ).
   lo_factory->connect( 'tab_return -> ~EXAMPLE/sflight [connid = i_connid]' ). " corresponding only
   lo_factory->connect( 'tab_return -> =exact_value' ).
@@ -176,6 +175,11 @@ The above `connect_method/proxy` configuration can be also done with a single st
   " and also a shorter version, using the set_default_mock()
   lo_factory->set_default_mock( 'EXAMPLE' ).
   lo_factory->connect( 'tab_return -> ./sflight [connid = i_connid]' ).
+
+  " Multi condition also supported
+  lo_factory->connect( 'tab_return -> ./sflight [connid = i_connid, fldate = i_fldate]' ). " AND
+  lo_factory->connect( 'tab_return -> ./sflight [connid = i_connid & fldate = i_fldate]' ). " AND
+  lo_factory->connect( 'tab_return -> ./sflight [connid = i_connid | fldate = i_fldate]' ). " OR
 ```
 
 #### Stub control
