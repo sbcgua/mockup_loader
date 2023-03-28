@@ -38,7 +38,6 @@ class ZCL_MOCKUP_LOADER definition
   create private .
 
   public section.
-    type-pools abap .
 
     interfaces zif_mockup_loader.
     aliases:
@@ -95,13 +94,14 @@ class ZCL_MOCKUP_LOADER definition
 
     class-data gt_zip_cache type standard table of ty_zip_cache.
 
-    data mo_zip type ref to cl_abap_zip .
-    data mv_amt_format type zif_mockup_loader=>ty_amt_format .
-    data mv_encoding type abap_encoding .
-    data mv_date_format type zif_mockup_loader=>ty_date_format .
+    data mo_zip type ref to cl_abap_zip.
+    data mv_amt_format type zif_mockup_loader=>ty_amt_format.
+    data mv_encoding type abap_encoding.
+    data mv_date_format type zif_mockup_loader=>ty_date_format.
     data mv_begin_comment type zif_mockup_loader=>ty_comment_char.
     data mv_is_redirected type abap_bool.
     data mt_ignore_conv_exits type zif_mockup_loader=>tty_conv_exits.
+    data mv_dir type string.
 
     class-methods create_zip_instance
       importing
@@ -138,6 +138,11 @@ class ZCL_MOCKUP_LOADER definition
         value(r_rawdata) type string
       raising
         zcx_mockup_loader_error .
+    methods find_file_case_insensitive
+      importing
+        i_path type string
+      returning
+        value(rs_file) like line of mo_zip->files.
     class-methods redirect_source
       changing
         c_src_type      type zif_mockup_loader=>ty_src_type
@@ -152,6 +157,11 @@ class ZCL_MOCKUP_LOADER definition
         value(ro_table_descr) type ref to cl_abap_tabledescr
       raising
         zcx_mockup_loader_error .
+    methods normalize_path
+      importing
+        i_path type string
+      returning
+        value(rv_path) type string.
 ENDCLASS.
 
 
@@ -261,10 +271,10 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     create object ro_instance.
 
     ro_instance->set_params(
-      i_amt_format  = i_amt_format
-      i_encoding    = i_encoding
-      i_date_format = i_date_format
-      i_begin_comment = i_begin_comment
+      i_amt_format         = i_amt_format
+      i_encoding           = i_encoding
+      i_date_format        = i_date_format
+      i_begin_comment      = i_begin_comment
       it_ignore_conv_exits = it_ignore_conv_exits ).
 
     data l_src_type type zif_mockup_loader=>ty_src_type.
@@ -414,6 +424,29 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       zcx_mockup_loader_error=>raise( msg = 'ZIP load failed' code = 'ZE' ).  "#EC NOTEXT
     endif.
 
+  endmethod.
+
+
+  method find_file_case_insensitive.
+
+    data lv_path like i_path.
+    lv_path = to_lower( i_path ).
+
+    loop at mo_zip->files into rs_file.
+      if to_lower( rs_file-name ) = lv_path.
+        exit.
+      endif.
+      clear rs_file.
+    endloop.
+
+  endmethod.
+
+
+  method normalize_path.
+    rv_path = i_path.
+    if strlen( rv_path ) >= 2 and rv_path+0(2) = './'.
+      rv_path = mv_dir && rv_path+1.
+    endif.
   endmethod.
 
 
@@ -626,33 +659,8 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   endmethod.
 
 
-  method set_params.
-
-    if i_amt_format is initial or i_amt_format+1(1) is initial. " Empty param or decimal separator
-      me->mv_amt_format = ' ,'. " Defaults
-    else.
-      me->mv_amt_format = i_amt_format.
-    endif.
-
-    if i_encoding is initial.
-      me->mv_encoding = zif_mockup_loader_constants=>encoding_utf8.
-    else.
-      me->mv_encoding = i_encoding.
-    endif.
-
-    if i_date_format is initial
-      or not i_date_format+3(1) co ' ./-'
-      or not ( i_date_format+0(3) = 'DMY'
-        or i_date_format+0(3) = 'MDY'
-        or i_date_format+0(3) = 'YMD' ).
-      me->mv_date_format = 'DMY.'. " DD.MM.YYYY
-    else.
-      me->mv_date_format = i_date_format.
-    endif.
-
-    me->mv_begin_comment = i_begin_comment.
-    me->mt_ignore_conv_exits = it_ignore_conv_exits.
-
+  method zif_mockup_loader~cd.
+    mv_dir = i_path.
   endmethod.
 
 
@@ -663,26 +671,21 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
   method zif_mockup_loader~load_blob.
 
+    data ls_file like line of mo_zip->files.
+    data lv_path like i_obj_path.
+
+    lv_path = normalize_path( i_obj_path ).
+
     mo_zip->get(
       exporting
-        name    = i_obj_path
+        name    = lv_path
       importing
         content = r_content
       exceptions
         zip_index_error = 1 ).
 
     if sy-subrc <> 0.
-      " try find case insensitive first
-      data ls_file like line of mo_zip->files.
-      data lv_obj_path like i_obj_path.
-      lv_obj_path = to_lower( i_obj_path ).
-
-      loop at mo_zip->files into ls_file.
-        if to_lower( ls_file-name ) = lv_obj_path.
-          exit.
-        endif.
-        clear ls_file.
-      endloop.
+      ls_file = find_file_case_insensitive( lv_path ).
 
       if ls_file is initial.
         zcx_mockup_loader_error=>raise( msg = |Cannot read { i_obj_path }| code = 'ZF' ). "#EC NOTEXT
@@ -711,7 +714,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       zcx_mockup_loader_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
     endif.
 
-    l_rawdata = read_zip( i_name = i_obj && '.txt' ).
+    l_rawdata = read_zip( i_obj && '.txt' ).
 
     parse_data(
       exporting
@@ -723,6 +726,36 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         i_rename_fields = i_rename_fields
       importing
         e_container = e_container ).
+
+  endmethod.
+
+
+  method zif_mockup_loader~set_params.
+
+    if i_amt_format is initial or i_amt_format+1(1) is initial. " Empty param or decimal separator
+      me->mv_amt_format = ' ,'. " Defaults
+    else.
+      me->mv_amt_format = i_amt_format.
+    endif.
+
+    if i_encoding is initial.
+      me->mv_encoding = zif_mockup_loader_constants=>encoding_utf8.
+    else.
+      me->mv_encoding = i_encoding.
+    endif.
+
+    if i_date_format is initial
+      or not i_date_format+3(1) co ' ./-'
+      or not ( i_date_format+0(3) = 'DMY'
+        or i_date_format+0(3) = 'MDY'
+        or i_date_format+0(3) = 'YMD' ).
+      me->mv_date_format = 'DMY.'. " DD.MM.YYYY
+    else.
+      me->mv_date_format = i_date_format.
+    endif.
+
+    me->mv_begin_comment = i_begin_comment.
+    me->mt_ignore_conv_exits = it_ignore_conv_exits.
 
   endmethod.
 ENDCLASS.

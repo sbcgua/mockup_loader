@@ -1,5 +1,5 @@
 interface zif_mockup_loader
-  public .
+  public.
 
   constants version type string value 'v2.2.0'. "#EC NOTEXT
   constants origin type string value 'https://github.com/sbcgua/mockup_loader'. "#EC NOTEXT
@@ -135,5 +135,8 @@ interface zif_mockup_loader
   methods is_redirected
     returning
       value(r_yes) type abap_bool.
+  methods cd
+    importing
+      !i_path type string.
 
 endinterface.

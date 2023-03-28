@@ -1,5 +1,5 @@
 interface zif_mockup_loader_stub_dummy
-  public .
+  public.
 
   types:
     begin of ty_params,

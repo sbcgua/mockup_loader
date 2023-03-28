@@ -1,5 +1,5 @@
-interface ZIF_MOCKUP_LOADER_STUB_CONTROL
-  public .
+interface zif_mockup_loader_stub_control
+  public.
 
   methods enable
     importing
