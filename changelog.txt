@@ -8,6 +8,10 @@ Legend
 + : added
 - : removed
 
+v2.?.?, 2023-??
+-------------------
++ main class supports `cd` to "change dir" and support "./..." paths, addition to #36
+
 v2.2.0, 2023-02-12
 -------------------
 ! [BREAKING] version constant moved to zif_mockup_loader
