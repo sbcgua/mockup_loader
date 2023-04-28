@@ -124,6 +124,12 @@ interface zif_mockup_loader
     raising
       zcx_mockup_loader_error .
 
+  methods to
+    importing
+      i_ref type ref to data
+    returning
+      value(ri_ml) type ref to zif_mockup_loader.
+
   methods set_params
     importing
       !i_amt_format type ty_amt_format optional

@@ -102,6 +102,7 @@ class ZCL_MOCKUP_LOADER definition
     data mv_is_redirected type abap_bool.
     data mt_ignore_conv_exits type zif_mockup_loader=>tty_conv_exits.
     data mv_dir type string.
+    data mr_ref_to_container type ref to data.
 
     class-methods create_zip_instance
       importing
@@ -710,23 +711,30 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   method zif_mockup_loader~load_data.
 
     data l_rawdata  type string.
+    field-symbols <container> type any.
 
-    if e_container is not supplied.
+    if e_container is not supplied and mr_ref_to_container is initial.
       zcx_mockup_loader_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
+    endif.
+
+    if e_container is supplied.
+      assign e_container to <container>.
+    else.
+      assign mr_ref_to_container->* to <container>.
     endif.
 
     l_rawdata = read_zip( i_obj && '.txt' ).
 
     parse_data(
       exporting
-        i_rawdata   = l_rawdata
-        i_strict    = i_strict
+        i_rawdata       = l_rawdata
+        i_strict        = i_strict
         i_corresponding = i_corresponding
-        i_deep      = i_deep
-        i_where     = i_where
+        i_deep          = i_deep
+        i_where         = i_where
         i_rename_fields = i_rename_fields
       importing
-        e_container = e_container ).
+        e_container = <container> ).
 
   endmethod.
 
@@ -760,5 +768,11 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
     ri_ml = me.
 
+  endmethod.
+
+
+  method zif_mockup_loader~to.
+    mr_ref_to_container = i_ref.
+    ri_ml = me.
   endmethod.
 ENDCLASS.

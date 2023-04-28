@@ -182,6 +182,7 @@ class ltcl_test_mockup_loader definition for testing
     methods assert_version           for testing.
     methods zip_cache                for testing raising zcx_mockup_loader_error.
     methods cd                       for testing raising zcx_mockup_loader_error.
+    methods to_container             for testing raising zcx_mockup_loader_error.
 
     methods get_dummy_data
       importing
@@ -1088,6 +1089,36 @@ class ltcl_test_mockup_loader implementation.
     cl_abap_unit_assert=>assert_equals(
       act = ls_act2
       exp = ls_act1 ).
+
+  endmethod.
+
+  method to_container.
+
+    data li type ref to zif_mockup_loader.
+    data lx type ref to zcx_mockup_loader_error.
+    data ls_act1 type ty_dummy.
+    data ls_act2 type ty_dummy.
+    data lr type ref to ty_dummy.
+
+    li = o.
+    get reference of ls_act2 into lr.
+
+    li->load_data(
+      exporting
+        i_obj       = 'testdir/testfile_complete'
+      importing
+        e_container = ls_act1 ).
+    cl_abap_unit_assert=>assert_not_initial( ls_act1 ).
+
+    try.
+      li->load_data( 'testdir/testfile_complete' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'NC' ).
+    endtry.
+
+    li->to( lr )->load_data( 'testdir/testfile_complete' ).
+    cl_abap_unit_assert=>assert_equals( act = ls_act2 exp = ls_act1 ).
 
   endmethod.
 
