@@ -476,15 +476,20 @@ class ltcl_test_mockup_loader implementation.
 * Check Unicode encoding parsing
 **********************************************************************
   method utf16_encoding.
-    data:
-          dummy_tab_act  type tt_dummy,
-          dummy_tab_exp  type tt_dummy,
-          lo_ex          type ref to zcx_mockup_loader_error.
+
+    data dummy_tab_act  type tt_dummy.
+    data dummy_tab_exp  type tt_dummy.
+    data lo_ex          type ref to zcx_mockup_loader_error.
+    data li             type ref to zif_mockup_loader.
 
     get_dummy_data( importing e_dummy_tab   = dummy_tab_exp ).
 
     try.
-      o->set_params( i_amt_format = '' i_encoding = zif_mockup_loader_constants=>encoding_utf16 ). " UTF16
+      li = o->set_params(
+        i_amt_format = ''
+        i_encoding   = zif_mockup_loader_constants=>encoding_utf16 ).
+      cl_abap_unit_assert=>assert_not_initial( li ).
+
       o->load_data(
         exporting i_obj       = 'testdir/testfile_complete_utf16'
         importing e_container = dummy_tab_act ).
@@ -1072,7 +1077,9 @@ class ltcl_test_mockup_loader implementation.
         exp = 'ZF' ).
     endtry.
 
-    o->zif_mockup_loader~cd( 'testdir' ).
+    data li type ref to zif_mockup_loader.
+    li = o->zif_mockup_loader~cd( 'testdir' ).
+    cl_abap_unit_assert=>assert_not_initial( li ).
     o->load_data(
       exporting
         i_obj       = './testfile_complete'

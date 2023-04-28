@@ -661,6 +661,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
   method zif_mockup_loader~cd.
     mv_dir = i_path.
+    ri_ml  = me.
   endmethod.
 
 
@@ -756,6 +757,8 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
     me->mv_begin_comment = i_begin_comment.
     me->mt_ignore_conv_exits = it_ignore_conv_exits.
+
+    ri_ml = me.
 
   endmethod.
 ENDCLASS.
