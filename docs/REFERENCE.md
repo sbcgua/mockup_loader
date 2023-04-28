@@ -56,6 +56,7 @@ importing
   I_AMT_FORMAT  type CHAR2
   I_ENCODING    type ABAP_ENCODING
   I_DATE_FORMAT type CHAR4
+returns self (for chaining)
 ```
 
 Changes the parsing parameters on-the-fly. See `CREATE` description for parameter explanation.
@@ -285,6 +286,34 @@ end-of-definition.
 ...
 
 load_mockup_no_strict 'BKPF' lt_bkpf.
+```
+
+### CD
+
+```abap
+IMPORTING
+  iv_path type string
+returns self (for chaining)
+```
+
+Sets the default mock path to a replacement for `'./'` placeholder. E.g. 
+
+```abap
+li_ml->cd( 'set_default_mock' )->load_data( ... './sheet' ... ).
+```
+
+### TO
+
+```abap
+IMPORTING
+  i_ref type red to data
+returns self (for chaining)
+```
+
+Binds a container for the next load_data call. This is more a syntaxic sugar to make the code more readable by getting rid of IMPORTING/EXPORTING. Works best in 7.40 syntax.
+
+```abap
+li_ml->to( #ref( lt_tab ) )->load_data( './sheet' ).
 ```
 
 ### LOAD_RAW
