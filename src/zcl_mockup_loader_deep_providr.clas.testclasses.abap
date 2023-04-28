@@ -26,6 +26,8 @@ class ltcl_mockup_loader_mock implementation.
   endmethod.
   method zif_mockup_loader~cd.
   endmethod.
+  method zif_mockup_loader~to.
+  endmethod.
 
   method zif_mockup_loader~load_data.
     data ls_data type ty_data.
