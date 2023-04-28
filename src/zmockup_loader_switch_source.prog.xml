@@ -13,7 +13,7 @@
    <TPOOL>
     <item>
      <ID>R</ID>
-     <ENTRY>Switch mockup source via SET/GET params</ENTRY>
+     <ENTRY>Redirect Mockup Source</ENTRY>
      <LENGTH>39</LENGTH>
     </item>
    </TPOOL>

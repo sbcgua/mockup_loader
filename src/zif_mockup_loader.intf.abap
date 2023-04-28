@@ -13,10 +13,25 @@ interface zif_mockup_loader
 **********************************************************************
 
   types:
+    ty_env_param    type tpara-paramid,
     ty_src_type     type c length 4,
     ty_date_format  type c length 4,
     ty_amt_format   type c length 2,
     ty_comment_char type c length 1.
+
+  constants:
+    begin of c_src_type,
+      undef type ty_src_type value '',
+      file type ty_src_type value 'FILE',
+      mime type ty_src_type value 'MIME',
+    end of c_src_type.
+
+  constants:
+    begin of c_env_param,
+      type type ty_env_param value 'ZMOCKUP_LOADER_STYPE',
+      path type ty_env_param value 'ZMOCKUP_LOADER_SPATH',
+      mime type ty_env_param value 'ZMOCKUP_LOADER_SMIME',
+    end of c_env_param.
 
 **********************************************************************
 * FILTER RELATED TYPES
