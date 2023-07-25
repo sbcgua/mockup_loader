@@ -101,6 +101,12 @@ interface zif_mockup_loader_stub_dummy
     returning
       value(r_val) type sflight-price .
 
+  methods exists
+    importing
+      !i_connid type s_conn_id
+    returning
+      value(r_yes) type abap_bool .
+
   methods return_value_w_date
     importing
       !i_connid type s_conn_id

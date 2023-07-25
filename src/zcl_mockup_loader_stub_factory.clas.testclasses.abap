@@ -32,6 +32,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods connect_string_or for testing raising zcx_mockup_loader_error.
     methods connect_string_multi_const for testing raising zcx_mockup_loader_error.
     methods connect_string_multi_1value for testing raising zcx_mockup_loader_error.
+    methods connect_string_has for testing raising zcx_mockup_loader_error.
 
     " HELPERS
     methods get_ml
@@ -94,6 +95,8 @@ class lcl_test_proxy_target implementation.
   method zif_mockup_loader_stub_dummy~return_value_w_date.
   endmethod.
   method zif_mockup_loader_stub_dummy~return_deep.
+  endmethod.
+  method zif_mockup_loader_stub_dummy~exists.
   endmethod.
 endclass.
 
@@ -1559,4 +1562,23 @@ class ltcl_mockup_stub_factory_test implementation.
 
   endmethod.
 
+  method connect_string_has.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    factory->connect( 'exists->example/sflight(?) [connid=i_connid]' ).
+
+    stub ?= factory->generate_stub( ).
+    cl_abap_unit_assert=>assert_equals(
+      act = stub->exists( i_connid = '2000' )
+      exp = 'X' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = stub->exists( i_connid = '9999' )
+      exp = '' ).
+
+  endmethod.
 endclass.

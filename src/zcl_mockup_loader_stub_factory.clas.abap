@@ -137,7 +137,9 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         id_output_type type ref to cl_abap_typedescr
         it_sift_types type tty_filter_types
       returning
-        value(rd_type) type ref to cl_abap_structdescr.
+        value(rd_type) type ref to cl_abap_structdescr
+      raising
+        zcx_mockup_loader_error .
 
 ENDCLASS.
 
@@ -186,6 +188,15 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     append initial line to lt_components assigning <c>.
     <c>-name = i_config-field_only.
     <c>-type ?= id_output_type.
+
+    if <c>-name = '?'. " check existance only
+      if id_output_type->type_kind <> cl_abap_typedescr=>typekind_char.
+        zcx_mockup_loader_error=>raise(
+          msg  = 'Expecter CHAR returning type'
+          code = 'CR' ). "#EC NOTEXT
+      endif.
+      <c>-name = '____DUMMY'. " In hope this is not a real field ever :)
+    endif.
 
     field-symbols <t> like line of it_sift_types.
     loop at it_sift_types assigning <t>.
