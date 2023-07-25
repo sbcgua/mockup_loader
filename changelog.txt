@@ -8,15 +8,15 @@ Legend
 + : added
 - : removed
 
-v2.?.?, 2023-??
--------------------
+v2.2.1, 2023-07-25
+------------------
 + main class supports `cd` to "change dir" and support "./..." paths, addition to #36
 + `cd` and `set_params` return self
 + new `to` method to bind container for the next `load_data`
 + add a possibility to connect to return TRUE on existing record `connect(x->page(?) [condition])` #45
 
 v2.2.0, 2023-02-12
--------------------
+------------------
 ! [BREAKING] version constant moved to zif_mockup_loader
 ! [BREAKING] types and constants moved from utils class to zif_mockup_loader #30
 ! [BREAKING] types and constants moved from stub class to zif_mockup_loader
