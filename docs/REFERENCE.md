@@ -16,8 +16,8 @@ importing
 Creates an instance of mockup loader and read the zip file (from FILE or for MIME storage).
 
 - **I_TYPE** - source type.
-    - can be `'MIME'`, which loads data from W3MI object (uploaded via SMW0) - this is the way "production" unit test should be executed, the object travels with the package so can be used if, for example, transported to another system instance.
-    - Alternatively the parameter accepts `'FILE'`, which then reads the local file via `GUI_UPLOAD` from workstation. The mode created for development purpose to avoid constant reloading of zip to SMW0 while working on unit tests.
+  - can be `'MIME'`, which loads data from W3MI object (uploaded via SMW0) - this is the way "production" unit test should be executed, the object travels with the package so can be used if, for example, transported to another system instance.
+  - Alternatively the parameter accepts `'FILE'`, which then reads the local file via `GUI_UPLOAD` from workstation. The mode created for development purpose to avoid constant reloading of zip to SMW0 while working on unit tests.
 - **I_PATH** - Actual name of W3MI object or path to zip file on local computer.
 - **I_AMT_FORMAT** - amount separators. First character defines thousand separator, the second one defines decimal separator. E.g. `'.,'` would suppose amounts like `123.000,12`. Empty parameter resets to default - `' ,'`. The second character cannot be empty - this also resets the format to defaults.
 - **I_ENCODING** - encoding of text files in zip. Default is 4110 which is UTF8. See table `TCP00` for list of ABAP encodings.
@@ -39,6 +39,7 @@ zcl_mockup_loader=>create(
 importing
   I_REQUIRED_VERSION type STRING
 ```
+
 Checks if the mockup loader has at least same version than required. In comparison to `CHECK_VERSION_FITS` it throws an exception if the version does not fit.
 
 ### CHECK_VERSION_FITS
@@ -47,6 +48,7 @@ Checks if the mockup loader has at least same version than required. In comparis
 importing
   I_REQUIRED_VERSION type STRING
 ```
+
 Checks if the mockup loader has at least same version than required
 
 ### SET_PARAMS
@@ -84,7 +86,7 @@ exporting
 
 - **I_OBJ** - path to file inside ZIP. Extension `'.txt'` is automatically appended so should not be specified. Please be aware that ZIP file names are **case insensitive** (at least this is how SAP handles them).
 - **I_STRICT** - suggests if the structure of the file must strictly correspond to the structure of target container. The call **always** validates that all fields in the text file are present in target structure. `I_STRICT` = 'True' **additionally** means that the number of fields is the same as in the target structure.
-    - One exception is `MANDT` field. It may be skipped in a text file even for strict validation. So a text file with all structure fields but MANDT is still considered as strictly equal.
+  - One exception is `MANDT` field. It may be skipped in a text file even for strict validation. So a text file with all structure fields but MANDT is still considered as strictly equal.
 - **I_DEEP** - allow filling deep components (tables/structures) in the target structure. If the component is not empty it must have the form of `<source_path>[<source_id_field>=<value|@reference_field>]`. See more detail below.
 - **I_WHERE** - optional condition to filter the source table. See "Using filtering" section below for details.
 - **E_CONTAINER** - container for the data. Can be a table or a structure. In the latter case just the first data line of the file is parsed, no error is thrown if there are more lines in case like that. Can also be **data ref** to a table or a structure. In this case data ref **must be** created and passed to the method, it cannot infer data type for proper conversion without it.
@@ -96,11 +98,13 @@ The method assumes that field names are specified in the first line of the text 
 **Example:**
 
 ZIP:/TEST1/bseg.txt
-```
+
+```text
 BUKRS BELNR GJAHR BUZEI BSCHL KOART
 1000  10    2015  1     40    S
 1000  10    2015  2     50    S
 ```
+
 Loading code (`i_strict = false`, so all fields, missing in the file, are initialized with empty value).
 
 ```abap
@@ -214,7 +218,7 @@ If you have a target data with deep fields - tables or structures - it is possib
 
 Let's assume you have 2 linked tables - header and lines - the tables are represented by **separate** files in zip.
 
-```
+```text
 DOCUMENT
 ========
 ID   DATE   ...
@@ -230,6 +234,7 @@ DOCID   LINEID   AMOUNT   ...
 ```
 
 Let's assume you have a target data of the following structure
+
 ```abap
 types:
   begin of ty_line,
@@ -259,7 +264,7 @@ The following code will load this kind of structure
 
 To instruct mockup loader how to find the data for deep components you have to fill these components in the text in special format: `<source_path>[<source_id_field>=<value|@reference_field>]` which means *"go find `source_path` file, parse it, extract the lines, filter those where `source_id_field` = `value` or `reference_field` value of the current header record"*. For example:
 
-```
+```text
 DOCUMENT
 ========
 ID   DATE   ...   LINES
@@ -296,7 +301,7 @@ IMPORTING
 returns self (for chaining)
 ```
 
-Sets the default mock path to a replacement for `'./'` placeholder. E.g. 
+Sets the default mock path to a replacement for `'./'` placeholder. E.g.
 
 ```abap
 li_ml->cd( 'set_default_mock' )->load_data( ... './sheet' ... ).
@@ -424,8 +429,8 @@ exceptions
 
 - **I_NAME** - the label used in the `STORE` or `LOAD_AND_STORE` call
 - **E_DATA** - container to retrieve data to. The type of stored and retrieved data must be identical. Tables, however, are checked for the identical line type. So:
-    - Standard/Sorted/Hashed table type are compatible (can be saved as standard and retrieved as sorted)
-    - Types like `BKPF_TAB` (dictionary table type) and variables `type table of BKPF` are also compatible (line type is checked)
+  - Standard/Sorted/Hashed table type are compatible (can be saved as standard and retrieved as sorted)
+  - Types like `BKPF_TAB` (dictionary table type) and variables `type table of BKPF` are also compatible (line type is checked)
 - **I_SIFT** - the value which is used to filter stored table data to the `E_DATA` container. Only lines where TABKEY field (see `STORE` method) equals to `I_SIFT` value will be retrieved.
 - **I_WHERE** - alternative filtering method to `I_SIFT`. Cannot be used simultaneously. See `LOAD_DATA` method description for more details.
 
@@ -490,10 +495,10 @@ See `LOAD_DATA` for description of **I_OBJ** and **I_STRICT**. See `STORE` to cl
 
 **I_TYPE** is literal name of the type to validate the text data structure and create store container.  Please refer to documentation of RTTI method `cl_abap_typedescr=>describe_by_name` for information on how to specify type names. But briefly it accepts thing like:
 
--  dictionary types (e.g. `'BSET_TAB'`)
--  type pools types (e.g. `'ABAP_COMPDESCR'` from ABAP type pool)
--  locally defined types (e.g. `'TY_BSET_EXTRACT'` defined locally in program)
--  class **public** types (e.g. `'ZCL_SOME_CLASS=>TY_SOME_TYPE'`)
+- dictionary types (e.g. `'BSET_TAB'`)
+- type pools types (e.g. `'ABAP_COMPDESCR'` from ABAP type pool)
+- locally defined types (e.g. `'TY_BSET_EXTRACT'` defined locally in program)
+- class **public** types (e.g. `'ZCL_SOME_CLASS=>TY_SOME_TYPE'`)
 
 Alternatively **I_TYPE_DESC** can be used instead to pass `CL_ABAP_TYPEDESCR` instance.
 
@@ -510,7 +515,6 @@ catch zcx_mockup_loader_error into lo_ex.
   fail_somehow( lo_ex->get_text( ) ).
 endtry.
 ```
-
 
 ## ZCL_MOCKUP_LOADER_UTILS
 
@@ -545,6 +549,7 @@ zcl_mockup_loader_utils=>filter_table(
 ```
 
 or
+
 ```abap
 ...
 " if value is single and you need type-check
@@ -621,6 +626,7 @@ Generated stub instance implements `ZIF_MOCKUP_LOADER_STUB_CONTROL` interface. I
     io_proxy_target  type ref to object
     io_ml_instance   type ref to zcl_mockup_loader
 ```
+
 - **i_interface_name** - global interface name to stub
 - **io_ml_instance** - instance of initiated mockup loader
 - **io_proxy_target** - instance of initiated object, implementing the same interface for proxy calls, see `proxy_method` below
@@ -644,6 +650,7 @@ Generated stub instance implements `ZIF_MOCKUP_LOADER_STUB_CONTROL` interface. I
   returning
     r_instance type ref to zcl_mockup_loader_stub_factory
 ```
+
 Activates stub for the given method, connects it to the specified mockup path, optionally with a filter. `i_sift_param` and `i_mock_tab_key` must be both empty or both specified.
 
 - **i_method_name**  - interface method to stub
@@ -689,6 +696,7 @@ Example of **i_field_only** usage. The below code will find the **first** record
   returning
     r_instance type ref to zcl_mockup_loader_stub_factory
 ```
+
 Activates stub for the given method, but does not connect to a mock. Instead forward the call to `io_proxy_target`, specified during instantiation. For example if some of accessor methods must be connected to mocks and some others were implemented elsewhere in-code.
 
 - **i_method_name**  - interface method to forward
@@ -763,6 +771,9 @@ Supports:
 " return one specific field of the first filtered item
 'get_my_data -> my_mock(single_field) [field = i_param]'
 
+" returns abap_true if records exist
+'get_my_data -> my_mock(?) [field = i_param]'
+
 " return constant single value (or amount)
 'get_my_data -> =value'
 
@@ -771,11 +782,13 @@ Supports:
 ```
 
 The string is case **in**sensitive so you can specify most of parameters using the case you prefer. Also spaces are trimmed. The following strings would give the same result:
+
 - `'get_my_data -> mock_path [a = i_a]'`
 - `'GET_MY_DATA -> mock_path [A = I_A]'`
 - `'get_my_data->mock_path[a=i_a]'`
 
 Check also `set_default_mock` method to shorten the connection strings.
+
 ```abap
 lo_factory->( 'set_default_mock' ).
 lo_factory->connect( 'get_my_data -> ./sheet' ).
@@ -788,7 +801,7 @@ lo_factory->connect( 'get_my_data -> ./sheet' ).
     iv_path type csequence
 ```
 
-Sets the default mock path to a replacement for `'./'` placeholder. E.g. 
+Sets the default mock path to a replacement for `'./'` placeholder. E.g.
 
 ```abap
 lo_factory->( 'set_default_mock' ).
@@ -808,4 +821,5 @@ Just a syntaxic sugar.
   returning
     r_stub type ref to object
 ```
+
 Generate the stub based on connected methods. Not stubbed methods are generated as empty and return nothing. Returns the initiated instance of the stub that implements the intended interface and can be passed further to the code-under-test.

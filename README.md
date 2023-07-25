@@ -9,6 +9,7 @@
 *[history of changes](/changelog.txt)*
 
 Mockup loader is a tool to simplify data preparation for SAP ABAP unit tests. Create unit test data in Excel, easily convert it into MIME object that travels with ABAP package, easily consume the data from your unit test code. The tool was created with the following high level goals in mind:
+
 - simplify **communication process between a developer and a business analyst** (from client side in particular)
 - simplify test data preparation and maintenance - do and store it in Excel (and commit the Excel file to git)
 - simplify test data consumption - in particular, reduce volume of code required for a complex data tests
@@ -35,7 +36,7 @@ Features:
 - [Load source redirection](#load-source-redirection)
 - [Conversion from Excel](#conversion-from-excel)
 - [Examples and Reference](#examples-and-reference)
-- [Contributors](#contributors)
+- [Contributing](#contributing)
 - [Publications](#publications)
 - [License](#license)
 
@@ -43,13 +44,13 @@ Features:
 
 ## Synopsis
 
-The tool is created to simplify data preparation/loading for SAP ABAP unit tests. In one of our projects we had to prepare a lot of table data for unit tests. For example, a set of content from `BKPF`, `BSEG`, `BSET` tables (FI document). The output of the methods under test is also often a table or a complex structure. 
+The tool is created to simplify data preparation/loading for SAP ABAP unit tests. In one of our projects we had to prepare a lot of table data for unit tests. For example, a set of content from `BKPF`, `BSEG`, `BSET` tables (FI document). The output of the methods under test is also often a table or a complex structure.
 
 Hard-coding all of that data was not an option - too much to code, difficult to maintain and terrible code readability. So we decided to write a tool which would get the data from TAB delimited `.txt` files, which, in turn, would be prepared in Excel in a convenient way. Certain objectives were set:
 
 - all the test data should be combined together in one file (zip)
 - ... and uploaded to SAP - test data should be a part of the dev package (W3MI binary object would fit)
-- loading routine should identify the file structure (fields) automatically and verify its compatibility with a target container (structure or table) 
+- loading routine should identify the file structure (fields) automatically and verify its compatibility with a target container (structure or table)
 - it should also be able to safely skip fields, missing in `.txt` file, if required (*non strict* mode) e.g. when processing structures (like FI document) with too many fields, most of which are irrelevant to a specific test.
 
 ```abap
@@ -81,7 +82,7 @@ assert_equals(...).
 
 The first part of the code takes TAB delimited text file `bkpf.txt` in TEST1 directory (file names are case-**in**sensitive) of ZIP file uploaded as binary object via SMW0 transaction...
 
-```
+```text
 BUKRS BELNR GJAHR BUZEI BSCHL KOART ...
 1000  10    2015  1     40    S     ...
 1000  10    2015  2     50    S     ...
@@ -98,6 +99,7 @@ On-the-fly data filtering is supported. For more information see [REFERENCE.md](
 Since 2.0.0 mockup loader supports generating of interface stubs. :tada:
 
 It creates an instance object which implements the given interface where one or more methods retrieve the data from the mockup.
+
 - Optional filtering is supported:
   - thus one of the method parameters is treated as the value to filter the mockup data by the given key field
   - Multiple field filtering also supported
@@ -142,7 +144,9 @@ It creates an instance object which implements the given interface where one or 
     i_mock_name       = 'EXAMPLE/sflight' ). " <MOCK PATH>
   ...
 ```
-This will result in the data set where key field `CONNID` will be equal to `I_CONNID` parameter actually passed to interface call. 
+
+This will result in the data set where key field `CONNID` will be equal to `I_CONNID` parameter actually passed to interface call.
+
 - Structured addressing also supported, e.g. `IS_PARAMS-CONNID`.
 - ranges also supported - `I_CONNID` above can be a range parameter
 
@@ -168,6 +172,7 @@ The above `connect_method/proxy` configuration can be also done with a single st
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight [connid = i_connid]' ).
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight [connid = "XYZ_ID"]' ).
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight(this_field_only) [connid = i_connid]' ).
+  lo_factory->connect( 'tab_return -> EXAMPLE/sflight(?) [connid = i_connid]' ). " boolc("record exists")
   lo_factory->connect( 'tab_return -> ~EXAMPLE/sflight [connid = i_connid]' ). " corresponding only
   lo_factory->connect( 'tab_return -> =exact_value' ).
   lo_factory->connect( 'tab_return -> *' ). " proxy
@@ -185,6 +190,7 @@ The above `connect_method/proxy` configuration can be also done with a single st
 #### Stub control
 
 Generated stub instance implements `ZIF_MOCKUP_LOADER_STUB_CONTROL` interface, which allows:
+
 - temporarily enable/disable separate or all stubbed methods, which might be useful for some specific testing situations
 - accessing to call counters (method was called X times)
 - in plans: potentially, caching call parameters
@@ -195,7 +201,7 @@ Available since v2.1.0.
 
 If you have a target data with deep fields - tables or structures - it is possible to fill them in one run. Let's consider a simple example: assume you have 2 linked tables - header and lines - the tables are represented by **separate** files in zip.
 
-```
+```text
 DOCUMENT
 ========
 ID   DATE   ...
@@ -241,7 +247,7 @@ The following code will load this kind of structure
 
 To instruct mockup loader how to find the data for deep components you have to fill these components in the text in special format: `<source_path>[<source_id_field>=<value|@reference_field>]` which means *"go find `source_path` file, parse it, extract the lines, filter those where `source_id_field` = `value` or `reference_field` value of the current header record"*. For example:
 
-```
+```text
 DOCUMENT
 ========
 ID   DATE   ...   LINES
@@ -257,8 +263,8 @@ For the first record the mockup loader will find file `path_to_lines_file.txt` a
 
 ![data flow](docs/illustration.png)
 
-Some code is quite difficult to test when it has a *db select* in the middle. Of course, good code design would assume isolation of DB operations from business logic code, but it is not always possible (or was not done in proper time). So we needed to create a way to substitute *selects* in code to a simple call, which would take the prepared test data instead if test environment was identified. We came up with the solution we called `store`. 
-   
+Some code is quite difficult to test when it has a *db select* in the middle. Of course, good code design would assume isolation of DB operations from business logic code, but it is not always possible (or was not done in proper time). So we needed to create a way to substitute *selects* in code to a simple call, which would take the prepared test data instead if test environment was identified. We came up with the solution we called `store`.
+
 ```abap
 " Test class (o_mls is mockup_loader_STORE instance)
 ...
@@ -324,13 +330,14 @@ The `zcl_mockup_loader` has a *shortcut* method `load_and_store` to load data to
 Some design facts about the `store`:
 
 - The store class `ZCL_MOCKUP_LOADER_STORE` is designed as a singleton class. So it is initiated once in a test class and the exists in one instance only.
-- `RETRIEVE` method, which takes data from the "Store" is **static**. It is assumed to be called from "production" code instead of *DB selects*. It acquires the instance inside and throws **non-class** based exception on error. This is made to avoid the necessity to handle test-related exceptions, irrelevant to the main code, and also to be able to catch the exception as `SY-SUBRC` value. `SY-SUBRC` can be checked later similarly to regular DB select. So the interference with the main code is minimal. 
+- `RETRIEVE` method, which takes data from the "Store" is **static**. It is assumed to be called from "production" code instead of *DB selects*. It acquires the instance inside and throws **non-class** based exception on error. This is made to avoid the necessity to handle test-related exceptions, irrelevant to the main code, and also to be able to catch the exception as `SY-SUBRC` value. `SY-SUBRC` can be checked later similarly to regular DB select. So the interference with the main code is minimal.
 
 ## Installation
 
 The most convenient way to install the package is to use [abapGit](https://github.com/larshp/abapGit) - it is easily installed itself and then a couple of click to clone the repo into the system. There is also an option for offline installation - download the repo as zip file and import it with abapGit. Unit test execution is always recommended after installation.
 
 Dependencies (to install before mockup loader):
+
 - [text2tab](https://github.com/sbcgua/text2tab) - tab-delimited text parser (was a part of *mockup loader* but now a separate reusable tool). Mandatory prerequisite.
 
 ## Load source redirection
@@ -363,11 +370,11 @@ See [EXCEL2TXT.md](docs/EXCEL2TXT.md) for more info.
 
 ## Examples and Reference
 
-- Complete reference of classes and methods can be found in [REFERENCE.md](docs/REFERENCE.md). 
+- Complete reference of classes and methods can be found in [REFERENCE.md](docs/REFERENCE.md).
 - A simple example can be found in [/src/zmockup_loader_example.prog.abap](/src/zmockup_loader_example.prog.abap).
 - Also see unit tests - these are the most up-to-date examples
 - Have a look at the how-to section in the project [Wiki](../../wiki).
-- Gitlab CI example - https://gitlab.com/atsybulsky/ut-monitor-example - idea is to commit UTs sources as well as SMW0 object to repo and see the **text-based diffs** (which is not possible for binary objects obviously)
+- [Gitlab CI example](https://gitlab.com/atsybulsky/ut-monitor-example) - idea is to commit UTs sources as well as SMW0 object to repo and see the **text-based diffs** (which is not possible for binary objects obviously)
 
 ## Contributing
 
