@@ -226,9 +226,20 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
     if <conf>-field_only is not initial.
       field-symbols <data> type any.
       field-symbols <field> type any.
-      assign r_data->* to <data>.
-      assign component <conf>-field_only of structure <data> to <field>.
       data lr_field type ref to data.
+      data lv_record_exists type abap_bool.
+
+      if <conf>-field_only = '?'. " existing only
+        assign r_data->* to <data>.
+        assign lv_record_exists to <field>.
+        lv_record_exists = boolc( <data> is not initial ).
+        " TODO improve, potential bug - if no filter, then empty data but the record could exist.
+        " One of solutions: load_data should also export record count
+      else.
+        assign r_data->* to <data>.
+        assign component <conf>-field_only of structure <data> to <field>.
+      endif.
+
       create data lr_field like <field>.
       assign lr_field->* to <data>.
       <data> = <field>.
