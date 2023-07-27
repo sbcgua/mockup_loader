@@ -221,6 +221,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     else.
       connect_method(
         i_sift_param      = ls_params-sift_param
+        i_output_param    = ls_params-output_param
         i_mock_tab_key    = ls_params-mock_tab_key
         i_field_only      = ls_params-field_only
         i_method_name     = ls_params-method_name

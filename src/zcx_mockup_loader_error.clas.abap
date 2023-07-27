@@ -7,7 +7,7 @@ class ZCX_MOCKUP_LOADER_ERROR definition
 public section.
 
   types:
-    ty_rc type c length 2.
+    ty_rc type c length 4.
 
   interfaces IF_T100_MESSAGE .
 

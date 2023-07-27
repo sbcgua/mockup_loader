@@ -59,15 +59,17 @@ class lcl_connect_string_parser implementation.
   endmethod.
 
   method parse_connect_string.
-    " for mock          `METHOD -> file`
-    " for mock w/params `METHOD -> file [param = key]`
-    " for mock w/params `METHOD -> file [param = key, param2 = key2]`
-    " for mock w/params `METHOD -> file [param = "const"]`
-    " for proxy         `METHOD -> *`
-    " for corresponding `METHOD -> ~file`
-    " for single field  `METHOD -> file(field_name)`
-    " for fixed value   `METHOD -> =value`
-    " for deep          `METHOD -> :deep:value`
+    " for mock           `METHOD -> file`
+    " for mock w/params  `METHOD -> file [param = key]`
+    " for mock w/params  `METHOD -> file [param = key, param2 = key2]`
+    " for mock w/params  `METHOD -> file [param = "const"]`
+    " for proxy          `METHOD -> *`
+    " for corresponding  `METHOD -> ~file`
+    " for single field   `METHOD -> file(field_name)`
+    " to check exists    `METHOD -> file(?)`
+    " for fixed value    `METHOD -> =value`
+    " for deep           `METHOD -> :deep:value`
+    " to spec. out param `METHOD(out_param) -> file`
     " TODO 'directives' - :xxx:
 
     data lv_pair type string.
@@ -109,6 +111,26 @@ class lcl_connect_string_parser implementation.
       ms_parsed-field_only = substring(
         val = ms_parsed-field_only
         len = lv_len - 1 ).
+      condense ms_parsed-field_only.
+      if ms_parsed-field_only is initial.
+        zcx_mockup_loader_error=>raise( msg = 'missing field only' code = 'MFO' ).
+      endif.
+    endif.
+
+    " Output param
+    split ms_parsed-method_name at '(' into ms_parsed-method_name ms_parsed-output_param.
+    if ms_parsed-output_param is not initial.
+      lv_len = strlen( ms_parsed-output_param ).
+      if substring( val = ms_parsed-output_param off = lv_len - 1 ) <> ')'.
+        zcx_mockup_loader_error=>raise( msg = 'missing output param' code = 'WOP' ).
+      endif.
+      ms_parsed-output_param = substring(
+        val = ms_parsed-output_param
+        len = lv_len - 1 ).
+      condense ms_parsed-output_param.
+      if ms_parsed-output_param is initial.
+        zcx_mockup_loader_error=>raise( msg = 'missing output param' code = 'MOP' ).
+      endif.
     endif.
 
     condense ms_parsed-method_name.
