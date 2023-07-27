@@ -173,6 +173,7 @@ The above `connect_method/proxy` configuration can be also done with a single st
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight [connid = "XYZ_ID"]' ).
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight(this_field_only) [connid = i_connid]' ).
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight(?) [connid = i_connid]' ). " boolc("record exists")
+  lo_factory->connect( 'tab_export(e_tab) -> EXAMPLE/sflight' ). " write output to e_tab param (exports)
   lo_factory->connect( 'tab_return -> ~EXAMPLE/sflight [connid = i_connid]' ). " corresponding only
   lo_factory->connect( 'tab_return -> =exact_value' ).
   lo_factory->connect( 'tab_return -> *' ). " proxy

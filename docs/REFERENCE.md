@@ -755,6 +755,9 @@ Supports:
 " filter data where `field` of an item = the given `const` (see `i_sift_const` above)
 'get_my_data -> my_mock [field = "const"]'
 
+" Put loaded data to the exp_tab param (exporting or changing)
+'get_my_data(exp_tab) -> EXAMPLE/sflight'
+
 " copy only corresponding fields, for the case when target structure/table is **SMALLER** than the source.
 " So `non-strict` reading in a opposite sense
 'get_my_data -> ~my_mock'
