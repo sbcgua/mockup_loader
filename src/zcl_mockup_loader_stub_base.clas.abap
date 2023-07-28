@@ -29,6 +29,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
     methods get_mock_data
       importing
         i_method_name type abap_methname
+        i_output_param type abap_parmname optional " actually just for UTs, in reality it is not optional
         i_sift_value  type any optional
       returning
         value(r_data) type ref to data
@@ -200,7 +201,10 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
   method get_mock_data.
     " find config
     field-symbols <conf> like line of mt_config.
-    read table mt_config with key method_name = i_method_name assigning <conf>.
+    read table mt_config assigning <conf>
+      with key
+        method_name = i_method_name
+        output_param = i_output_param.
     if <conf> is not assigned.
       return.
     endif.

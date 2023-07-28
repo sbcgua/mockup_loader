@@ -92,27 +92,33 @@ interface zif_mockup_loader
     tty_stub_sift_values type standard table of ref to data with default key.
 
   types:
-    begin of ty_mock_config,
-      method_name     type abap_methname,
-      mock_name       type string,
-      load_strict     type abap_bool,
-      corresponding   type abap_bool,
-      sift_param      type string,
-      sift_const      type string,
-      mock_tab_key    type abap_compname,
+    begin of ty_load_config,
       output_param    type abap_parmname,
       output_pkind    type abap_parmkind,
       output_type     type ref to cl_abap_datadescr,
-      as_proxy        type abap_bool,
+      mock_name       type string,
+      load_strict     type abap_bool,
+      corresponding   type abap_bool,
+      sift_param      type string, " rename to query ?
+      sift_const      type string,
+      mock_tab_key    type abap_compname,
       field_only      type abap_parmname,
       const_value     type string,
       deep            type abap_bool,
       filter          type tty_stub_filter_params,
-    end of ty_mock_config .
+    end of ty_load_config,
+    tty_load_config type standard table of ty_load_config with key output_param.
   types:
-    tt_mock_config type standard table of ty_mock_config with key method_name .
+    begin of ty_mock_config,
+      method_name     type abap_methname,
+      as_proxy        type abap_bool.
+      include type ty_load_config. " TODO refactor
+      types:
+    end of ty_mock_config.
   types:
-    tty_mock_config_by_methname type sorted table of ty_mock_config with unique key method_name .
+    tt_mock_config type standard table of ty_mock_config with key method_name.
+  types:
+    tty_mock_config_by_methname type sorted table of ty_mock_config with non-unique key method_name.
 
 **********************************************************************
 * METHODS

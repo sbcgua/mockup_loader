@@ -80,6 +80,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       raising
         zcx_mockup_loader_error .
 
+    methods build_stub_source_code.
     methods _src
       importing
         iv_src_line type string.
@@ -210,6 +211,104 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
   endmethod.
 
 
+  method build_stub_source_code.
+
+    field-symbols <method> like line of md_if_desc->methods.
+    field-symbols <conf> like line of mt_config.
+    field-symbols <param> like line of <method>-parameters.
+    field-symbols <f> like line of <conf>-filter.
+
+    data lv_data_def_added type abap_bool.
+    data l_param_kind like <param>-parm_kind.
+
+    clear mt_src.
+
+    _src( 'program.' ).
+    _src( 'class lcl_mockup_loader_stub definition final' ).
+    _src( '  inheriting from zcl_mockup_loader_stub_base.' ).
+    _src( '  public section.' ).
+    _src( |    interfaces { mv_interface_name }.| ).
+    _src( 'endclass.' ).
+
+    _src( 'class lcl_mockup_loader_stub implementation.' ).
+
+    loop at md_if_desc->methods assigning <method>.
+      _src( |  method { mv_interface_name }~{ <method>-name }.| ).
+
+      lv_data_def_added = abap_false.
+      loop at <method>-parameters assigning <param> where parm_kind = 'E' or parm_kind = 'C'.
+        _src( |    clear { <param>-name }.| ).
+      endloop.
+      _src( |    if is_disabled( '{ <method>-name }' ) = abap_true.| ).
+      _src( '      return.' ).
+      _src( '    endif.' ).
+      _src( |    increment_call_count( '{ <method>-name }' ).| ).
+
+      loop at mt_config assigning <conf> where method_name = <method>-name.
+
+        if <conf>-as_proxy = abap_true.
+
+          " Proxy connection can only be one so data will be defined once
+          _src( '    data lt_params type abap_parmbind_tab.' ).
+          _src( '    data ls_param like line of lt_params.' ).
+
+          loop at <method>-parameters assigning <param>.
+            l_param_kind = <param>-parm_kind.
+            translate l_param_kind using 'IEEICCRR'. " Importing -> exporting, etc
+            _src( |    ls_param-name = '{ <param>-name }'.| ).
+            _src( |    ls_param-kind = '{ l_param_kind }'.| ).
+            _src( |    get reference of { <param>-name } into ls_param-value.| ).
+            _src( '    insert ls_param into table lt_params.' ).
+          endloop.
+
+          _src( |    call method mo_proxy_target->('{ mv_interface_name }~{ <method>-name }')| ).
+          _src( |      parameter-table lt_params.| ).
+
+        elseif <conf>-const_value is not initial.
+
+          _src( |    { <conf>-output_param } = '{ <conf>-const_value }'.| ).
+
+        else.
+
+          if lv_data_def_added = abap_false.
+            _src( '    data lt_sift_values type zif_mockup_loader=>tty_stub_sift_values.' ).
+            _src( '    data lr_sift_val type ref to data.' ).
+            _src( '    data lr_data type ref to data.' ).
+            _src( '    field-symbols <container> type any.' ).
+            lv_data_def_added = abap_true.
+          endif.
+
+          if <conf>-filter is not initial.
+            _src( '    clear lt_sift_values.' ).
+            loop at <conf>-filter assigning <f> where sift_param is not initial.
+              _src( |    get reference of { <f>-sift_param } into lr_sift_val.| ).
+              _src( '    append lr_sift_val to lt_sift_values.' ).
+            endloop.
+          endif.
+
+          " TODO try catch ?
+          _src( '    lr_data = get_mock_data(' ).
+          if <conf>-sift_param is not initial.
+            _src( |      i_sift_value = { <conf>-sift_param }| ).
+          elseif <conf>-filter is not initial.
+            _src( '      i_sift_value = lt_sift_values' ).
+          endif.
+          _src( |      i_output_param = '{ <conf>-output_param }'| ).
+          _src( |      i_method_name = '{ <method>-name }' ).| ).
+          _src( '    assign lr_data->* to <container>.' ).
+          _src( |    { <conf>-output_param } = <container>.| ).
+
+        endif.
+      endloop.
+
+      _src( '  endmethod.' ).
+    endloop.
+
+    _src( 'endclass.' ).
+
+  endmethod.
+
+
   method connect.
 
     data ls_params type zif_mockup_loader=>ty_mock_config.
@@ -263,12 +362,12 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       <f>-sift_param   = to_upper( <f>-sift_param ).
     endloop.
 
-    handle_duplicates( ls_config ).
-
     " Validate and save config
     ls_config = build_config(
       id_if_desc = md_if_desc
       i_config   = ls_config ).
+
+    handle_duplicates( ls_config ).
     append ls_config to mt_config.
 
     r_instance = me.
@@ -337,88 +436,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       l_prog_name   type string,
       l_class_name  type string.
 
-    field-symbols <method> like line of md_if_desc->methods.
-    field-symbols <conf> like line of mt_config.
-
-    clear mt_src.
-
-    _src( 'program.' ).                                        "#EC NOTEXT
-    _src( 'class lcl_mockup_loader_stub definition final' ).   "#EC NOTEXT
-    _src( '  inheriting from zcl_mockup_loader_stub_base.' ).  "#EC NOTEXT
-    _src( '  public section.' ).                               "#EC NOTEXT
-    _src( |    interfaces { mv_interface_name }.| ).           "#EC NOTEXT
-    _src( 'endclass.' ).                                       "#EC NOTEXT
-
-    _src( 'class lcl_mockup_loader_stub implementation.' ).    "#EC NOTEXT
-
-    loop at md_if_desc->methods assigning <method>.
-      unassign <conf>.
-      read table mt_config assigning <conf> with key method_name = <method>-name.
-      _src( |  method { mv_interface_name }~{ <method>-name }.| ).
-
-      _src( |    if is_disabled( '{ <method>-name }' ) = abap_true.| ). "#EC NOTEXT
-      if <conf> is assigned and <conf>-output_param is not initial.
-        _src( |      clear { <conf>-output_param }.| ).         "#EC NOTEXT
-      endif.
-      _src( '      return.' ).                                "#EC NOTEXT
-      _src( '    endif.' ).                                   "#EC NOTEXT
-      _src( |    increment_call_count( '{ <method>-name }' ).| ). "#EC NOTEXT
-
-      if <conf> is assigned.
-        if <conf>-as_proxy = abap_true.
-
-          field-symbols <param> like line of <method>-parameters.
-          data l_param_kind like <param>-parm_kind.
-
-          _src( '    data lt_params type abap_parmbind_tab.' ). "#EC NOTEXT
-          _src( '    data ls_param like line of lt_params.' ).  "#EC NOTEXT
-
-          loop at <method>-parameters assigning <param>.
-            l_param_kind = <param>-parm_kind.
-            translate l_param_kind using 'IEEICCRR'. " Importing -> exporting, etc
-            _src( |    ls_param-name = '{ <param>-name }'.| ) ##NO_TEXT.
-            _src( |    ls_param-kind = '{ l_param_kind }'.| ) ##NO_TEXT.
-            _src( |    get reference of { <param>-name } into ls_param-value.| ) ##NO_TEXT.
-            _src( '    insert ls_param into table lt_params.' ). "#EC NOTEXT
-          endloop.
-
-          _src( |    call method mo_proxy_target->('{ mv_interface_name }~{ <method>-name }')| ). "#EC NOTEXT
-          _src( |      parameter-table lt_params.| ).            "#EC NOTEXT
-
-        elseif <conf>-const_value is not initial.
-
-          _src( |    { <conf>-output_param } = '{ <conf>-const_value }'.| )   ##NO_TEXT.
-
-        else.
-
-          if <conf>-filter is not initial.
-            _src( '    data lt_sift_values type zif_mockup_loader=>tty_stub_sift_values.' ) ##NO_TEXT.
-            _src( '    data lr_sift_val type ref to data.' )       ##NO_TEXT.
-            field-symbols <f> like line of <conf>-filter.
-            loop at <conf>-filter assigning <f> where sift_param is not initial.
-              _src( |    get reference of { <f>-sift_param } into lr_sift_val.| )  ##NO_TEXT.
-              _src( |    append lr_sift_val to lt_sift_values.| )  ##NO_TEXT.
-            endloop.
-          endif.
-
-          _src( '    data lr_data type ref to data.' ).          "#EC NOTEXT
-          _src( '    lr_data = get_mock_data(' ).                "#EC NOTEXT
-          if <conf>-sift_param is not initial.
-            _src( |      i_sift_value = { <conf>-sift_param }| ) ##NO_TEXT.
-          elseif <conf>-filter is not initial.
-            _src( '      i_sift_value = lt_sift_values' )       ##NO_TEXT.
-          endif.
-          _src( |      i_method_name = '{ <method>-name }' ).| ) ##NO_TEXT.
-          _src( '    field-symbols <container> type any.' ).      "#EC NOTEXT
-          _src( '    assign lr_data->* to <container>.' ).        "#EC NOTEXT
-          _src( |    { <conf>-output_param } = <container>.| )   ##NO_TEXT.
-
-        endif.
-      endif.
-      _src( '  endmethod.' ).                                   "#EC NOTEXT
-    endloop.
-
-    _src( 'endclass.' ).                                        "#EC NOTEXT
+    build_stub_source_code( ).
 
     generate subroutine pool mt_src name l_prog_name message lv_message. "#EC CI_GENERATE
     l_class_name = |\\PROGRAM={ l_prog_name }\\CLASS=LCL_MOCKUP_LOADER_STUB|.
@@ -436,15 +454,39 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
 
   method handle_duplicates.
 
-    read table mt_config with key method_name = is_config-method_name transporting no fields.
-    if sy-subrc = 0. " already connected
+    data lv_raise type abap_bool.
+    field-symbols <m> like line of mt_config.
+
+    read table mt_config assigning <m> with key method_name = is_config-method_name.
+
+    if sy-subrc <> 0. " no connection yet - no problem
+      return.
+    endif.
+
+    if is_config-as_proxy = abap_true or <m>-as_proxy = abap_true.
       if mv_allow_overrides = abap_true.
-        delete mt_config index sy-tabix.
+        delete mt_config where method_name = is_config-method_name.
       else.
-        zcx_mockup_loader_error=>raise(
-          msg  = |Method { is_config-method_name } is already connected|
-          code = 'MC' ). "#EC NOTEXT
+        lv_raise = abap_true.
       endif.
+    else. " maybe it's connecting another param of the same method
+      read table mt_config transporting no fields
+        with key
+          method_name  = is_config-method_name
+          output_param = is_config-output_param.
+      if sy-subrc = 0. " found with the same output_param
+        if mv_allow_overrides = abap_true.
+          delete mt_config index sy-tabix.
+        else.
+          lv_raise = abap_true.
+        endif.
+      endif.
+    endif.
+
+    if lv_raise = abap_true.
+      zcx_mockup_loader_error=>raise(
+        msg  = |Method { is_config-method_name } is already connected|
+        code = 'MC' ). "#EC NOTEXT
     endif.
 
   endmethod.

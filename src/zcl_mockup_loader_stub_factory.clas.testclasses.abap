@@ -39,6 +39,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods connect_string_multi_1value for testing raising zcx_mockup_loader_error.
     methods connect_string_has for testing raising zcx_mockup_loader_error.
     methods connect_string_w_outparam for testing raising zcx_mockup_loader_error.
+    methods connect_string_multiouts for testing raising zcx_mockup_loader_error.
 
     " HELPERS
     methods get_ml
@@ -281,6 +282,24 @@ class ltcl_mockup_stub_factory_test implementation.
       cl_abap_unit_assert=>assert_equals( exp = 'MC' act = lo_ex->code ).
     endtry.
 
+    " But allow another param connection
+    create object lo_dc
+      exporting
+        io_proxy_target = lcl_test_proxy_target=>create( )
+        ii_ml_instance = lo_ml
+        i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+    lo_dc->connect_method(
+      i_method_name     = 'TAB_EXPORT'
+      i_output_param    = 'E_TAB'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+    lo_dc->connect_method(
+      i_method_name     = 'TAB_EXPORT'
+      i_output_param    = 'E_BY_DATE'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( lo_dc->mt_config )
+      exp = 2 ).
+
     " Override
     create object lo_dc
       exporting
@@ -312,6 +331,29 @@ class ltcl_mockup_stub_factory_test implementation.
     cl_abap_unit_assert=>assert_equals(
       act = ls_config-as_proxy
       exp = abap_true ).
+
+    " Replace with forward
+    create object lo_dc
+      exporting
+        ii_ml_instance    = lo_ml
+        io_proxy_target   = lcl_test_proxy_target=>create( )
+        i_allow_overrides = abap_true
+        i_interface_name  = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+    lo_dc->connect_method(
+      i_method_name     = 'TAB_EXPORT'
+      i_output_param    = 'E_TAB'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+    lo_dc->connect_method(
+      i_method_name     = 'TAB_EXPORT'
+      i_output_param    = 'E_BY_DATE'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( lo_dc->mt_config )
+      exp = 2 ).
+    lo_dc->forward_method( 'TAB_EXPORT' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( lo_dc->mt_config )
+      exp = 1 ).
 
   endmethod.
 
@@ -1641,13 +1683,6 @@ class ltcl_mockup_stub_factory_test implementation.
     factory = get_factory( ml ).
     factory->connect( 'tab_export(e_tab)->example/sflight [connid=i_connid]' ).
 
-*    factory->connect_method(
-*      i_method_name  = 'tab_export'
-*      i_mock_name    = 'example/sflight'
-*      i_output_param = 'e_tab'
-*      i_sift_param   = 'i_connid'
-*      i_mock_tab_key = 'connid' ).
-
     stub ?= factory->generate_stub( ).
 
     stub->tab_export(
@@ -1671,6 +1706,54 @@ class ltcl_mockup_stub_factory_test implementation.
     cl_abap_unit_assert=>assert_equals(
       act = lines( act )
       exp = 0 ).
+
+  endmethod.
+
+  method connect_string_multiouts.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data act type standard table of sflight.
+    data act2 type standard table of sflight.
+    data act_i type i.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    factory->connect( 'tab_export(e_tab)->example/sflight [connid=i_connid]' ).
+    factory->connect( 'tab_export(e_by_date)->example/sflight [fldate=i_by_date]' ).
+    factory->connect( 'tab_export(e_val)-> =10' ).
+
+    stub ?= factory->generate_stub( ).
+
+    stub->tab_export(
+      exporting
+        i_connid = '2000'
+        i_by_date = '20150101'
+      importing
+        e_val     = act_i
+        e_tab     = act
+        e_by_date = act2 ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = act_i
+      exp = 10 ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( act )
+      exp = 2 ).
+    read table act transporting no fields with key price = '200.00'.
+    cl_abap_unit_assert=>assert_subrc( ).
+    read table act transporting no fields with key price = '300.00'.
+    cl_abap_unit_assert=>assert_subrc( ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( act2 )
+      exp = 2 ).
+    read table act2 transporting no fields with key price = '200.00'.
+    cl_abap_unit_assert=>assert_subrc( ).
+    read table act2 transporting no fields with key price = '100.00'.
+    cl_abap_unit_assert=>assert_subrc( ).
 
   endmethod.
 
