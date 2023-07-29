@@ -113,7 +113,7 @@ interface zif_mockup_loader
       method_name     type abap_methname,
       as_proxy        type abap_bool.
       include type ty_load_config. " TODO refactor
-      types:
+  types:
     end of ty_mock_config.
   types:
     tt_mock_config type standard table of ty_mock_config with key method_name.
