@@ -8,7 +8,7 @@ Legend
 + : added
 - : removed
 
-v2.2.2, 2023-07-??
+v2.2.2, 2023-07-29
 ------------------
 + connect support specifying output param `connect(x(export_param)->page...)` - #46
 + connect supports several output param (see docs) - #46
