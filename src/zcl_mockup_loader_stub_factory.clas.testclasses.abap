@@ -11,6 +11,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods returning_value for testing raising zcx_mockup_loader_error.
     methods corresponding for testing raising zcx_mockup_loader_error.
     methods controls for testing raising zcx_mockup_loader_error.
+    methods test_internal_dump for testing raising zcx_mockup_loader_error.
 
     methods parse_string_negative for testing.
     methods parse_string_positive for testing raising zcx_mockup_loader_error.
@@ -1754,6 +1755,34 @@ class ltcl_mockup_stub_factory_test implementation.
     cl_abap_unit_assert=>assert_subrc( ).
     read table act2 transporting no fields with key price = '100.00'.
     cl_abap_unit_assert=>assert_subrc( ).
+
+  endmethod.
+
+  method test_internal_dump.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data lx type ref to cx_sy_no_handler.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    factory->connect( 'tab_return->example/missing-file' ). " wrong table
+
+    stub ?= factory->generate_stub( ).
+
+    try.
+      stub->tab_return( i_connid = '2000' ).
+      cl_abap_unit_assert=>fail( ).
+    catch cx_sy_no_handler into lx.
+      cl_abap_unit_assert=>assert_equals(
+        act = lx->classname
+        exp = 'ZCX_MOCKUP_LOADER_ERROR' ).
+      " TODO refactor: probably create a no_check exception to bubble
+      " from stub_base get_mock_data
+      " use previous for original error
+      " can test with CX_FATAL_EXCEPTION first
+    endtry.
 
   endmethod.
 
