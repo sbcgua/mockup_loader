@@ -5,34 +5,42 @@ class ltcl_mockup_stub_factory_test definition final
 
   private section.
     methods main_test_stub for testing.
-    methods connect_deep_corresponding for testing raising zcx_mockup_loader_error.
-    methods connect_and_overrides for testing raising zcx_mockup_loader_error.
-    methods build_config for testing raising zcx_mockup_loader_error.
-    methods build_config_filter_type for testing raising zcx_mockup_loader_error.
-    methods build_config_multi_filter_neg for testing raising zcx_mockup_loader_error.
     methods instantiation for testing.
     methods forward_method for testing.
     methods proxy_forwarding for testing raising zcx_mockup_loader_error.
+    methods returning_value for testing raising zcx_mockup_loader_error.
+    methods corresponding for testing raising zcx_mockup_loader_error.
+    methods controls for testing raising zcx_mockup_loader_error.
+    methods test_internal_dump for testing raising zcx_mockup_loader_error.
+
+    methods parse_string_negative for testing.
+    methods parse_string_positive for testing raising zcx_mockup_loader_error.
+    methods parse_string_multi for testing raising zcx_mockup_loader_error.
+    methods parse_string_w_outparam for testing raising zcx_mockup_loader_error.
+
+    methods build_config for testing raising zcx_mockup_loader_error.
+    methods build_config_filter_type for testing raising zcx_mockup_loader_error.
+    methods build_config_multi_filter_neg for testing raising zcx_mockup_loader_error.
+
     methods filtering for testing raising zcx_mockup_loader_error.
     methods filtering_w_const for testing raising zcx_mockup_loader_error.
     methods filtering_w_struc_param for testing raising zcx_mockup_loader_error.
     methods filtering_multi for testing raising zcx_mockup_loader_error.
     methods filtering_multi_and_const for testing raising zcx_mockup_loader_error.
-    methods returning_value for testing raising zcx_mockup_loader_error.
-    methods corresponding for testing raising zcx_mockup_loader_error.
     methods filter_by_range_param for testing raising zcx_mockup_loader_error.
-    methods controls for testing raising zcx_mockup_loader_error.
+
+    methods connect_deep_corresponding for testing raising zcx_mockup_loader_error.
+    methods connect_and_overrides for testing raising zcx_mockup_loader_error.
     methods const_value for testing raising zcx_mockup_loader_error.
     methods connect_string_positive for testing raising zcx_mockup_loader_error.
-    methods parse_string_negative for testing.
-    methods parse_string_positive for testing raising zcx_mockup_loader_error.
-    methods parse_string_multi for testing raising zcx_mockup_loader_error.
     methods connect_w_default_mock for testing raising zcx_mockup_loader_error.
     methods connect_string_multi for testing raising zcx_mockup_loader_error.
     methods connect_string_or for testing raising zcx_mockup_loader_error.
     methods connect_string_multi_const for testing raising zcx_mockup_loader_error.
     methods connect_string_multi_1value for testing raising zcx_mockup_loader_error.
     methods connect_string_has for testing raising zcx_mockup_loader_error.
+    methods connect_string_w_outparam for testing raising zcx_mockup_loader_error.
+    methods connect_string_multiouts for testing raising zcx_mockup_loader_error.
 
     " HELPERS
     methods get_ml
@@ -275,6 +283,24 @@ class ltcl_mockup_stub_factory_test implementation.
       cl_abap_unit_assert=>assert_equals( exp = 'MC' act = lo_ex->code ).
     endtry.
 
+    " But allow another param connection
+    create object lo_dc
+      exporting
+        io_proxy_target = lcl_test_proxy_target=>create( )
+        ii_ml_instance = lo_ml
+        i_interface_name = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+    lo_dc->connect_method(
+      i_method_name     = 'TAB_EXPORT'
+      i_output_param    = 'E_TAB'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+    lo_dc->connect_method(
+      i_method_name     = 'TAB_EXPORT'
+      i_output_param    = 'E_BY_DATE'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( lo_dc->mt_config )
+      exp = 2 ).
+
     " Override
     create object lo_dc
       exporting
@@ -306,6 +332,29 @@ class ltcl_mockup_stub_factory_test implementation.
     cl_abap_unit_assert=>assert_equals(
       act = ls_config-as_proxy
       exp = abap_true ).
+
+    " Replace with forward
+    create object lo_dc
+      exporting
+        ii_ml_instance    = lo_ml
+        io_proxy_target   = lcl_test_proxy_target=>create( )
+        i_allow_overrides = abap_true
+        i_interface_name  = 'ZIF_MOCKUP_LOADER_STUB_DUMMY'.
+    lo_dc->connect_method(
+      i_method_name     = 'TAB_EXPORT'
+      i_output_param    = 'E_TAB'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+    lo_dc->connect_method(
+      i_method_name     = 'TAB_EXPORT'
+      i_output_param    = 'E_BY_DATE'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( lo_dc->mt_config )
+      exp = 2 ).
+    lo_dc->forward_method( 'TAB_EXPORT' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( lo_dc->mt_config )
+      exp = 1 ).
 
   endmethod.
 
@@ -1206,6 +1255,13 @@ class ltcl_mockup_stub_factory_test implementation.
       cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'SF' ).
     endtry.
 
+    try.
+      lcl_connect_string_parser=>parse( 'methodX -> mock_path()' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'MFO' ).
+    endtry.
+
   endmethod.
 
   method parse_string_positive.
@@ -1426,6 +1482,41 @@ class ltcl_mockup_stub_factory_test implementation.
 
   endmethod.
 
+  method parse_string_w_outparam.
+
+    data lx type ref to zcx_mockup_loader_error.
+    data ls_exp type zif_mockup_loader=>ty_mock_config.
+    field-symbols <f> like line of ls_exp-filter.
+
+    ls_exp-method_name   = 'method'.
+    ls_exp-mock_name     = 'path'.
+    ls_exp-mock_tab_key  = 'f1'.
+    ls_exp-sift_param    = 'p1'.
+    ls_exp-output_param  = 'out'.
+    cl_abap_unit_assert=>assert_equals(
+      act = lcl_connect_string_parser=>parse( 'method(out)->path [ f1 = p1 ]' )
+      exp = ls_exp ).
+
+    try.
+      lcl_connect_string_parser=>parse( 'method()->path [ f1 = p1 ]' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals(
+        act = lx->code
+        exp = 'MOP' ).
+    endtry.
+
+    try.
+      lcl_connect_string_parser=>parse( 'method(out->path [ f1 = p1 ]' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals(
+        act = lx->code
+        exp = 'WOP' ).
+    endtry.
+
+  endmethod.
+
   method connect_w_default_mock.
 
     data factory type ref to zcl_mockup_loader_stub_factory.
@@ -1581,4 +1672,118 @@ class ltcl_mockup_stub_factory_test implementation.
       exp = '' ).
 
   endmethod.
+
+  method connect_string_w_outparam.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data act type standard table of sflight.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    factory->connect( 'tab_export(e_tab)->example/sflight [connid=i_connid]' ).
+
+    stub ?= factory->generate_stub( ).
+
+    stub->tab_export(
+      exporting
+        i_connid = '2000'
+      importing
+        e_tab    = act ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( act )
+      exp = 2 ).
+    read table act transporting no fields with key price = '200.00'.
+    cl_abap_unit_assert=>assert_subrc( ).
+    read table act transporting no fields with key price = '300.00'.
+    cl_abap_unit_assert=>assert_subrc( ).
+
+    stub->tab_export(
+      exporting
+        i_connid = '9999'
+      importing
+        e_tab    = act ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( act )
+      exp = 0 ).
+
+  endmethod.
+
+  method connect_string_multiouts.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data act type standard table of sflight.
+    data act2 type standard table of sflight.
+    data act_i type i.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    factory->connect( 'tab_export(e_tab)->example/sflight [connid=i_connid]' ).
+    factory->connect( 'tab_export(e_by_date)->example/sflight [fldate=i_by_date]' ).
+    factory->connect( 'tab_export(e_val)-> =10' ).
+
+    stub ?= factory->generate_stub( ).
+
+    stub->tab_export(
+      exporting
+        i_connid = '2000'
+        i_by_date = '20150101'
+      importing
+        e_val     = act_i
+        e_tab     = act
+        e_by_date = act2 ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = act_i
+      exp = 10 ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( act )
+      exp = 2 ).
+    read table act transporting no fields with key price = '200.00'.
+    cl_abap_unit_assert=>assert_subrc( ).
+    read table act transporting no fields with key price = '300.00'.
+    cl_abap_unit_assert=>assert_subrc( ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( act2 )
+      exp = 2 ).
+    read table act2 transporting no fields with key price = '200.00'.
+    cl_abap_unit_assert=>assert_subrc( ).
+    read table act2 transporting no fields with key price = '100.00'.
+    cl_abap_unit_assert=>assert_subrc( ).
+
+  endmethod.
+
+  method test_internal_dump.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data lx type ref to cx_sy_no_handler.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    factory->connect( 'tab_return->example/missing-file' ). " wrong table
+
+    stub ?= factory->generate_stub( ).
+
+    try.
+      stub->tab_return( i_connid = '2000' ).
+      cl_abap_unit_assert=>fail( ).
+    catch cx_sy_no_handler into lx.
+      cl_abap_unit_assert=>assert_equals(
+        act = lx->classname
+        exp = 'ZCX_MOCKUP_LOADER_ERROR' ).
+      " TODO refactor: probably create a no_check exception to bubble
+      " from stub_base get_mock_data
+      " use previous for original error
+      " can test with CX_FATAL_EXCEPTION first
+    endtry.
+
+  endmethod.
+
 endclass.

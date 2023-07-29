@@ -733,7 +733,20 @@ A more readable alternative of `connect_method` and `connect_proxy`. Allows to c
 lo_factory->connect( 'get_my_data -> mock_path/sheet' ).
 ```
 
-Supports:
+Syntax (simplified, see examples below for all features):
+
+- `<method>(<optional_output_param>) -> <source_file>(<optional_field_spec>) [<filter_conditions>]`
+- `method` - the method to connect
+- `optional_output_param` - output param to load data into, if empty - automatically detects and uses the `returning` paramter
+- `source_file` - path to mock file. Prepend with `'~'` for *corresponding* load. Use `'*'` for forwarding.
+- `optional_field_spec` optionally, select the returning field of a structure
+- `filter_conditions` - selection criteria as `field_in_data = method_param`.
+  - Where `field_in_data` is a field in mock file (filtering by fields, missing in the resulting structure, is supported!).
+  - `method_param` - importing paramater of the method. Supports ranges. Supports addressing fields of a param. E.g. `vbeln = i_vbrk-vbeln`.
+  - there may be several criterias, listed with `','`/`'&'` for **AND** and `'|'` for **OR** logical operation.
+- You can also connect one method several times for several output parameters (exporting/changing)
+
+Examples:
 
 ```abap
 " map `get_my_data` method to `my_mock`
@@ -755,6 +768,9 @@ Supports:
 " filter data where `field` of an item = the given `const` (see `i_sift_const` above)
 'get_my_data -> my_mock [field = "const"]'
 
+" Put loaded data to the exp_tab param (exporting or changing)
+'get_my_data(exp_tab) -> EXAMPLE/sflight'
+
 " copy only corresponding fields, for the case when target structure/table is **SMALLER** than the source.
 " So `non-strict` reading in a opposite sense
 'get_my_data -> ~my_mock'
@@ -765,7 +781,7 @@ Supports:
 " importantly, if the `field` is **NOT** in the target structure **you still CAN use it** for filtering.
 'get_my_data -> ~my_mock [field = i_param]'
 
-" forward the method
+" forward the method to the proxy object
 'get_my_data -> *'
 
 " return one specific field of the first filtered item
@@ -779,6 +795,10 @@ Supports:
 
 " enable deep structures (can be also `~:deep:` = deep + corresponding)
 'get_my_data -> :deep: value'
+
+" connecting multiple outgoing parameters requires several calls
+'get_sales_invoice(e_vbrk) -> vbrk_mock [vbeln = i_vbeln]'
+'get_sales_invoice(e_vbrp) -> vbrp_mock [vbeln = i_vbeln]'
 ```
 
 The string is case **in**sensitive so you can specify most of parameters using the case you prefer. Also spaces are trimmed. The following strings would give the same result:

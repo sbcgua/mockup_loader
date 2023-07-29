@@ -1,3 +1,4 @@
+<!-- markdownlint-disable first-line-heading -->
 ![abaplint](https://github.com/sbcgua/mockup_loader/workflows/abaplint/badge.svg)
 ![Version](https://img.shields.io/github/v/tag/sbcgua/mockup_loader.svg)
 ![Abap package version](https://img.shields.io/endpoint?url=https://shield.abap.space/version-shield-json/github/sbcgua/mockup_loader/src/zif_mockup_loader.intf.abap/version)
@@ -173,6 +174,7 @@ The above `connect_method/proxy` configuration can be also done with a single st
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight [connid = "XYZ_ID"]' ).
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight(this_field_only) [connid = i_connid]' ).
   lo_factory->connect( 'tab_return -> EXAMPLE/sflight(?) [connid = i_connid]' ). " boolc("record exists")
+  lo_factory->connect( 'tab_export(e_tab) -> EXAMPLE/sflight' ). " write output to e_tab param (exports)
   lo_factory->connect( 'tab_return -> ~EXAMPLE/sflight [connid = i_connid]' ). " corresponding only
   lo_factory->connect( 'tab_return -> =exact_value' ).
   lo_factory->connect( 'tab_return -> *' ). " proxy
@@ -185,6 +187,10 @@ The above `connect_method/proxy` configuration can be also done with a single st
   lo_factory->connect( 'tab_return -> ./sflight [connid = i_connid, fldate = i_fldate]' ). " AND
   lo_factory->connect( 'tab_return -> ./sflight [connid = i_connid & fldate = i_fldate]' ). " AND
   lo_factory->connect( 'tab_return -> ./sflight [connid = i_connid | fldate = i_fldate]' ). " OR
+
+  " Multiple connection for exporting params of the same method is supported
+  lo_factory->connect( 'read_sales_invoice(e_vbrk) -> ./vbrk [vbeln = i_vbeln]' ).
+  lo_factory->connect( 'read_sales_invoice(e_vbrp) -> ./vbrp [vbeln = i_vbeln]' ). " Same method, another exporting param
 ```
 
 #### Stub control

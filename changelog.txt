@@ -8,6 +8,11 @@ Legend
 + : added
 - : removed
 
+v2.2.2, 2023-07-??
+------------------
++ connect support specifying output param `connect(x(export_param)->page...)` - #46
++ connect supports several output param (see docs) - #46
+
 v2.2.1, 2023-07-25
 ------------------
 + main class supports `cd` to "change dir" and support "./..." paths, addition to #36
