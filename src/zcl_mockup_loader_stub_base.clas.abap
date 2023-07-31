@@ -99,6 +99,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
       ls_filter_param-mock_tab_key = is_conf-mock_tab_key.
       ls_filter_param-sift_param   = is_conf-sift_param.
       ls_filter_param-sift_const   = is_conf-sift_const.
+      ls_filter_param-sift_initial = is_conf-sift_initial.
       get reference of i_sift_value into lr_sift_value.
 
       ls_filter = build_filter_item(
@@ -165,7 +166,8 @@ CLASS ZCL_MOCKUP_LOADER_STUB_BASE IMPLEMENTATION.
     endif.
 
     " if sift const, build filter. param xor const is checked in the factory
-    if is_filter_param-sift_const is not initial.
+    if is_filter_param-sift_const is not initial or is_filter_param-sift_initial = abap_true.
+      " TODO maybe split processing of initial and non initial, maybe event create correct type
       rs_filter = zcl_mockup_loader_utils=>conv_single_val_to_filter(
         i_where = is_filter_param-mock_tab_key
         i_value = is_filter_param-sift_const ).

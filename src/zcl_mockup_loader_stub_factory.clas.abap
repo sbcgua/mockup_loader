@@ -341,6 +341,8 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     ls_config-corresponding = i_corresponding.
     ls_config-sift_param    = to_upper( i_sift_param ).
     ls_config-sift_const    = i_sift_const.
+    ls_config-sift_initial  = boolc(
+      i_sift_param is initial and i_sift_const is initial and i_sift_const is supplied ).
     ls_config-mock_tab_key  = to_upper( i_mock_tab_key ).
     ls_config-output_param  = to_upper( i_output_param ).
     ls_config-field_only    = to_upper( i_field_only ).
@@ -348,7 +350,8 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     ls_config-deep          = i_deep.
     ls_config-filter        = i_filter.
 
-    if mv_default_mock_root is not initial and strlen( ls_config-mock_name ) >= 2 and ls_config-mock_name+0(2) = './'.
+    if mv_default_mock_root is not initial
+      and strlen( ls_config-mock_name ) >= 2 and ls_config-mock_name+0(2) = './'.
       ls_config-mock_name = replace(
         val  = ls_config-mock_name
         sub  = `.`
@@ -567,12 +570,16 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     loop at lt_filter assigning <f>.
 
       " check filters
-      if boolc( <f>-sift_param is initial and <f>-sift_const is initial )
+      if <f>-sift_const is not initial and <f>-sift_initial = abap_true.
+        zcx_mockup_loader_error=>raise(
+          msg  = |In { i_config-method_name } const has value and supposed initial|
+          code = 'CVI' ). "#EC NOTEXT
+      elseif boolc( <f>-sift_param is initial and <f>-sift_const is initial and <f>-sift_initial = abap_false )
         <> boolc( <f>-mock_tab_key is initial ). " XOR
         zcx_mockup_loader_error=>raise(
           msg  = |In { i_config-method_name } specify both sift_param/const and mock_tab_key|
           code = 'MS' ). "#EC NOTEXT
-      elseif <f>-sift_param is not initial and <f>-sift_const is not initial.
+      elseif <f>-sift_param is not initial and ( <f>-sift_const is not initial or <f>-sift_initial = abap_true ).
         zcx_mockup_loader_error=>raise(
           msg  = |In { i_config-method_name } Cannot combine sift_param and sift_const|
           code = 'CS' ). "#EC NOTEXT

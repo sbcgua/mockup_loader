@@ -863,6 +863,7 @@ class ltcl_mockup_stub_factory_test implementation.
     data ml type ref to zcl_mockup_loader.
     data lt_exp type flighttab.
     data lt_act type flighttab.
+    data lx type ref to zcx_mockup_loader_error.
 
     ml      = get_ml( ).
     factory = get_factory( ml ).
@@ -882,7 +883,6 @@ class ltcl_mockup_stub_factory_test implementation.
       exp = lt_exp ).
 
     " Fail on const and param
-    data lx type ref to zcx_mockup_loader_error.
     factory = get_factory( ml ).
     try.
       factory->connect_method(
@@ -897,6 +897,45 @@ class ltcl_mockup_stub_factory_test implementation.
         act = lx->code
         exp = 'CS' ).
     endtry.
+
+    " Empty const
+    factory = get_factory( ml ).
+    try.
+      factory->connect_method(
+        i_mock_tab_key    = 'CURRENCY' " this field is empty in mock tab
+        i_method_name     = 'TAB_RETURN'
+        i_mock_name       = 'EXAMPLE/sflight' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals(
+        act = lx->code
+        exp = 'MS' ).
+    endtry.
+
+    factory = get_factory( ml ).
+    factory->connect_method(
+      i_mock_tab_key    = 'CURRENCY' " this field is empty in mock tab
+      i_sift_const      = ''
+      i_method_name     = 'TAB_RETURN'
+      i_mock_name       = 'EXAMPLE/sflight' ).
+    stub ?= factory->generate_stub( ).
+    lt_act = stub->tab_return( i_connid = '9999' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( lt_act )
+      exp = 3 ).
+
+    factory = get_factory( ml ).
+    factory->connect_method(
+      i_method_name     = 'TAB_RETURN'
+      i_mock_tab_key    = 'RESULT'
+      i_sift_const      = ''
+      i_corresponding   = abap_true
+      i_mock_name       = 'EXAMPLE/testcases' ).
+    stub ?= factory->generate_stub( ).
+    lt_act = stub->tab_return( i_connid = '0000' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( lt_act )
+      exp = 1 ).
 
   endmethod.
 
@@ -1228,6 +1267,13 @@ class ltcl_mockup_stub_factory_test implementation.
     endtry.
 
     try.
+      lcl_connect_string_parser=>parse( 'methodX -> mock_path [ field = ]' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'SF' ).
+    endtry.
+
+    try.
       lcl_connect_string_parser=>parse( 'methodX -> mock_path [f1=p1&f2=p2|f3=p3 ]' ).
       cl_abap_unit_assert=>fail( ).
     catch zcx_mockup_loader_error into lx.
@@ -1350,6 +1396,19 @@ class ltcl_mockup_stub_factory_test implementation.
     ls_exp-const_value   = ''.
     cl_abap_unit_assert=>assert_equals(
       act = lcl_connect_string_parser=>parse( 'methodX -> mock_path [ field = "const" ]' )
+      exp = ls_exp ).
+
+    clear ls_exp.
+    ls_exp-method_name   = 'methodX'.
+    ls_exp-mock_name     = 'mock_path'.
+    ls_exp-corresponding = ''.
+    ls_exp-sift_const    = ''.
+    ls_exp-sift_initial  = abap_true.
+    ls_exp-mock_tab_key  = 'field'.
+    ls_exp-field_only    = ''.
+    ls_exp-const_value   = ''.
+    cl_abap_unit_assert=>assert_equals(
+      act = lcl_connect_string_parser=>parse( 'methodX -> mock_path [ field = "" ]' )
       exp = ls_exp ).
 
     clear ls_exp.

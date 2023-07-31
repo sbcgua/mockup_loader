@@ -84,6 +84,7 @@ interface zif_mockup_loader
       mock_tab_key    type abap_compname,
       sift_param      type string,
       sift_const      type string,
+      sift_initial    type abap_bool,
       operation       type ty_filter_operation, " Internal usage for the moment
     end of ty_stub_filter_param.
   types:
@@ -101,6 +102,7 @@ interface zif_mockup_loader
       corresponding   type abap_bool,
       sift_param      type string, " rename to query ?
       sift_const      type string,
+      sift_initial    type abap_bool,
       mock_tab_key    type abap_compname,
       field_only      type abap_parmname,
       const_value     type string,

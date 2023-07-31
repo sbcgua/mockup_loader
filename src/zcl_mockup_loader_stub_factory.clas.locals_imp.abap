@@ -253,6 +253,7 @@ class lcl_connect_string_parser implementation.
         len = lv_len - 2
         off = 1 ).
       condense rs_filter_param-sift_const.
+      rs_filter_param-sift_initial = boolc( rs_filter_param-sift_const is initial ).
       clear rs_filter_param-sift_param.
     endif.
 
