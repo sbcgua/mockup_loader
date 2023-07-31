@@ -193,7 +193,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     if <c>-name = '?'. " check existance only
       if id_output_type->type_kind <> cl_abap_typedescr=>typekind_char.
         zcx_mockup_loader_error=>raise(
-          msg  = 'Expecter CHAR returning type'
+          msg  = |In { i_config-method_name } expected CHAR returning type|
           code = 'CR' ). "#EC NOTEXT
       endif.
       <c>-name = '____DUMMY'. " In hope this is not a real field ever :)
@@ -506,15 +506,15 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
         code = 'MM' ). "#EC NOTEXT
     elseif i_config-mock_name is initial and i_config-const_value is initial.
       zcx_mockup_loader_error=>raise(
-        msg  = 'Specify mock_name'
+        msg  = |In { i_config-method_name } specify mock_name|
         code = 'MK' ). "#EC NOTEXT
     elseif i_config-mock_name is not initial and i_config-const_value is not initial.
       zcx_mockup_loader_error=>raise(
-        msg  = 'Either mock or const value is allowed'
+        msg  = |In { i_config-method_name } either mock or const value is allowed|
         code = 'CV' ). "#EC NOTEXT
     elseif i_config-corresponding = abap_true and i_config-field_only is not initial.
       zcx_mockup_loader_error=>raise(
-        msg  = 'Cannot combine field_only and corresponding'
+        msg  = |In { i_config-method_name } cannot combine field_only and corresponding|
         code = 'PC' ). "#EC NOTEXT
     endif.
 
@@ -556,7 +556,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     endif.
     if <f> is not initial and i_config-filter is not initial.
       zcx_mockup_loader_error=>raise(
-        msg  = 'Cannot specify single and multi filter at the same time'
+        msg  = |In { i_config-method_name } cannot specify single and multi filter at the same time|
         code = 'BF' ). "#EC NOTEXT
     endif.
     if <f> is initial.
@@ -570,11 +570,11 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       if boolc( <f>-sift_param is initial and <f>-sift_const is initial )
         <> boolc( <f>-mock_tab_key is initial ). " XOR
         zcx_mockup_loader_error=>raise(
-          msg  = 'Specify both sift_param/const and mock_tab_key'
+          msg  = |In { i_config-method_name } specify both sift_param/const and mock_tab_key|
           code = 'MS' ). "#EC NOTEXT
       elseif <f>-sift_param is not initial and <f>-sift_const is not initial.
         zcx_mockup_loader_error=>raise(
-          msg  = 'Cannot combine sift_param and sift_const'
+          msg  = |In { i_config-method_name } Cannot combine sift_param and sift_const|
           code = 'CS' ). "#EC NOTEXT
       endif.
 
@@ -582,7 +582,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       read table rt_sift_types transporting no fields with key mock_tab_key = <f>-mock_tab_key.
       if sy-subrc = 0.
         zcx_mockup_loader_error=>raise(
-          msg  = |Filter duplication for field { <f>-mock_tab_key }|
+          msg  = |In { i_config-method_name } filter duplication for field { <f>-mock_tab_key }|
           code = 'DF' ). "#EC NOTEXT
       endif.
 
@@ -611,21 +611,21 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       read table i_method-parameters with key parm_kind = 'R' into es_output_param. " returning
       if sy-subrc is not initial.
         zcx_mockup_loader_error=>raise(
-          msg  = 'Method has no returning params and output_param was not specified'
+          msg  = |In { i_config-method_name } no returning params and output_param was not specified|
           code = 'MR' ). "#EC NOTEXT
       endif.
     else.
       read table i_method-parameters with key name = i_config-output_param into es_output_param.
       if sy-subrc is not initial.
         zcx_mockup_loader_error=>raise(
-          msg  = |Param { i_config-output_param } not found|
+          msg  = |In { i_config-method_name } param { i_config-output_param } not found|
           code = 'PF' ). "#EC NOTEXT
       endif.
     endif.
 
     if es_output_param-parm_kind = 'I'.
       zcx_mockup_loader_error=>raise(
-        msg  = |Param { i_config-output_param } is importing|
+        msg  = |In { i_config-method_name } param { i_config-output_param } is importing|
         code = 'PI' ). "#EC NOTEXT
     endif.
 
@@ -636,19 +636,19 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     if i_config-field_only is not initial.
       if ed_output_type->kind <> cl_abap_typedescr=>kind_elem. " Elementary
         zcx_mockup_loader_error=>raise(
-          msg  = |Field only param { es_output_param-name } must be elementary|
+          msg  = |In { i_config-method_name } field only param { es_output_param-name } must be elementary|
           code = 'PL' ). "#EC NOTEXT
       endif.
     elseif i_config-const_value is not initial.
       if ed_output_type->kind <> cl_abap_typedescr=>kind_elem. " Elementary
         zcx_mockup_loader_error=>raise(
-          msg  = |Const value result { es_output_param-name } must be elementary|
+          msg  = |In { i_config-method_name } const value result { es_output_param-name } must be elementary|
           code = 'CE' ). "#EC NOTEXT
       endif.
     else.
       if not ed_output_type->kind co 'ST'. " Table or structure
         zcx_mockup_loader_error=>raise(
-          msg  = |Param { es_output_param-name } must be table or structure|
+          msg  = |In { i_config-method_name } param { es_output_param-name } must be table or structure|
           code = 'PT' ). "#EC NOTEXT
       endif.
     endif.
@@ -676,7 +676,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
         parameter_not_found = 1 ).
     if sy-subrc = 1.
       zcx_mockup_loader_error=>raise(
-        msg  = |Param { lv_part1 } not found|
+        msg  = |In { iv_method_name } param { lv_part1 } not found|
         code = 'PF' ). "#EC NOTEXT
     endif.
 
@@ -685,7 +685,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
     else. " structured param
       if ld_type->kind <> cl_abap_typedescr=>kind_struct. " TODO class ref ?
         zcx_mockup_loader_error=>raise(
-          msg  = |Param { lv_part1 } must be a structure|
+          msg  = |In { iv_method_name } param { lv_part1 } must be a structure|
           code = 'PE' ). "#EC NOTEXT
       endif.
 
@@ -700,7 +700,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
           component_not_found = 1 ).
       if sy-subrc = 1.
         zcx_mockup_loader_error=>raise(
-          msg  = |Param { lv_part2 } not found|
+          msg  = |In { iv_method_name } param { lv_part2 } not found|
           code = 'PF' ). "#EC NOTEXT
       endif.
 
@@ -711,7 +711,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       if ld_type->kind = cl_abap_typedescr=>kind_table.
         if zcl_mockup_loader_utils=>is_range( ld_type ) = abap_false.
           zcx_mockup_loader_error=>raise(
-            msg  = |Param { lv_final_param } must be elementary or range|
+            msg  = |In { iv_method_name } param { lv_final_param } must be elementary or range|
             code = 'PE' ). "#EC NOTEXT
         endif.
 
@@ -721,7 +721,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
         ld_type   = ld_struc->get_component_type( 'LOW' ).
       else.
         zcx_mockup_loader_error=>raise(
-          msg  = |Param { lv_final_param } must be elementary or range|
+          msg  = |In { iv_method_name } param { lv_final_param } must be elementary or range|
           code = 'PE' ). "#EC NOTEXT
       endif.
     endif.
