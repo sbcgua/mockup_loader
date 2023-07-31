@@ -8,6 +8,11 @@ Legend
 + : added
 - : removed
 
+v2.2.3, 2023-
+------------------
+* better exception structure and informative messages for stubbing
+* support initial sift_const values
+
 v2.2.2, 2023-07-29
 ------------------
 + connect support specifying output param `connect(x(export_param)->page...)` - #46
