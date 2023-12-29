@@ -585,15 +585,7 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
           code = 'CS' ). "#EC NOTEXT
       endif.
 
-      " duplication check
-      read table rt_sift_types transporting no fields with key mock_tab_key = <f>-mock_tab_key.
-      if sy-subrc = 0.
-        zcx_mockup_loader_error=>raise(
-          msg  = |In { i_config-method_name } filter duplication for field { <f>-mock_tab_key }|
-          code = 'DF' ). "#EC NOTEXT
-      endif.
-
-      " get types
+      " get param types
       data ls_filter_type like line of rt_sift_types.
       if <f>-sift_param is not initial.
         ls_filter_type-type = validate_sift_and_get_type(
@@ -603,8 +595,27 @@ CLASS ZCL_MOCKUP_LOADER_STUB_FACTORY IMPLEMENTATION.
       else.
         ls_filter_type-type = cl_abap_typedescr=>describe_by_name( 'STRING' ).
       endif.
-      ls_filter_type-mock_tab_key = <f>-mock_tab_key.
-      append ls_filter_type to rt_sift_types.
+
+      " duplication check
+      data ls_existing_sift like line of rt_sift_types.
+      read table rt_sift_types into ls_existing_sift with key mock_tab_key = <f>-mock_tab_key.
+      if sy-subrc = 0.
+        " duplication can occure, but the basic type must be the same (e.g. LIFNR = KUNNR)
+        data lo_el type ref to cl_abap_elemdescr.
+        data lr_test_data type ref to data.
+        lo_el ?= ls_filter_type-type.
+        create data lr_test_data type handle lo_el.
+        lo_el ?= ls_existing_sift-type.
+        if lo_el->applies_to_data_ref( lr_test_data ) = abap_false.
+          zcx_mockup_loader_error=>raise(
+            msg  = |In { i_config-method_name } incompat. filter dupl. for field { <f>-mock_tab_key }|
+            code = 'DF' ). "#EC NOTEXT
+        endif.
+      else.
+        " Add into structure, can be used for "corresponding"
+        ls_filter_type-mock_tab_key = <f>-mock_tab_key.
+        append ls_filter_type to rt_sift_types.
+      endif.
 
     endloop.
 
