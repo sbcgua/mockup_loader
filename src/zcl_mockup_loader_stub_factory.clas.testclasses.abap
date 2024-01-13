@@ -36,6 +36,7 @@ class ltcl_mockup_stub_factory_test definition final
     methods connect_w_default_mock for testing raising zcx_mockup_loader_error.
     methods connect_string_multi for testing raising zcx_mockup_loader_error.
     methods connect_string_or for testing raising zcx_mockup_loader_error.
+    methods connect_string_or_same_field for testing raising zcx_mockup_loader_error.
     methods connect_string_multi_const for testing raising zcx_mockup_loader_error.
     methods connect_string_multi_1value for testing raising zcx_mockup_loader_error.
     methods connect_string_has for testing raising zcx_mockup_loader_error.
@@ -79,6 +80,8 @@ class lcl_test_proxy_target implementation.
     r_val = |{ i_p1 } { i_p2 }|.
   endmethod.
   method zif_mockup_loader_stub_dummy~tab_return.
+  endmethod.
+  method zif_mockup_loader_stub_dummy~tab_return_2conn.
   endmethod.
   method zif_mockup_loader_stub_dummy~tab_return_w_date.
   endmethod.
@@ -615,7 +618,7 @@ class ltcl_mockup_stub_factory_test implementation.
       <f>-sift_param   = 'I_CONNID'.
       append initial line to ls_conf-filter assigning <f>.
       <f>-mock_tab_key = 'CONNID'.
-      <f>-sift_param   = 'I_CONNID'.
+      <f>-sift_param   = 'I_FLDATE'.
 
       zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
@@ -1652,6 +1655,41 @@ class ltcl_mockup_stub_factory_test implementation.
     cl_abap_unit_assert=>assert_equals(
       act = lt_act
       exp = lt_exp ).
+
+  endmethod.
+
+  method connect_string_or_same_field.
+
+    data factory type ref to zcl_mockup_loader_stub_factory.
+    data stub type ref to zif_mockup_loader_stub_dummy.
+    data ml type ref to zcl_mockup_loader.
+    data lt_exp type flighttab.
+    data lt_act type flighttab.
+
+    ml      = get_ml( ).
+    factory = get_factory( ml ).
+    lt_exp  = get_sflights( ml ).
+    delete lt_exp where not ( connid = '1000' ).
+
+    factory->connect( 'tab_return_2conn->example/sflight [connid = i_connid | connid = i_connid2 ]' ).
+
+    stub ?= factory->generate_stub( ).
+    lt_act = stub->tab_return_2conn(
+      i_connid  = '1000'
+      i_connid2 = '9999' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
+      exp = lt_exp ).
+    lt_act = stub->tab_return_2conn(
+      i_connid  = '9999'
+      i_connid2 = '1000' ).
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
+      exp = lt_exp ).
+    lt_act = stub->tab_return_2conn(
+      i_connid  = '9999'
+      i_connid2 = '9999' ).
+    cl_abap_unit_assert=>assert_initial( lt_act ).
 
   endmethod.
 
