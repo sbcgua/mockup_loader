@@ -158,7 +158,7 @@ class ltcl_test implementation.
       o_ml = zcl_mockup_loader=>create(
         i_type       = 'MIME'
         i_path       = 'ZMOCKUP_LOADER_EXAMPLE'
-        i_encoding   = zif_mockup_loader_constants=>encoding_utf16
+        i_encoding   = zif_mockup_loader=>encoding_utf16
         i_amt_format = ' ,' ).
     catch cx_static_check into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
