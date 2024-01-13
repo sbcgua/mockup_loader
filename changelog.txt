@@ -12,6 +12,7 @@ v2.2.3, 2023-
 ------------------
 * better exception structure and informative messages for stubbing
 * support initial sift_const values
++ several params to one field - #48
 
 v2.2.2, 2023-07-29
 ------------------

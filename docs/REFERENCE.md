@@ -758,6 +758,7 @@ Examples:
 " multiple filter params are supported (both ',' and '&' mean AND)
 'get_my_data -> my_mock [field = i_param, field2 = i_params2]'
 'get_my_data -> my_mock [field = i_param & field2 = i_params2]'
+'get_my_data -> my_mock [field = i_param | field = i_params2]' " can be also several params to one field
 
 " Also OR multicondition is supported, BUT NOT SIMULTANEOUSLY WITH AND
 'get_my_data -> my_mock [field = i_param | field2 = i_params2]'

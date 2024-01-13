@@ -187,6 +187,7 @@ The above `connect_method/proxy` configuration can be also done with a single st
   lo_factory->connect( 'tab_return -> ./sflight [connid = i_connid, fldate = i_fldate]' ). " AND
   lo_factory->connect( 'tab_return -> ./sflight [connid = i_connid & fldate = i_fldate]' ). " AND
   lo_factory->connect( 'tab_return -> ./sflight [connid = i_connid | fldate = i_fldate]' ). " OR
+  lo_factory->connect( 'tab_return_2conn -> ./sflight [connid = i_connid | connid = i_connid2 ]' ). " Same field multi-filtert
 
   " Multiple connection for exporting params of the same method is supported
   lo_factory->connect( 'read_sales_invoice(e_vbrk) -> ./vbrk [vbeln = i_vbeln]' ).
