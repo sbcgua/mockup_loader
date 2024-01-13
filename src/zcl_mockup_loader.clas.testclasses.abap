@@ -226,7 +226,7 @@ class ltcl_test_mockup_loader implementation.
       i_type       = 'MIME'
       i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
       i_amt_format = ''     " default
-      i_encoding   = zif_mockup_loader_constants=>encoding_utf8 ). " utf8
+      i_encoding   = zif_mockup_loader=>encoding_utf8 ). " utf8
   endmethod.
 
   method setup.
@@ -488,7 +488,7 @@ class ltcl_test_mockup_loader implementation.
     try.
       li = o->set_params(
         i_amt_format = ''
-        i_encoding   = zif_mockup_loader_constants=>encoding_utf16 ).
+        i_encoding   = zif_mockup_loader=>encoding_utf16 ).
       cl_abap_unit_assert=>assert_not_initial( li ).
 
       o->load_data(
@@ -694,7 +694,7 @@ class ltcl_test_mockup_loader implementation.
     l_str_exp = '<?xml version="1.0"?><mytag>mydata</mytag>'.
 
     " .XML
-    lo_conv = cl_abap_conv_in_ce=>create( encoding = zif_mockup_loader_constants=>encoding_utf8 ).
+    lo_conv = cl_abap_conv_in_ce=>create( encoding = zif_mockup_loader=>encoding_utf8 ).
     l_xstr_act = o->load_blob( 'testdir/test_raw.xml' ).
     lo_conv->convert(
       exporting
@@ -729,7 +729,7 @@ class ltcl_test_mockup_loader implementation.
     endtry.
 
     " Case insensitive path
-    lo_conv = cl_abap_conv_in_ce=>create( encoding = zif_mockup_loader_constants=>encoding_utf8 ).
+    lo_conv = cl_abap_conv_in_ce=>create( encoding = zif_mockup_loader=>encoding_utf8 ).
     l_xstr_act = o->load_blob( 'TESTDIR/test_raw.xml' ).
     lo_conv->convert(
       exporting
@@ -1021,7 +1021,7 @@ class ltcl_test_mockup_loader implementation.
       i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
       i_cache_timeout = 5
       i_amt_format = ''     " default
-      i_encoding   = zif_mockup_loader_constants=>encoding_utf8 ).
+      i_encoding   = zif_mockup_loader=>encoding_utf8 ).
 
     cl_abap_unit_assert=>assert_equals(
       act = lines( zcl_mockup_loader=>gt_zip_cache )
@@ -1037,7 +1037,7 @@ class ltcl_test_mockup_loader implementation.
       i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
       i_cache_timeout = 5
       i_amt_format = ''     " default
-      i_encoding   = zif_mockup_loader_constants=>encoding_utf8 ).
+      i_encoding   = zif_mockup_loader=>encoding_utf8 ).
 
     cl_abap_unit_assert=>assert_equals(
       act = lines( zcl_mockup_loader=>gt_zip_cache )

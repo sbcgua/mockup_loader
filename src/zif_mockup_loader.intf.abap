@@ -5,6 +5,10 @@ interface zif_mockup_loader
   constants origin type string value 'https://github.com/sbcgua/mockup_loader'. "#EC NOTEXT
   constants license type string value 'MIT'. "#EC NOTEXT
 
+  " codepages
+  constants encoding_utf8  type abap_encoding value '4110'. "#EC NOTEXT
+  constants encoding_utf16 type abap_encoding value '4103'. "#EC NOTEXT
+
   " Dependencies
   constants c_required_text2tab_ver type string value 'v2.3.2'.
 

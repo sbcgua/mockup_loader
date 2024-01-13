@@ -449,7 +449,7 @@ class ltcl_test_mockup_store implementation.
       i_type       = 'MIME'
       i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
       i_amt_format = ''
-      i_encoding   = zif_mockup_loader_constants=>encoding_utf8 ).
+      i_encoding   = zif_mockup_loader=>encoding_utf8 ).
 
     get_dummy_data( importing e_dummy_tab   = dummy_tab_exp ).
 

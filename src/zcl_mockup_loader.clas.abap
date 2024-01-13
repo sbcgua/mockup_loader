@@ -539,9 +539,9 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
     " Remove unicode signatures
     case mv_encoding.
-      when zif_mockup_loader_constants=>encoding_utf8.
+      when zif_mockup_loader=>encoding_utf8.
         shift l_xstring left deleting leading cl_abap_char_utilities=>byte_order_mark_utf8 in byte mode.
-      when zif_mockup_loader_constants=>encoding_utf16.
+      when zif_mockup_loader=>encoding_utf16.
         shift l_xstring left deleting leading cl_abap_char_utilities=>byte_order_mark_little in byte mode.
     endcase.
 
@@ -748,7 +748,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     endif.
 
     if i_encoding is initial.
-      me->mv_encoding = zif_mockup_loader_constants=>encoding_utf8.
+      me->mv_encoding = zif_mockup_loader=>encoding_utf8.
     else.
       me->mv_encoding = i_encoding.
     endif.
