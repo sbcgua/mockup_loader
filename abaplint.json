@@ -182,7 +182,9 @@
       "checkForms": true
     },
     "method_parameter_names": {
-      "exclude": [],
+      "exclude": [
+        "zif_mockup_loader.intf.abap"
+      ],
       "patternKind": "required",
       "ignoreNames": [],
       "ignorePatterns": [],

@@ -18,6 +18,8 @@ endclass.
 
 class ltcl_mockup_loader_mock implementation.
 
+  method zif_mockup_loader~load.
+  endmethod.
   method zif_mockup_loader~load_blob.
   endmethod.
   method zif_mockup_loader~set_params.
@@ -27,6 +29,8 @@ class ltcl_mockup_loader_mock implementation.
   method zif_mockup_loader~cd.
   endmethod.
   method zif_mockup_loader~to.
+  endmethod.
+  method zif_mockup_loader~into.
   endmethod.
 
   method zif_mockup_loader~load_data.
