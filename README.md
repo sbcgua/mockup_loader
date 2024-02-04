@@ -93,6 +93,19 @@ BUKRS BELNR GJAHR BUZEI BSCHL KOART ...
 
 On-the-fly data filtering is supported. For more information see [REFERENCE.md](docs/REFERENCE.md).
 
+### Alternative invocation (Experimental)
+
+Calls with `importing`/`exporting` are less readable, especially when stack together. In search of more readable options there are several experimental forms to achieve the same result. Use with care yet, they might be changed. Feedback via github issues is appreaciated.
+
+```abap
+ml->to( lr )->load_data( 'test-mock-path' ).
+" where lr is a `ref to data`
+" works nicely in newer releases, but requires extra `get reference of` in older
+" so also:
+ml->load( 'test-mock-path' )->into( changing data = lt_data ).
+" which works in 7.02 and reads well enough
+```
+
 ## Data delivery
 
 ### Interface stubbing

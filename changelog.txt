@@ -8,12 +8,13 @@ Legend
 + : added
 - : removed
 
-v2.2.3, 2023-
+v2.2.3, 2024-02-04
 ------------------
 - [BREAKING] move constants to zif_mockup_loader and delete zif_mockup_loader_constants interface - #34
 * better exception structure and informative messages for stubbing
 * support initial sift_const values
 + several params to one field - #48
++ `load` - `into` method pair - a more readable way ot loading data, see the docs #52
 
 v2.2.2, 2023-07-29
 ------------------

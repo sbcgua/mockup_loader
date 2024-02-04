@@ -183,6 +183,7 @@ class ltcl_test_mockup_loader definition for testing
     methods zip_cache                for testing raising zcx_mockup_loader_error.
     methods cd                       for testing raising zcx_mockup_loader_error.
     methods to_container             for testing raising zcx_mockup_loader_error.
+    methods into_container           for testing raising zcx_mockup_loader_error.
 
     methods get_dummy_data
       importing
@@ -1119,6 +1120,63 @@ class ltcl_test_mockup_loader implementation.
 
     li->to( lr )->load_data( 'testdir/testfile_complete' ).
     cl_abap_unit_assert=>assert_equals( act = ls_act2 exp = ls_act1 ).
+
+  endmethod.
+
+  method into_container.
+
+    data li type ref to zif_mockup_loader.
+    data lx type ref to zcx_mockup_loader_error.
+    data ls_exp type ty_dummy.
+    data ls_act type ty_dummy.
+    data lt_exp type tt_dummy.
+    data lt_act type tt_dummy.
+
+    li = o.
+
+    " Usual load
+    li->load_data(
+      exporting
+        i_obj       = 'testdir/testfile_complete'
+      importing
+        e_container = ls_exp ).
+    cl_abap_unit_assert=>assert_not_initial( ls_exp ).
+
+    li->load_data(
+      exporting
+        i_obj       = 'testdir/testfile_complete'
+      importing
+        e_container = lt_exp ).
+    cl_abap_unit_assert=>assert_not_initial( lt_exp ).
+
+    " ideaomatic load
+    li->load( 'testdir/testfile_complete' )->into( changing data = ls_act ).
+    cl_abap_unit_assert=>assert_equals( act = ls_act exp = ls_exp ).
+
+    " load table
+    li->load( 'testdir/testfile_complete' )->into( changing data = lt_act ).
+    cl_abap_unit_assert=>assert_equals( act = lt_act exp = lt_exp ).
+
+    " filter
+    " No deep test, because it just calls load_data insede which is well tested
+    li->load(
+      i_obj   = 'testdir/testfile_complete'
+      i_where = 'tnumber = 2016' )->into( changing data = lt_act ).
+    cl_abap_unit_assert=>assert_equals( act = lines( lt_exp ) exp = 3 ).
+    cl_abap_unit_assert=>assert_equals( act = lines( lt_act ) exp = 1 ).
+
+    " Renames
+    data:
+      begin of ls_act_renamed,
+        ychar type c length 8,
+      end of ls_act_renamed.
+    li->load(
+      i_obj           = 'testdir/testfile_complete'
+      i_corresponding = abap_true
+      i_rename_fields = 'tchar:ychar' )->into( changing data = ls_act_renamed ).
+    cl_abap_unit_assert=>assert_equals(
+      act = ls_act_renamed-ychar
+      exp = 'Trololo1' ).
 
   endmethod.
 

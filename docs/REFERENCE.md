@@ -276,7 +276,7 @@ For the first record the mockup loader will find file `path_to_lines_file.txt` a
 
 #### "Best practice" suggestions
 
-To improve code readability within numerous datasets we use macros.
+To improve code readability within numerous datasets we ~~use macros~~ use `load-into` pair (skip this section and see _"LOAD and INTO"_ section below).
 
 ```abap
 define load_mockup_no_strict.
@@ -307,7 +307,7 @@ Sets the default mock path to a replacement for `'./'` placeholder. E.g.
 li_ml->cd( 'set_default_mock' )->load_data( ... './sheet' ... ).
 ```
 
-### TO
+### TO (Experimental)
 
 ```abap
 IMPORTING
@@ -319,6 +319,14 @@ Binds a container for the next load_data call. This is more a syntaxic sugar to 
 
 ```abap
 li_ml->to( #ref( lt_tab ) )->load_data( './sheet' ).
+```
+
+### LOAD and INTO (Experimental)
+
+Two experimental methods to be used together. Acomplish same as `load_data` yet in a more readable way. `LOAD` has same importing parameters as `load_data`. `INTO` has one changeing parameter `data`. An alternative to `TO` which works very nicely in 7.4+ but not that readable in earlier releases.
+
+```abap
+li_ml->load( './sheet' )->into( changing data = lt_tab ).
 ```
 
 ### LOAD_RAW
