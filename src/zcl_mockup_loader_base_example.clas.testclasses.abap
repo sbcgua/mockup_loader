@@ -14,7 +14,7 @@ class ltcl_test_base implementation.
 
   method class_setup.
 
-*          gi_ml->cd( 'testdir' ). " Only if
+*  gi_ml->cd( 'testdir' ). " Only if
 
   endmethod.
 

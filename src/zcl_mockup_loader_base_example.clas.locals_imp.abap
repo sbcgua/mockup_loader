@@ -25,6 +25,11 @@ class lcl_dao implementation.
     mi_instance = ii_instance.
   endmethod.
 
+  method zif_mockup_loader_stub_dummy~tab_return.
+    " Real selects here ...
+    select * from sflight into table r_tab where connid = i_connid.
+  endmethod.
+
 endclass.
 
 **********************************************************************

@@ -10,6 +10,7 @@ class ZCL_MOCKUP_LOADER_BASE_EXAMPLE definition
     " THIS CLASS IN AN EXAMPLE
     " It was marked as final intentionally (to avoid occasional subclassing), real class would be not final
 
+    " To check the instaled version of the ML
     constants gc_required_mockup_loader_ver type string value 'v2.2.2'.
 
     methods constructor.
@@ -18,9 +19,9 @@ class ZCL_MOCKUP_LOADER_BASE_EXAMPLE definition
   protected section.
 
     class-data:
-      gi_ml           type ref to zif_mockup_loader,
-      gi_proxy_target type ref to zif_mockup_loader_stub_dummy,
-      gi_da_stub      type ref to zif_mockup_loader_stub_dummy.
+      gi_ml           type ref to zif_mockup_loader,            " ML instance
+      gi_proxy_target type ref to zif_mockup_loader_stub_dummy, " Custom mock, when needed
+      gi_dao_stub     type ref to zif_mockup_loader_stub_dummy. " Stub instance
 
     " This is shortcut to set up custom mock to pass calls to
     class-methods _set_proxy_target
@@ -57,8 +58,9 @@ class ZCL_MOCKUP_LOADER_BASE_EXAMPLE definition
     class-data gt_connections type string_table.
 
     methods _inject_db_mock.
+
     class-methods _setup_loader.
-    class-methods _gen_stub.
+    class-methods _generate_stub.
     class-methods _connect_defaults.
     class-methods _count_markers
       importing
@@ -87,8 +89,8 @@ CLASS ZCL_MOCKUP_LOADER_BASE_EXAMPLE IMPLEMENTATION.
 
 
   method constructor.
-    if gi_da_stub is not bound. "skip if generated
-      _gen_stub( ).
+    if gi_dao_stub is not bound. "skip if generated
+      _generate_stub( ).
     endif.
     _inject_db_mock( ).
   endmethod.
@@ -130,7 +132,7 @@ CLASS ZCL_MOCKUP_LOADER_BASE_EXAMPLE IMPLEMENTATION.
   endmethod.
 
 
-  method _gen_stub.
+  method _generate_stub.
 
     data lx type ref to cx_static_check.
 
@@ -140,7 +142,7 @@ CLASS ZCL_MOCKUP_LOADER_BASE_EXAMPLE IMPLEMENTATION.
       data ld_stub_intf type ref to cl_abap_refdescr.
       field-symbols <c> like line of gt_connections.
 
-      ld_stub_intf ?= cl_abap_typedescr=>describe_by_data( gi_da_stub ). " Avoid hardcoding names when possible
+      ld_stub_intf ?= cl_abap_typedescr=>describe_by_data( gi_dao_stub ). " Avoid hardcoding names when possible
 
       create object lo_stub_factory
         exporting
@@ -153,7 +155,7 @@ CLASS ZCL_MOCKUP_LOADER_BASE_EXAMPLE IMPLEMENTATION.
         lo_stub_factory->connect( <c> ).
       endloop.
 
-      gi_da_stub ?= lo_stub_factory->generate_stub( ).
+      gi_dao_stub ?= lo_stub_factory->generate_stub( ).
 
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>fail( lx->get_text( ) ).
@@ -191,9 +193,9 @@ CLASS ZCL_MOCKUP_LOADER_BASE_EXAMPLE IMPLEMENTATION.
 
 
   method _inject_db_mock.
-    " In real life this shuold be a global class which is a real commonly used DAO or some kind of DAO factory
-    " DAO = data accessor object
-    lcl_dao=>inject_instance( gi_da_stub ).
+    " In real life this shoold be a global class which is a real commonly used DAO or some kind of DAO factory
+    " DAO = "data accessor object"
+    lcl_dao=>inject_instance( gi_dao_stub ).
   endmethod.
 
 
