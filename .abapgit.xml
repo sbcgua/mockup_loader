@@ -18,6 +18,7 @@
     <item>/abaplint.json</item>
     <item>/ci/</item>
    </IGNORE>
+   <VERSION_CONSTANT>zif_mockup_loader=&gt;version</VERSION_CONSTANT>
   </DATA>
  </asx:values>
 </asx:abap>
