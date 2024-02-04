@@ -59,7 +59,7 @@ class ZCL_MOCKUP_LOADER definition
         value(ro_instance) type ref to zcl_mockup_loader
       raising
         zcx_mockup_loader_error .
-    class-methods create_from_sys_settings
+    class-methods create_from_sys_settings " OBSOLETE, may be removed in future
       importing
         !i_path type string
         !i_type type zif_mockup_loader=>ty_src_type default 'MIME'
@@ -87,6 +87,16 @@ class ZCL_MOCKUP_LOADER definition
   private section.
 
     types:
+      begin of ty_load_params,
+        obj_path         type string,
+        is_strict        type abap_bool,
+        is_corresponding type abap_bool,
+        is_deep          type abap_bool,
+        filter           type zif_mockup_loader=>tt_filter,
+        rename_map       type zcl_text2tab_utils=>tt_field_name_map,
+      end of ty_load_params.
+
+    types:
       begin of ty_zip_cache,
         key type string,
         zip_blob type xstring,
@@ -103,6 +113,7 @@ class ZCL_MOCKUP_LOADER definition
     data mt_ignore_conv_exits type zif_mockup_loader=>tty_conv_exits.
     data mv_dir type string.
     data mr_ref_to_container type ref to data.
+    data ms_next_load_params type ty_load_params.
 
     class-methods create_zip_instance
       importing
@@ -361,6 +372,8 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
 
   method create_from_sys_settings.
+
+    " OBSOLETE, may be removed in future
 
     types:
       begin of lty_settings,
@@ -666,8 +679,49 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   endmethod.
 
 
+  method zif_mockup_loader~into.
+
+    load_data(
+      exporting
+        i_obj           = ms_next_load_params-obj_path
+        i_strict        = ms_next_load_params-is_strict
+        i_corresponding = ms_next_load_params-is_corresponding
+        i_deep          = ms_next_load_params-is_deep
+        i_where         = ms_next_load_params-filter
+        i_rename_fields = ms_next_load_params-rename_map
+      importing
+        e_container = data ).
+
+    clear ms_next_load_params.
+
+  endmethod.
+
+
   method zif_mockup_loader~is_redirected.
     r_yes = mv_is_redirected.
+  endmethod.
+
+
+  method zif_mockup_loader~load.
+
+    data lx_parser type ref to zcx_text2tab_error.
+
+    clear ms_next_load_params.
+
+    ms_next_load_params-obj_path         = i_obj.
+    ms_next_load_params-is_strict        = i_strict.
+    ms_next_load_params-is_corresponding = i_corresponding.
+    ms_next_load_params-is_deep          = i_deep.
+    ms_next_load_params-filter           = zcl_mockup_loader_utils=>build_filter( i_where ).
+
+    try.
+      ms_next_load_params-rename_map = zcl_text2tab_utils=>build_rename_map( i_rename_fields ).
+    catch zcx_text2tab_error into lx_parser.
+      zcx_mockup_loader_error=>raise( msg = lx_parser->get_text( ) code = 'XE' ).
+    endtry.
+
+    ri_self = me.
+
   endmethod.
 
 
@@ -713,6 +767,10 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     data l_rawdata  type string.
     field-symbols <container> type any.
 
+    if i_obj is initial.
+      zcx_mockup_loader_error=>raise( msg = 'No object path supplied' code = 'OP' ). "#EC NOTEXT
+    endif.
+
     if e_container is not supplied and mr_ref_to_container is initial.
       zcx_mockup_loader_error=>raise( msg = 'No container supplied' code = 'NC' ). "#EC NOTEXT
     endif.
@@ -735,6 +793,8 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         i_rename_fields = i_rename_fields
       importing
         e_container = <container> ).
+
+    clear ms_next_load_params.
 
   endmethod.
 

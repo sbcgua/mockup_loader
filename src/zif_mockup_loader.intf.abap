@@ -177,4 +177,25 @@ interface zif_mockup_loader
     returning
       value(ri_ml) type ref to zif_mockup_loader.
 
+*** EXPERIMENTAL ***
+
+  methods load
+    importing
+      !i_obj    type string
+      !i_strict type abap_bool default abap_false
+      !i_corresponding type abap_bool default abap_false
+      !i_deep   type abap_bool default abap_false
+      !i_where  type any optional
+      !i_rename_fields type any optional
+    returning
+      value(ri_self) type ref to zif_mockup_loader
+    raising
+      zcx_mockup_loader_error.
+
+  methods into
+    changing
+      data type data
+    raising
+      zcx_mockup_loader_error.
+
 endinterface.
