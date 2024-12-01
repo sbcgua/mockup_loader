@@ -133,6 +133,8 @@ class ltcl_test_mockup_utils definition for testing
     methods conv_nc_struc_to_filter   for testing raising zcx_mockup_loader_error .
     methods conv_range_to_filter      for testing raising zcx_mockup_loader_error .
 
+    methods test_and                  for testing raising zcx_mockup_loader_error .
+
 endclass.
 
 **********************************************************************
@@ -954,6 +956,40 @@ class ltcl_test_mockup_utils implementation.
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'ER' ).
     endtry.
+
+  endmethod.
+
+  method test_and.
+
+    data lt_filter_act type zif_mockup_loader=>tt_filter.
+    data ls_filter like line of lt_filter_act.
+    field-symbols <v> type any.
+
+    lt_filter_act = zcl_mockup_loader_utils=>and(
+      i_op1 = 'A = B'
+      i_op2 = zcl_mockup_loader_utils=>conv_single_val_to_filter( i_where = 'XYZ' i_value = 1 ) ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lines( lt_filter_act )
+      exp = 2 ).
+
+    read table lt_filter_act into ls_filter index 1.
+    cl_abap_unit_assert=>assert_equals(
+      act = ls_filter-name
+      exp = 'A' ).
+    assign ls_filter-valref->* to <v>.
+    cl_abap_unit_assert=>assert_equals(
+      act = <v>
+      exp = 'B' ).
+
+    read table lt_filter_act into ls_filter index 2.
+    cl_abap_unit_assert=>assert_equals(
+      act = ls_filter-name
+      exp = 'XYZ' ).
+    assign ls_filter-valref->* to <v>.
+    cl_abap_unit_assert=>assert_equals(
+      act = <v>
+      exp = 1 ).
 
   endmethod.
 

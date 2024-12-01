@@ -8,6 +8,10 @@ Legend
 + : added
 - : removed
 
+v2.2.4, 2024-??-??
+------------------
++ zcl_mockup_loader_utils=>and - merge several filters together - #53
+
 v2.2.3, 2024-02-04
 ------------------
 - [BREAKING] move constants to zif_mockup_loader and delete zif_mockup_loader_constants interface - #34

@@ -76,8 +76,17 @@ class ZCL_MOCKUP_LOADER_UTILS definition
       returning
         value(r_filter) type zif_mockup_loader=>ty_filter
       raising
-        zcx_mockup_loader_error
-        cx_sy_move_cast_error .
+        zcx_mockup_loader_error .
+    class-methods and
+      importing
+        !i_op1 type any
+        !i_op2 type any
+        !i_op3 type any optional
+        !i_op4 type any optional
+      returning
+        value(r_filter) type zif_mockup_loader=>tt_filter
+      raising
+        zcx_mockup_loader_error.
 
     class-methods is_range
       importing
@@ -106,6 +115,29 @@ ENDCLASS.
 
 
 CLASS ZCL_MOCKUP_LOADER_UTILS IMPLEMENTATION.
+
+
+  method and.
+
+    data lt_filter type zif_mockup_loader=>tt_filter.
+
+    lt_filter = build_filter( i_op1 ).
+    append lines of lt_filter to r_filter.
+
+    lt_filter = build_filter( i_op2 ).
+    append lines of lt_filter to r_filter.
+
+    if i_op3 is not initial.
+      lt_filter = build_filter( i_op3 ).
+      append lines of lt_filter to r_filter.
+    endif.
+
+    if i_op4 is not initial.
+      lt_filter = build_filter( i_op4 ).
+      append lines of lt_filter to r_filter.
+    endif.
+
+  endmethod.
 
 
   method build_filter.
