@@ -126,91 +126,101 @@ endtry.
 
 1) A string condition in form of `"A=B"`, where `A` is a name of a target table filed to filter and `B` is requested value (all others will be filtered out). If `A` is missing in the target table - it is **ignored** (no exception). Be aware that `B` is not typed so it may result in dump if used improperly. `'='` may contain spaces around it.
 
-```abap
-  o_ml->load_data(
-    exporting
-      i_obj       = 'TEST1/BSEG'
-      i_where     = 'BELNR = 0000000010'
-    importing
-      e_container = lt_bseg ).
-```
+    ```abap
+      o_ml->load_data(
+        exporting
+          i_obj       = 'TEST1/BSEG'
+          i_where     = 'BELNR = 0000000010'
+        importing
+          e_container = lt_bseg ).
+    ```
 
 2) A structure of "named components" - range tables or values. Component of the structure must be named after target table fields. The structure may contain ranges or single values. The structure may contain components (names) which are missing in the target table - they are just ignored.
 
-```abap
-  data:
-    begin of l_where,
-      belnr  type range of belnr_d, " Range
-      gjahr  type gjahr,            " Single value
-    end of l_where,
-    rl_belnr like line of l_where-belnr,
+    ```abap
+      data:
+        begin of l_where,
+          belnr  type range of belnr_d, " Range
+          gjahr  type gjahr,            " Single value
+        end of l_where,
+        rl_belnr like line of l_where-belnr,
 
-  rl_belnr-sign   = 'I'.
-  rl_belnr-option = 'EQ'.
-  rl_belnr-low    = '0000000010'.
-  append rl_belnr to l_where-belnr.
+      rl_belnr-sign   = 'I'.
+      rl_belnr-option = 'EQ'.
+      rl_belnr-low    = '0000000010'.
+      append rl_belnr to l_where-belnr.
 
-  l_where-gjahr = '2021'.
-...
-  o_ml->load_data(
-    exporting
-      i_obj       = 'TEST1/BSEG'
-      i_where     = l_where
-    importing
-      e_container = lt_bseg ).
-```
+      l_where-gjahr = '2021'.
+    ...
+      o_ml->load_data(
+        exporting
+          i_obj       = 'TEST1/BSEG'
+          i_where     = l_where
+        importing
+          e_container = lt_bseg ).
+    ```
 
 3) A structure of `zif_mockup_loader=>ty_where` or a table of `tt_where`, where each line contain a filter (applied simultaneously in case of table => AND). `NAME` component should contain target table field name (ignored if missing in target table). `RANGE` is a reference to a range table. (we assume it should be convenient and well-readable in 7.40+ environments).
 
-```abap
-  data:
-    where_tab type zif_mockup_loader=>tt_where,
-    l_where   type zif_mockup_loader=>ty_where,
-    belnr_rng type range of belnr_d,
-    r_belnr   like line of rt_belnr,
+    ```abap
+      data:
+        where_tab type zif_mockup_loader=>tt_where,
+        l_where   type zif_mockup_loader=>ty_where,
+        belnr_rng type range of belnr_d,
+        r_belnr   like line of rt_belnr,
 
-  r_belnr-sign   = 'I'.
-  r_belnr-option = 'EQ'.
-  r_belnr-low    = '0000000010'.
-  append r_belnr to belnr_rng.
+      r_belnr-sign   = 'I'.
+      r_belnr-option = 'EQ'.
+      r_belnr-low    = '0000000010'.
+      append r_belnr to belnr_rng.
 
-  l_where-name  = 'BELNR'.
-  get reference of range_rng into l_where-range.
-  append l_where to where_tab.
-...
-  o_ml->load_data(
-    exporting
-      i_obj       = 'TEST1/BSEG'
-      i_where     = l_where
-    importing
-      e_container = lt_bseg ).
-  " OR
-  o_ml->load_data(
-    exporting 
-      i_obj       = 'TEST1/BSEG'
-      i_strict    = abap_false
-      i_where     = where_tab
-    importing
-      e_container = lt_bseg ).
-
-```
+      l_where-name  = 'BELNR'.
+      get reference of range_rng into l_where-range.
+      append l_where to where_tab.
+    ...
+      o_ml->load_data(
+        exporting
+          i_obj       = 'TEST1/BSEG'
+          i_where     = l_where
+        importing
+          e_container = lt_bseg ).
+      " OR
+      o_ml->load_data(
+        exporting 
+          i_obj       = 'TEST1/BSEG'
+          i_strict    = abap_false
+          i_where     = where_tab
+        importing
+          e_container = lt_bseg ).
+    ```
 
 4) A table `zif_mockup_loader=>tt_filter`. You probably should not contract the table yourselves but rather build it with `zcl_mockup_loader_utils=>build_filter` which understands all the options above. Can be handy to reuse the pre-built filter several times. In addition `build_filter` can accept `i_single_value` param as an alternative to string-like pattern which is also more type-safe. In this case `i_where` is the name of field to filter.
 
-```abap
-  data lt_filt = zif_mockup_loader=>tt_filter.
-  lt_filt = zcl_mockup_loader_utils=>build_filter(
-    i_where        = 'BELNR'
-    i_single_value = '0010000012' ).
-  o_ml->load_data(
-    exporting
-      i_obj       = 'TEST1/BSEG'
-      i_where     = lt_filt
-    importing
-      e_container = lt_bseg ).
-```
+    ```abap
+      data lt_filt = zif_mockup_loader=>tt_filter.
+      lt_filt = zcl_mockup_loader_utils=>build_filter(
+        i_where        = 'BELNR'
+        i_single_value = '0010000012' ).
+      o_ml->load_data(
+        exporting
+          i_obj       = 'TEST1/BSEG'
+          i_where     = lt_filt
+        importing
+          e_container = lt_bseg ).
+    ```
 
 5) A structure `zif_mockup_loader=>ty_filter` - one line of `tt_filter` above.
+
+6) Logical operations (partially in-development) - `zcl_mockup_loader_utils=>and` (works), `zcl_mockup_loader_utils=>or` (to be delivered)
+
+    ```abap
+      o_ml->load(
+        i_obj   = '/vbrp'
+        i_where = zcl_mockup_loader_utils=>and(
+          i_op1 = |VBELN = { i_vbeln }| " Or any other filter definition
+          i_op2 = |POSNR = { i_posnr }| )
+        )->into( changing data = item ).
+    ```
 
 #### Filling deep components in one path
 
@@ -276,7 +286,7 @@ For the first record the mockup loader will find file `path_to_lines_file.txt` a
 
 #### "Best practice" suggestions
 
-To improve code readability within numerous datasets we ~~use macros~~ use `load-into` pair (skip this section and see _"LOAD and INTO"_ section below).
+To improve code readability within numerous datasets we ~~use macros~~ use `load-into` pair (skip this section and see *"LOAD and INTO"* section below).
 
 ```abap
 define load_mockup_no_strict.
