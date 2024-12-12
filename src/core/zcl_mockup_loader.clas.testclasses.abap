@@ -99,7 +99,7 @@ class ltcl_dependencies_version implementation.
 
     if abap_false = zcl_text2tab_parser=>check_version_fits( lc_required_ver ).
       cl_abap_unit_assert=>fail( |data parser version ({
-        zif_text2tab_constants=>version }) is lower than required ({
+        zif_text2tab=>version }) is lower than required ({
         lc_required_ver })| ). "#EC NOTEXT
     endif.
 
