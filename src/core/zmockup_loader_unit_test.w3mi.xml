@@ -11,11 +11,11 @@
     </WWWPARAMS>
     <WWWPARAMS>
      <NAME>filename</NAME>
-     <VALUE>ZMOCKUP_LOADER_UNIT_TEST.zip</VALUE>
+     <VALUE>mockup-compiler-build.zip</VALUE>
     </WWWPARAMS>
     <WWWPARAMS>
      <NAME>mimetype</NAME>
-     <VALUE>ZIP</VALUE>
+     <VALUE>application/zip</VALUE>
     </WWWPARAMS>
    </PARAMS>
   </asx:values>

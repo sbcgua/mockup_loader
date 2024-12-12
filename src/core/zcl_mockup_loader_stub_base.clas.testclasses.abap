@@ -39,12 +39,13 @@ class ltcl_mockup_stub_base_test implementation.
 
     go_ml = zcl_mockup_loader=>create(
       i_type     = 'MIME'
-      i_path     = 'ZMOCKUP_LOADER_EXAMPLE'
-      i_encoding = zif_mockup_loader=>encoding_utf16 ).
+      i_path     = 'ZMOCKUP_LOADER_UNIT_TEST'
+      i_amt_format = ' .'
+      i_encoding = zif_mockup_loader=>encoding_utf8 ).
 
     go_ml->load_data(
       exporting
-        i_obj    = 'EXAMPLE/sflight'
+        i_obj    = 'sflight/sflight'
         i_strict = abap_false
       importing
         e_container = gt_flights ).
@@ -60,7 +61,7 @@ class ltcl_mockup_stub_base_test implementation.
 
     " Common
     ls_conf-output_type ?= cl_abap_typedescr=>describe_by_data( lt_dummy ).
-    ls_conf-mock_name    = 'EXAMPLE/sflight'.
+    ls_conf-mock_name    = 'sflight/sflight'.
 
     ls_conf-method_name  = 'METHOD_SIMPLE'.
     append ls_conf to lt_config.

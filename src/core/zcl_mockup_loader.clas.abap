@@ -270,7 +270,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
     if zcl_text2tab_parser=>check_version_fits( lc_required_ver ) = abap_false.
       zcx_mockup_loader_error=>raise(
-        msg  = |text2tab version ({ zif_text2tab_constants=>version
+        msg  = |text2tab version ({ zif_text2tab=>version
           }) is lower than required ({ lc_required_ver })|
         code = 'VL' ). "#EC NOTEXT
     endif.

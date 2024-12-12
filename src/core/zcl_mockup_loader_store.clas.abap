@@ -25,7 +25,6 @@ class ZCL_MOCKUP_LOADER_STORE definition
         !e_data type any
       exceptions
         retrieve_error .
-    type-pools abap .
     methods store
       importing
         !i_name type ty_store_tag
