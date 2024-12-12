@@ -128,8 +128,9 @@ class lcl_test_base implementation.
     try.
       lo_ml  = zcl_mockup_loader=>create(
         i_type = 'MIME'
-        i_path = 'ZMOCKUP_LOADER_EXAMPLE'
-        i_encoding = zif_mockup_loader=>encoding_utf16 ).
+        i_path = 'ZMOCKUP_LOADER_UNIT_TEST'
+        i_amt_format = ' .'
+        i_encoding = zif_mockup_loader=>encoding_utf8 ).
 
       create object lo_dc type (iv_factory_classname)
         exporting
@@ -140,23 +141,23 @@ class lcl_test_base implementation.
         i_sift_param      = 'I_CONNID'
         i_mock_tab_key    = 'CONNID'
         i_method_name     = 'TAB_RETURN'
-        i_mock_name       = 'EXAMPLE/sflight' ).
+        i_mock_name       = 'sflight/sflight' ).
 
       lo_dc->connect_method(
         i_method_name  = 'TAB_EXPORT'
-        i_mock_name    = 'EXAMPLE/sflight'
+        i_mock_name    = 'sflight/sflight'
         i_output_param = 'E_TAB' ).
 
       lo_dc->connect_method(
         i_method_name  = 'TAB_CHANGE'
-        i_mock_name    = 'EXAMPLE/sflight'
+        i_mock_name    = 'sflight/sflight'
         i_output_param = 'C_TAB' ).
 
       li_if ?= lo_dc->generate_stub( ).
 
       lo_ml->load_data(
         exporting
-          i_obj    = 'EXAMPLE/sflight'
+          i_obj    = 'sflight/sflight'
           i_strict = abap_false
         importing
           e_container = lt_exp ).
@@ -168,7 +169,7 @@ class lcl_test_base implementation.
 
       lo_ml->load_data(
         exporting
-          i_obj    = 'EXAMPLE/sflight'
+          i_obj    = 'sflight/sflight'
           i_strict = abap_false
         importing
           e_container = lt_exp ).
@@ -210,10 +211,7 @@ class ltcl_mockup_stub_factory_test implementation.
 
     data lt_exp type zif_mockup_loader_stub_dummy=>tt_deep.
 
-    lo_ml  = zcl_mockup_loader=>create(
-      i_type = 'MIME'
-      i_path = 'ZMOCKUP_LOADER_EXAMPLE'
-      i_encoding = zif_mockup_loader=>encoding_utf16 ).
+    lo_ml  = get_ml( ).
 
     create object lo_dc
       exporting
@@ -226,13 +224,13 @@ class ltcl_mockup_stub_factory_test implementation.
       i_method_name     = 'RETURN_DEEP'
       i_deep            = abap_true
       i_corresponding   = abap_true
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
 
     li_if ?= lo_dc->generate_stub( ).
 
     lo_ml->load_data(
       exporting
-        i_obj    = 'EXAMPLE/sflight'
+        i_obj    = 'sflight/sflight'
         i_strict = abap_false
         i_corresponding = abap_true
         i_deep   = abap_true
@@ -254,10 +252,7 @@ class ltcl_mockup_stub_factory_test implementation.
     data lo_ex type ref to zcx_mockup_loader_error.
     data ls_config like line of lo_dc->mt_config.
 
-    lo_ml  = zcl_mockup_loader=>create(
-      i_type = 'MIME'
-      i_path = 'ZMOCKUP_LOADER_EXAMPLE'
-      i_encoding = zif_mockup_loader=>encoding_utf16 ).
+    lo_ml  = get_ml( ).
 
     create object lo_dc
       exporting
@@ -267,13 +262,13 @@ class ltcl_mockup_stub_factory_test implementation.
 
     lo_dc->connect_method(
       i_method_name     = 'TAB_RETURN'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
 
     " Multiple connect
     try.
       lo_dc->connect_method(
         i_method_name     = 'TAB_RETURN'
-        i_mock_name       = 'EXAMPLE/sflight' ).
+        i_mock_name       = 'sflight/sflight' ).
       cl_abap_unit_assert=>fail( ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>assert_equals( exp = 'MC' act = lo_ex->code ).
@@ -295,11 +290,11 @@ class ltcl_mockup_stub_factory_test implementation.
     lo_dc->connect_method(
       i_method_name     = 'TAB_EXPORT'
       i_output_param    = 'E_TAB'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
     lo_dc->connect_method(
       i_method_name     = 'TAB_EXPORT'
       i_output_param    = 'E_BY_DATE'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
     cl_abap_unit_assert=>assert_equals(
       act = lines( lo_dc->mt_config )
       exp = 2 ).
@@ -314,18 +309,18 @@ class ltcl_mockup_stub_factory_test implementation.
 
     lo_dc->connect_method(
       i_method_name     = 'TAB_RETURN'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
 
     lo_dc->connect_method(
       i_method_name     = 'TAB_RETURN'
-      i_mock_name       = 'EXAMPLE/override' ).
+      i_mock_name       = 'sflight/override' ).
     cl_abap_unit_assert=>assert_equals(
       act = lines( lo_dc->mt_config )
       exp = 1 ).
     read table lo_dc->mt_config index 1 into ls_config.
     cl_abap_unit_assert=>assert_equals(
       act = ls_config-mock_name
-      exp = 'EXAMPLE/override' ).
+      exp = 'sflight/override' ).
 
     lo_dc->forward_method( 'TAB_RETURN' ).
     cl_abap_unit_assert=>assert_equals(
@@ -346,11 +341,11 @@ class ltcl_mockup_stub_factory_test implementation.
     lo_dc->connect_method(
       i_method_name     = 'TAB_EXPORT'
       i_output_param    = 'E_TAB'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
     lo_dc->connect_method(
       i_method_name     = 'TAB_EXPORT'
       i_output_param    = 'E_BY_DATE'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
     cl_abap_unit_assert=>assert_equals(
       act = lines( lo_dc->mt_config )
       exp = 2 ).
@@ -372,7 +367,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try.
       clear: lo_ex, ls_conf.
       ls_conf-method_name = 'TAB_RETURN'.
-      ls_conf-mock_name   = 'EXAMPLE/sflight'.
+      ls_conf-mock_name   = 'sflight/sflight'.
       ls_conf_act = zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
@@ -385,7 +380,7 @@ class ltcl_mockup_stub_factory_test implementation.
 
     try. " method missing
       clear: lo_ex, ls_conf.
-      ls_conf-mock_name   = 'EXAMPLE/sflight'.
+      ls_conf-mock_name   = 'sflight/sflight'.
       zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
@@ -406,7 +401,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " sift incomplete
       clear: lo_ex, ls_conf.
       ls_conf-method_name = 'TAB_RETURN'.
-      ls_conf-mock_name   = 'EXAMPLE/sflight'.
+      ls_conf-mock_name   = 'sflight/sflight'.
       ls_conf-sift_param  = 'I_CONNID'.
       zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
@@ -418,7 +413,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " sift incomplete
       clear: lo_ex, ls_conf.
       ls_conf-method_name  = 'TAB_RETURN'.
-      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      ls_conf-mock_name    = 'sflight/sflight'.
       ls_conf-mock_tab_key = 'CONNID'.
       zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
@@ -430,7 +425,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " sift incomplete
       clear: lo_ex, ls_conf.
       ls_conf-method_name  = '???'.
-      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      ls_conf-mock_name    = 'sflight/sflight'.
       zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
@@ -441,7 +436,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " sift not found
       clear: lo_ex, ls_conf.
       ls_conf-method_name  = 'TAB_RETURN'.
-      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      ls_conf-mock_name    = 'sflight/sflight'.
       ls_conf-sift_param   = 'X_CONNID'.
       ls_conf-mock_tab_key = 'CONNID'.
       zcl_mockup_loader_stub_factory=>build_config(
@@ -454,7 +449,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " sift has wrong type
       clear: lo_ex, ls_conf.
       ls_conf-method_name  = 'WRONG_SIFT'.
-      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      ls_conf-mock_name    = 'sflight/sflight'.
       ls_conf-sift_param   = 'I_CONNID'.
       ls_conf-mock_tab_key = 'CONNID'.
       zcl_mockup_loader_stub_factory=>build_config(
@@ -467,7 +462,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " no return
       clear: lo_ex, ls_conf.
       ls_conf-method_name = 'TAB_EXPORT'.
-      ls_conf-mock_name   = 'EXAMPLE/sflight'.
+      ls_conf-mock_name   = 'sflight/sflight'.
       zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
@@ -478,7 +473,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " no param
       clear: lo_ex, ls_conf.
       ls_conf-method_name  = 'TAB_RETURN'.
-      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      ls_conf-mock_name    = 'sflight/sflight'.
       ls_conf-output_param = '???'.
       zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
@@ -490,7 +485,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " no param
       clear: lo_ex, ls_conf.
       ls_conf-method_name  = 'TAB_RETURN'.
-      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      ls_conf-mock_name    = 'sflight/sflight'.
       ls_conf-output_param = 'I_CONNID'.
       zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
@@ -502,7 +497,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " no param
       clear: lo_ex, ls_conf.
       ls_conf-method_name  = 'WRONG_RETURN'.
-      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      ls_conf-mock_name    = 'sflight/sflight'.
       zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
         i_config   = ls_conf ).
@@ -513,7 +508,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " field only elementary param
       clear: lo_ex, ls_conf.
       ls_conf-method_name  = 'TAB_RETURN'.
-      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      ls_conf-mock_name    = 'sflight/sflight'.
       ls_conf-field_only   = 'PRICE'.
       zcl_mockup_loader_stub_factory=>build_config(
         id_if_desc = ld_if
@@ -525,7 +520,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " field only + corresponding
       clear: lo_ex, ls_conf.
       ls_conf-method_name  = 'TAB_RETURN_EXTRACT_BY_DATE'.
-      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      ls_conf-mock_name    = 'sflight/sflight'.
       ls_conf-corresponding = abap_true.
       ls_conf-field_only   = 'PRICE'.
       zcl_mockup_loader_stub_factory=>build_config(
@@ -550,7 +545,7 @@ class ltcl_mockup_stub_factory_test implementation.
     " Type from param
     clear ls_conf.
     ls_conf-method_name  = 'RETURN_VALUE_W_DATE'.
-    ls_conf-mock_name    = 'EXAMPLE/sflight'.
+    ls_conf-mock_name    = 'sflight/sflight'.
     ls_conf-mock_tab_key = 'CONNID'.
     ls_conf-sift_param   = 'I_CONNID'.
     ls_conf-field_only   = 'PRICE'.
@@ -566,7 +561,7 @@ class ltcl_mockup_stub_factory_test implementation.
     " Type from const
     clear ls_conf.
     ls_conf-method_name  = 'RETURN_VALUE_W_DATE'.
-    ls_conf-mock_name    = 'EXAMPLE/sflight'.
+    ls_conf-mock_name    = 'sflight/sflight'.
     ls_conf-mock_tab_key = 'CONNID'.
     ls_conf-sift_const   = '123'.
     ls_conf-field_only   = 'PRICE'.
@@ -594,7 +589,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " both filters passed
       clear ls_conf.
       ls_conf-method_name  = 'TAB_RETURN_W_DATE'.
-      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      ls_conf-mock_name    = 'sflight/sflight'.
       ls_conf-mock_tab_key = 'CONNID'.
       ls_conf-sift_param   = 'I_CONNID'.
       append initial line to ls_conf-filter assigning <f>.
@@ -612,7 +607,7 @@ class ltcl_mockup_stub_factory_test implementation.
     try. " duplication
       clear ls_conf.
       ls_conf-method_name  = 'TAB_RETURN_W_DATE'.
-      ls_conf-mock_name    = 'EXAMPLE/sflight'.
+      ls_conf-mock_name    = 'sflight/sflight'.
       append initial line to ls_conf-filter assigning <f>.
       <f>-mock_tab_key = 'CONNID'.
       <f>-sift_param   = 'I_CONNID'.
@@ -637,12 +632,7 @@ class ltcl_mockup_stub_factory_test implementation.
     data lo_ml type ref to zcl_mockup_loader.
 
     try. " wrong interface
-      lo_ml  = zcl_mockup_loader=>create(
-        i_type = 'MIME'
-        i_path = 'ZMOCKUP_LOADER_EXAMPLE'
-        i_encoding = zif_mockup_loader=>encoding_utf16 ).
-
-      clear: lo_ex.
+      lo_ml  = get_ml( ).
       create object lo
         exporting
           ii_ml_instance   = lo_ml
@@ -726,8 +716,9 @@ class ltcl_mockup_stub_factory_test implementation.
   method get_ml.
     ro_ml = zcl_mockup_loader=>create(
       i_type = 'MIME'
-      i_path = 'ZMOCKUP_LOADER_EXAMPLE'
-      i_encoding = zif_mockup_loader=>encoding_utf16 ).
+      i_path = 'ZMOCKUP_LOADER_UNIT_TEST'
+      i_amt_format = ' .'
+      i_encoding = zif_mockup_loader=>encoding_utf8 ).
   endmethod.
 
   method get_factory.
@@ -741,7 +732,7 @@ class ltcl_mockup_stub_factory_test implementation.
   method get_sflights.
     io_ml->load_data(
       exporting
-        i_obj    = 'EXAMPLE/sflight'
+        i_obj    = 'sflight/sflight'
         i_strict = abap_false
       importing
         e_container = rt_tab ).
@@ -764,7 +755,7 @@ class ltcl_mockup_stub_factory_test implementation.
       i_sift_param      = 'I_CONNID'
       i_mock_tab_key    = 'CONNID'
       i_method_name     = 'TAB_RETURN'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
 
     stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return( i_connid = '1000' ).
@@ -797,7 +788,7 @@ class ltcl_mockup_stub_factory_test implementation.
     factory->connect_method(
       i_filter          = lt_filter
       i_method_name     = 'TAB_RETURN_W_DATE'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
 
     stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return_w_date(
@@ -840,7 +831,7 @@ class ltcl_mockup_stub_factory_test implementation.
     factory->connect_method(
       i_filter          = lt_filter
       i_method_name     = 'TAB_RETURN_W_DATE'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
 
     stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return_w_date(
@@ -877,7 +868,7 @@ class ltcl_mockup_stub_factory_test implementation.
       i_sift_const      = '1000'
       i_mock_tab_key    = 'CONNID'
       i_method_name     = 'TAB_RETURN'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
 
     stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return( i_connid = '2000' ).
@@ -893,7 +884,7 @@ class ltcl_mockup_stub_factory_test implementation.
         i_sift_const      = '1000'
         i_mock_tab_key    = 'CONNID'
         i_method_name     = 'TAB_RETURN'
-        i_mock_name       = 'EXAMPLE/sflight' ).
+        i_mock_name       = 'sflight/sflight' ).
       cl_abap_unit_assert=>fail( ).
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_equals(
@@ -907,7 +898,7 @@ class ltcl_mockup_stub_factory_test implementation.
       factory->connect_method(
         i_mock_tab_key    = 'CURRENCY' " this field is empty in mock tab
         i_method_name     = 'TAB_RETURN'
-        i_mock_name       = 'EXAMPLE/sflight' ).
+        i_mock_name       = 'sflight/sflight' ).
       cl_abap_unit_assert=>fail( ).
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_equals(
@@ -920,7 +911,7 @@ class ltcl_mockup_stub_factory_test implementation.
       i_mock_tab_key    = 'CURRENCY' " this field is empty in mock tab
       i_sift_const      = ''
       i_method_name     = 'TAB_RETURN'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
     stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return( i_connid = '9999' ).
     cl_abap_unit_assert=>assert_equals(
@@ -930,15 +921,17 @@ class ltcl_mockup_stub_factory_test implementation.
     factory = get_factory( ml ).
     factory->connect_method(
       i_method_name     = 'TAB_RETURN'
-      i_mock_tab_key    = 'RESULT'
-      i_sift_const      = ''
+      i_mock_tab_key    = 'FLDATE'
+      i_sift_const      = '20150102'
       i_corresponding   = abap_true
-      i_mock_name       = 'EXAMPLE/testcases' ).
+      i_mock_name       = 'sflight/sflight' ).
     stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return( i_connid = '0000' ).
     cl_abap_unit_assert=>assert_equals(
       act = lines( lt_act )
       exp = 1 ).
+    read table lt_act with key fldate = '20150102' transporting no fields.
+    cl_abap_unit_assert=>assert_subrc( ).
 
   endmethod.
 
@@ -959,7 +952,7 @@ class ltcl_mockup_stub_factory_test implementation.
       i_sift_param      = 'I_PARAMS-CONNID'
       i_mock_tab_key    = 'CONNID'
       i_method_name     = 'TAB_RETURN_W_STRUC_PARAM'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
 
     data call_params type zif_mockup_loader_stub_dummy=>ty_params.
     call_params-connid = '1000'.
@@ -988,7 +981,7 @@ class ltcl_mockup_stub_factory_test implementation.
       i_mock_tab_key    = 'CONNID'
       i_field_only      = 'PRICE'
       i_method_name     = 'RETURN_VALUE'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
 
     stub ?= factory->generate_stub( ).
     cl_abap_unit_assert=>assert_equals(
@@ -1028,7 +1021,7 @@ class ltcl_mockup_stub_factory_test implementation.
       i_mock_tab_key    = 'fldate'
       i_method_name     = 'tab_return_extract_by_date'
       i_corresponding   = abap_true
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
 
     stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return_extract_by_date( i_fldate = '20150101' ).
@@ -1061,7 +1054,7 @@ class ltcl_mockup_stub_factory_test implementation.
       i_sift_param      = 'ir_connid'
       i_mock_tab_key    = 'connid'
       i_method_name     = 'tab_return_by_range'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
 
     stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return_by_range( ir_connid = lr_range ).
@@ -1078,10 +1071,7 @@ class ltcl_mockup_stub_factory_test implementation.
     data lo_ex type ref to zcx_mockup_loader_error.
     data li_control type ref to zif_mockup_loader_stub_control.
 
-    lo_ml  = zcl_mockup_loader=>create(
-      i_type = 'MIME'
-      i_path = 'ZMOCKUP_LOADER_EXAMPLE'
-      i_encoding = zif_mockup_loader=>encoding_utf16 ).
+    lo_ml  = get_ml( ).
 
     create object lo_dc
       exporting
@@ -1091,16 +1081,16 @@ class ltcl_mockup_stub_factory_test implementation.
 
     lo_dc->connect_method(
       i_method_name     = 'TAB_RETURN'
-      i_mock_name       = 'EXAMPLE/sflight' ).
+      i_mock_name       = 'sflight/sflight' ).
 
     lo_dc->connect_method(
       i_method_name  = 'TAB_EXPORT'
-      i_mock_name    = 'EXAMPLE/sflight'
+      i_mock_name    = 'sflight/sflight'
       i_output_param = 'E_TAB' ).
 
     lo_dc->connect_method(
       i_method_name  = 'TAB_CHANGE'
-      i_mock_name    = 'EXAMPLE/sflight'
+      i_mock_name    = 'sflight/sflight'
       i_output_param = 'C_TAB' ).
 
     lo_dc->forward_method( 'PROXY_TEST' ).
@@ -1115,7 +1105,7 @@ class ltcl_mockup_stub_factory_test implementation.
 
     lo_ml->load_data(
       exporting
-        i_obj    = 'EXAMPLE/sflight'
+        i_obj    = 'sflight/sflight'
         i_strict = abap_false
       importing
         e_container = lt_exp ).
@@ -1592,9 +1582,9 @@ class ltcl_mockup_stub_factory_test implementation.
     factory = get_factory( ml ).
     lt_exp  = get_sflights( ml ).
 
-    factory->set_default_mock( 'example' ).
+    factory->set_default_mock( 'sflight' ).
     factory->connect( 'tab_return->./sflight' ).
-    factory->connect( 'tab_return_by_range->example/sflight' ). " But full path should also work
+    factory->connect( 'tab_return_by_range->sflight/sflight' ). " But full path should also work
 
     stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return( i_connid = '0' ). " whatever, we are testing the mock path
@@ -1621,7 +1611,7 @@ class ltcl_mockup_stub_factory_test implementation.
     lt_exp  = get_sflights( ml ).
     delete lt_exp where not ( connid = '2000' and fldate = '20150102' ).
 
-    factory->connect( 'tab_return_w_date->example/sflight [connid = i_connid , fldate = i_fldate]' ).
+    factory->connect( 'tab_return_w_date->sflight/sflight [connid = i_connid , fldate = i_fldate]' ).
 
     stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return_w_date(
@@ -1646,7 +1636,7 @@ class ltcl_mockup_stub_factory_test implementation.
     lt_exp  = get_sflights( ml ).
     delete lt_exp where not ( connid = '1000' or fldate = '20150102' ).
 
-    factory->connect( 'tab_return_w_date->example/sflight [connid = i_connid | fldate = i_fldate ]' ).
+    factory->connect( 'tab_return_w_date->sflight/sflight [connid = i_connid | fldate = i_fldate ]' ).
 
     stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return_w_date(
@@ -1671,7 +1661,7 @@ class ltcl_mockup_stub_factory_test implementation.
     lt_exp  = get_sflights( ml ).
     delete lt_exp where not ( connid = '1000' ).
 
-    factory->connect( 'tab_return_2conn->example/sflight [connid = i_connid | connid = i_connid2 ]' ).
+    factory->connect( 'tab_return_2conn->sflight/sflight [connid = i_connid | connid = i_connid2 ]' ).
 
     stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return_2conn(
@@ -1706,7 +1696,7 @@ class ltcl_mockup_stub_factory_test implementation.
     lt_exp  = get_sflights( ml ).
     delete lt_exp where not ( connid = '2000' and fldate = '20150102' ).
 
-    factory->connect( 'tab_return_w_date->example/sflight [connid = i_connid , fldate = "20150102"]' ).
+    factory->connect( 'tab_return_w_date->sflight/sflight [connid = i_connid , fldate = "20150102"]' ).
 
     stub ?= factory->generate_stub( ).
     lt_act = stub->tab_return_w_date(
@@ -1727,7 +1717,7 @@ class ltcl_mockup_stub_factory_test implementation.
     ml = get_ml( ).
 
     factory = get_factory( ml ).
-    factory->connect( 'return_value_w_date->example/sflight(price) [connid=i_connid, fldate=i_fldate]' ).
+    factory->connect( 'return_value_w_date->sflight/sflight(price) [connid=i_connid, fldate=i_fldate]' ).
 
     stub ?= factory->generate_stub( ).
     cl_abap_unit_assert=>assert_equals(
@@ -1737,7 +1727,7 @@ class ltcl_mockup_stub_factory_test implementation.
       exp = '300.00' ).
 
     factory = get_factory( ml ).
-    factory->connect( 'return_value_w_date->example/sflight(price) [connid=i_connid, fldate="02.01.2015"]' ).
+    factory->connect( 'return_value_w_date->sflight/sflight(price) [connid=i_connid, fldate="02.01.2015"]' ).
     " NB: this is a bit tricky, dates in text are formatted and if we don't specify the method param
     " we don't know the type of it and so we don't know how to convert value. So contstant filters are always string
 
@@ -1758,7 +1748,7 @@ class ltcl_mockup_stub_factory_test implementation.
 
     ml      = get_ml( ).
     factory = get_factory( ml ).
-    factory->connect( 'exists->example/sflight(?) [connid=i_connid]' ).
+    factory->connect( 'exists->sflight/sflight(?) [connid=i_connid]' ).
 
     stub ?= factory->generate_stub( ).
     cl_abap_unit_assert=>assert_equals(
@@ -1779,7 +1769,7 @@ class ltcl_mockup_stub_factory_test implementation.
 
     ml      = get_ml( ).
     factory = get_factory( ml ).
-    factory->connect( 'tab_export(e_tab)->example/sflight [connid=i_connid]' ).
+    factory->connect( 'tab_export(e_tab)->sflight/sflight [connid=i_connid]' ).
 
     stub ?= factory->generate_stub( ).
 
@@ -1818,8 +1808,8 @@ class ltcl_mockup_stub_factory_test implementation.
 
     ml      = get_ml( ).
     factory = get_factory( ml ).
-    factory->connect( 'tab_export(e_tab)->example/sflight [connid=i_connid]' ).
-    factory->connect( 'tab_export(e_by_date)->example/sflight [fldate=i_by_date]' ).
+    factory->connect( 'tab_export(e_tab)->sflight/sflight [connid=i_connid]' ).
+    factory->connect( 'tab_export(e_by_date)->sflight/sflight [fldate=i_by_date]' ).
     factory->connect( 'tab_export(e_val)-> =10' ).
 
     stub ?= factory->generate_stub( ).
@@ -1864,7 +1854,7 @@ class ltcl_mockup_stub_factory_test implementation.
 
     ml      = get_ml( ).
     factory = get_factory( ml ).
-    factory->connect( 'tab_return->example/missing-file' ). " wrong table
+    factory->connect( 'tab_return->sflight/missing-file' ). " wrong table
 
     stub ?= factory->generate_stub( ).
 

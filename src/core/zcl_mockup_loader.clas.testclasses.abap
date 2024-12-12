@@ -194,8 +194,10 @@ class ltcl_test_mockup_loader definition for testing
         e_dummy_string type string.
 
     methods create_default
-      returning value(r_o) type ref to zcl_mockup_loader
-      raising zcx_mockup_loader_error.
+      returning
+        value(r_o) type ref to zcl_mockup_loader
+      raising
+        zcx_mockup_loader_error.
 
 endclass.
 
@@ -226,7 +228,7 @@ class ltcl_test_mockup_loader implementation.
     r_o = zcl_mockup_loader=>create(
       i_type       = 'MIME'
       i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
-      i_amt_format = ''     " default
+      i_amt_format = ' .'
       i_encoding   = zif_mockup_loader=>encoding_utf8 ). " utf8
   endmethod.
 
@@ -248,14 +250,14 @@ class ltcl_test_mockup_loader implementation.
 
     if i_strict = abap_true.
       l_string = 'MANDT\tTDATE\tTCHAR\tTRAW\tTSTRING\tTALPHA\tTDECIMAL\tTNUMBER\tTINTEGER\n'
-              && '\t01.01.2015\tTrololo1\t8A\tString1\t100000\t1234567,81\t2015\t1111\n'
-              && '\t02.01.2016\tTrololo2\t8B\tString2\t200000\t1234567,82\t2016\t2222\n'
-              && '\t03.01.2016\tTrololo3\t8C\tString3\t300000\t1234567,83\t2015\t3333\n' .
+              && '\t01.01.2015\tTrololo1\t8A\tString1\t100000\t1234567.81\t2015\t1111\n'
+              && '\t02.01.2016\tTrololo2\t8B\tString2\t200000\t1234567.82\t2016\t2222\n'
+              && '\t03.01.2016\tTrololo3\t8C\tString3\t300000\t1234567.83\t2015\t3333\n' .
     else.
       l_string = 'TDATE\tTSTRING\tTCHAR\tTDECIMAL\tTNUMBER\n'
-              && '01.01.2015\tString1\tTrololo1\t1234567,81\t2015\n'
-              && '02.01.2016\tString2\tTrololo2\t1234567,82\t2016\n'
-              && '03.01.2016\tString3\tTrololo3\t1234567,83\t2015\n' .
+              && '01.01.2015\tString1\tTrololo1\t1234567.81\t2015\n'
+              && '02.01.2016\tString2\tTrololo2\t1234567.82\t2016\n'
+              && '03.01.2016\tString3\tTrololo3\t1234567.83\t2015\n' .
     endif.
 
     replace all occurrences of '\t' in l_string with c_tab.
@@ -293,7 +295,7 @@ class ltcl_test_mockup_loader implementation.
     try.
       o->load_data(
         exporting
-          i_obj       = 'testdir/testfile_complete'
+          i_obj       = 'unit_tests/test_complete'
           i_strict    = abap_true
         importing
           e_container = dummy_tab_act ).
@@ -302,7 +304,7 @@ class ltcl_test_mockup_loader implementation.
 
       o->load_data(
         exporting
-          i_obj       = 'testdir/testfile_complete'
+          i_obj       = 'unit_tests/test_complete'
           i_strict    = abap_true
         importing
           e_container = dummy_act ).
@@ -311,7 +313,7 @@ class ltcl_test_mockup_loader implementation.
 
       o->load_data( " No MANDT field in file
         exporting
-          i_obj       = 'testdir/testfile_no_mandt'
+          i_obj       = 'unit_tests/test_no_mandt'
           i_strict    = abap_true
         importing
           e_container = dummy_tab_act ).
@@ -330,7 +332,7 @@ class ltcl_test_mockup_loader implementation.
     try.
       o->load_data(
         exporting
-          i_obj       = 'testdir/testfile_no_strict'
+          i_obj       = 'unit_tests/test_no_strict'
           i_strict    = abap_false
         importing
           e_container = dummy_tab_act ).
@@ -350,7 +352,7 @@ class ltcl_test_mockup_loader implementation.
     try.
       o->load_data(
         exporting
-          i_obj       = 'testdir/testfile_complete'
+          i_obj       = 'unit_tests/test_complete'
           i_where     = 'TNUMBER = 2016'
         importing
           e_container = dummy_tab_act ).
@@ -359,7 +361,7 @@ class ltcl_test_mockup_loader implementation.
 
       o->load_data(
         exporting
-          i_obj       = 'testdir/testfile_complete'
+          i_obj       = 'unit_tests/test_complete'
           i_where     = 'TNUMBER = 2016'
         importing
           e_container = dummy_act ).
@@ -372,7 +374,7 @@ class ltcl_test_mockup_loader implementation.
 
     " No container ***************************************************
     try.
-      o->load_data( i_obj = 'testdir/testfile_complete' ).
+      o->load_data( i_obj = 'unit_tests/test_complete' ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'NC'.
@@ -488,12 +490,12 @@ class ltcl_test_mockup_loader implementation.
 
     try.
       li = o->set_params(
-        i_amt_format = ''
+        i_amt_format = ' ,'
         i_encoding   = zif_mockup_loader=>encoding_utf16 ).
       cl_abap_unit_assert=>assert_not_initial( li ).
 
       o->load_data(
-        exporting i_obj       = 'testdir/testfile_complete_utf16'
+        exporting i_obj       = 'unit_tests/test_complete_utf16'
         importing e_container = dummy_tab_act ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
@@ -657,7 +659,7 @@ class ltcl_test_mockup_loader implementation.
 
     " Positive ***************************************
     try.
-      l_str = o->read_zip( i_name = 'testdir/testfile_complete.txt' ).
+      l_str = o->read_zip( i_name = 'unit_tests/test_complete.txt' ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>fail( lo_ex->get_text( ) ).
     endtry.
@@ -666,7 +668,7 @@ class ltcl_test_mockup_loader implementation.
     " NEGATIVE - wrong file name **********************
     clear lo_ex.
     try.
-      l_str = o->read_zip( i_name = 'testdir/wrong_filename.xyz' ).
+      l_str = o->read_zip( i_name = 'unit_tests/wrong_filename.xyz' ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'ZF'.
@@ -674,7 +676,7 @@ class ltcl_test_mockup_loader implementation.
     " NEGATIVE - wrong code page **********************
     clear lo_ex.
     try.
-      l_str = o->read_zip( i_name = 'testdir/testfile_complete_utf16.txt' ).
+      l_str = o->read_zip( i_name = 'unit_tests/test_complete_utf16.txt' ).
     catch zcx_mockup_loader_error into lo_ex.
     endtry.
     assert_excode 'CP'.
@@ -696,7 +698,7 @@ class ltcl_test_mockup_loader implementation.
 
     " .XML
     lo_conv = cl_abap_conv_in_ce=>create( encoding = zif_mockup_loader=>encoding_utf8 ).
-    l_xstr_act = o->load_blob( 'testdir/test_raw.xml' ).
+    l_xstr_act = o->load_blob( 'unit_tests/test_raw.xml' ).
     lo_conv->convert(
       exporting
         input = l_xstr_act
@@ -708,7 +710,7 @@ class ltcl_test_mockup_loader implementation.
       exp = l_str_exp ).
 
     " .TXT
-    l_xstr_act = o->load_blob( 'testdir/test_raw.txt' ).
+    l_xstr_act = o->load_blob( 'unit_tests/test_raw.txt' ).
     lo_conv->convert(
       exporting
         input = l_xstr_act
@@ -721,7 +723,7 @@ class ltcl_test_mockup_loader implementation.
 
     " Missing file
     try .
-      o->load_blob( 'testdir/no-file-like-this' ).
+      o->load_blob( 'unit_tests/no-file-like-this' ).
       cl_abap_unit_assert=>fail( ).
     catch zcx_mockup_loader_error into lo_ex.
       cl_abap_unit_assert=>assert_equals(
@@ -731,7 +733,7 @@ class ltcl_test_mockup_loader implementation.
 
     " Case insensitive path
     lo_conv = cl_abap_conv_in_ce=>create( encoding = zif_mockup_loader=>encoding_utf8 ).
-    l_xstr_act = o->load_blob( 'TESTDIR/test_raw.xml' ).
+    l_xstr_act = o->load_blob( 'unit_tests/test_raw.xml' ).
     lo_conv->convert(
       exporting
         input = l_xstr_act
@@ -758,7 +760,7 @@ class ltcl_test_mockup_loader implementation.
 
     try.
       o->load_data(
-        exporting i_obj       = 'testdir/testfile_complete'
+        exporting i_obj       = 'unit_tests/test_complete'
         importing e_container = lr_data ).
       assign lr_data->* to <act>.
       cl_abap_unit_assert=>assert_equals( act = <act> exp = dummy_tab_exp ).
@@ -840,7 +842,7 @@ class ltcl_test_mockup_loader implementation.
     data lt_docs_act like lt_docs_exp.
     o->load_data(
       exporting
-        i_obj  = 'testdir/deep_head'
+        i_obj  = 'unit_tests/deep_head'
         i_deep = abap_true
       importing
         e_container = lt_docs_act ).
@@ -857,7 +859,7 @@ class ltcl_test_mockup_loader implementation.
     try .
       o->load_data(
         exporting
-          i_obj  = 'testdir/deep_head_with_wrong_path'
+          i_obj  = 'unit_tests/deep_head_with_wrong_path'
           i_deep = abap_true
         importing
           e_container = lt_docs_act ).
@@ -869,7 +871,7 @@ class ltcl_test_mockup_loader implementation.
     try .
       o->load_data(
         exporting
-          i_obj  = 'testdir/deep_head_with_wrong_field'
+          i_obj  = 'unit_tests/deep_head_with_wrong_field'
           i_deep = abap_true
         importing
           e_container = lt_docs_act ).
@@ -897,7 +899,7 @@ class ltcl_test_mockup_loader implementation.
 
     o->load_data(
       exporting
-        i_obj           = 'testdir/testfile_complete'
+        i_obj           = 'unit_tests/test_complete'
         i_strict        = abap_false
         i_corresponding = abap_true
       importing
@@ -911,7 +913,7 @@ class ltcl_test_mockup_loader implementation.
 
     o->load_data(
       exporting
-        i_obj           = 'testdir/testfile_complete'
+        i_obj           = 'unit_tests/test_complete'
         i_strict        = abap_false
         i_corresponding = abap_true
         i_where         = 'tchar = Trololo3'
@@ -941,7 +943,7 @@ class ltcl_test_mockup_loader implementation.
 
     o->load_data(
       exporting
-        i_obj           = 'testdir/testfile_complete'
+        i_obj           = 'unit_tests/test_complete'
         i_strict        = abap_false
         i_corresponding = abap_true
         i_where         = 'tnumber = 2015'
@@ -969,7 +971,7 @@ class ltcl_test_mockup_loader implementation.
     clear dummy_tab_act.
     o->load_data(
       exporting
-        i_obj           = 'testdir/testfile_complete'
+        i_obj           = 'unit_tests/test_complete'
         i_strict        = abap_false
         i_corresponding = abap_true
         i_where         = lt_filter
@@ -995,7 +997,7 @@ class ltcl_test_mockup_loader implementation.
 
     o->load_data(
       exporting
-        i_obj           = 'testdir/testfile_complete'
+        i_obj           = 'unit_tests/test_complete'
         i_strict        = abap_false
         i_rename_fields = 'tchar:ychar'
         i_corresponding = abap_true
@@ -1061,7 +1063,7 @@ class ltcl_test_mockup_loader implementation.
 
     o->load_data(
       exporting
-        i_obj       = 'testdir/testfile_complete'
+        i_obj       = 'unit_tests/test_complete'
       importing
         e_container = ls_act1 ).
     cl_abap_unit_assert=>assert_not_initial( ls_act1 ).
@@ -1069,7 +1071,7 @@ class ltcl_test_mockup_loader implementation.
     try.
       o->load_data(
         exporting
-          i_obj       = './testfile_complete'
+          i_obj       = './test_complete'
         importing
           e_container = ls_act2 ).
       cl_abap_unit_assert=>fail( ).
@@ -1080,11 +1082,11 @@ class ltcl_test_mockup_loader implementation.
     endtry.
 
     data li type ref to zif_mockup_loader.
-    li = o->zif_mockup_loader~cd( 'testdir' ).
+    li = o->zif_mockup_loader~cd( 'unit_tests' ).
     cl_abap_unit_assert=>assert_not_initial( li ).
     o->load_data(
       exporting
-        i_obj       = './testfile_complete'
+        i_obj       = './test_complete'
       importing
         e_container = ls_act2 ).
     cl_abap_unit_assert=>assert_equals(
@@ -1106,19 +1108,19 @@ class ltcl_test_mockup_loader implementation.
 
     li->load_data(
       exporting
-        i_obj       = 'testdir/testfile_complete'
+        i_obj       = 'unit_tests/test_complete'
       importing
         e_container = ls_act1 ).
     cl_abap_unit_assert=>assert_not_initial( ls_act1 ).
 
     try.
-      li->load_data( 'testdir/testfile_complete' ).
+      li->load_data( 'unit_tests/test_complete' ).
       cl_abap_unit_assert=>fail( ).
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_equals( act = lx->code exp = 'NC' ).
     endtry.
 
-    li->to( lr )->load_data( 'testdir/testfile_complete' ).
+    li->to( lr )->load_data( 'unit_tests/test_complete' ).
     cl_abap_unit_assert=>assert_equals( act = ls_act2 exp = ls_act1 ).
 
   endmethod.
@@ -1137,30 +1139,30 @@ class ltcl_test_mockup_loader implementation.
     " Usual load
     li->load_data(
       exporting
-        i_obj       = 'testdir/testfile_complete'
+        i_obj       = 'unit_tests/test_complete'
       importing
         e_container = ls_exp ).
     cl_abap_unit_assert=>assert_not_initial( ls_exp ).
 
     li->load_data(
       exporting
-        i_obj       = 'testdir/testfile_complete'
+        i_obj       = 'unit_tests/test_complete'
       importing
         e_container = lt_exp ).
     cl_abap_unit_assert=>assert_not_initial( lt_exp ).
 
     " ideaomatic load
-    li->load( 'testdir/testfile_complete' )->into( changing data = ls_act ).
+    li->load( 'unit_tests/test_complete' )->into( changing data = ls_act ).
     cl_abap_unit_assert=>assert_equals( act = ls_act exp = ls_exp ).
 
     " load table
-    li->load( 'testdir/testfile_complete' )->into( changing data = lt_act ).
+    li->load( 'unit_tests/test_complete' )->into( changing data = lt_act ).
     cl_abap_unit_assert=>assert_equals( act = lt_act exp = lt_exp ).
 
     " filter
     " No deep test, because it just calls load_data insede which is well tested
     li->load(
-      i_obj   = 'testdir/testfile_complete'
+      i_obj   = 'unit_tests/test_complete'
       i_where = 'tnumber = 2016' )->into( changing data = lt_act ).
     cl_abap_unit_assert=>assert_equals( act = lines( lt_exp ) exp = 3 ).
     cl_abap_unit_assert=>assert_equals( act = lines( lt_act ) exp = 1 ).
@@ -1171,7 +1173,7 @@ class ltcl_test_mockup_loader implementation.
         ychar type c length 8,
       end of ls_act_renamed.
     li->load(
-      i_obj           = 'testdir/testfile_complete'
+      i_obj           = 'unit_tests/test_complete'
       i_corresponding = abap_true
       i_rename_fields = 'tchar:ychar' )->into( changing data = ls_act_renamed ).
     cl_abap_unit_assert=>assert_equals(
