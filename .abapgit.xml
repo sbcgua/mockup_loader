@@ -2,6 +2,7 @@
 <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
  <asx:values>
   <DATA>
+   <NAME>Mockup loader</NAME>
    <MASTER_LANGUAGE>E</MASTER_LANGUAGE>
    <STARTING_FOLDER>/src/</STARTING_FOLDER>
    <FOLDER_LOGIC>PREFIX</FOLDER_LOGIC>
@@ -18,7 +19,7 @@
     <item>/abaplint.json</item>
     <item>/ci/</item>
    </IGNORE>
-   <VERSION_CONSTANT>zif_mockup_loader=&gt;version</VERSION_CONSTANT>
+   <VERSION_CONSTANT>ZIF_MOCKUP_LOADER=&gt;VERSION</VERSION_CONSTANT>
   </DATA>
  </asx:values>
 </asx:abap>

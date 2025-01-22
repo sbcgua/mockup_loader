@@ -448,7 +448,7 @@ class ltcl_test_mockup_store implementation.
     lo_ml = zcl_mockup_loader=>create(
       i_type       = 'MIME'
       i_path       = 'ZMOCKUP_LOADER_UNIT_TEST'
-      i_amt_format = ''
+      i_amt_format = ' .'
       i_encoding   = zif_mockup_loader=>encoding_utf8 ).
 
     get_dummy_data( importing e_dummy_tab   = dummy_tab_exp ).
@@ -459,7 +459,7 @@ class ltcl_test_mockup_store implementation.
     try.
       o->load_and_store(
         io_ml       = lo_ml
-        i_obj       = 'testdir/testfile_complete'
+        i_obj       = 'unit_tests/test_complete'
         i_name      = 'TAB'
         i_type      = 'LTCL_TEST_MOCKUP_STORE=>TT_DUMMY' ).
 
@@ -470,7 +470,7 @@ class ltcl_test_mockup_store implementation.
 
       o->load_and_store(
         io_ml       = lo_ml
-        i_obj       = 'testdir/testfile_complete'
+        i_obj       = 'unit_tests/test_complete'
         i_name      = 'TAB'
         i_type_desc = lo_type_desc ).
       clear dummy_tab_act.
@@ -489,7 +489,7 @@ class ltcl_test_mockup_store implementation.
     try.
       o->load_and_store(
         io_ml       = lo_ml
-        i_obj       = 'testdir/testfile_complete'
+        i_obj       = 'unit_tests/test_complete'
         i_name      = 'TAB'
         i_type      = '************' ).
 
@@ -502,7 +502,7 @@ class ltcl_test_mockup_store implementation.
     try.
       o->load_and_store(
         io_ml       = lo_ml
-        i_obj       = 'testdir/testfile_complete'
+        i_obj       = 'unit_tests/test_complete'
         i_name      = 'TAB'
         i_type_desc = lo_type_desc
         i_type      = '************' ).

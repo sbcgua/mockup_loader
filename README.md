@@ -356,6 +356,8 @@ Some design facts about the `store`:
 
 The most convenient way to install the package is to use [abapGit](https://github.com/larshp/abapGit) - it is easily installed itself and then a couple of click to clone the repo into the system. There is also an option for offline installation - download the repo as zip file and import it with abapGit. Unit test execution is always recommended after installation.
 
+The package contains 2 subpackages: `core` (the tool itself), `devtools` (switch source program), and `examples` (example programs). The latter 2 can be skipped for the deserialization in target systems (abapGit supports filename filtering - specify `*/examples/*` in the corresponding repo setting).
+
 Dependencies (to install before mockup loader):
 
 - [text2tab](https://github.com/sbcgua/text2tab) - tab-delimited text parser (was a part of *mockup loader* but now a separate reusable tool). Mandatory prerequisite.

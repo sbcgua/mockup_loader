@@ -8,8 +8,10 @@ Legend
 + : added
 - : removed
 
-v2.2.4, 2024-??-??
+v2.3.0, 2025-03-22
 ------------------
+! reworks in unit tests
+! Restructured packages: core objects were separated from examples and devtools, to improve deployment (abapGit supports skipping packages, so examples package can be left out of the real system)
 + zcl_mockup_loader_utils=>and - merge several filters together - #53
 
 v2.2.3, 2024-02-04
