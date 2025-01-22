@@ -1,7 +1,7 @@
 interface zif_mockup_loader
   public.
 
-  constants version type string value 'v2.2.3'. "#EC NOTEXT
+  constants version type string value 'v2.3.0'. "#EC NOTEXT
   constants origin type string value 'https://github.com/sbcgua/mockup_loader'. "#EC NOTEXT
   constants license type string value 'MIT'. "#EC NOTEXT
 
