@@ -10,7 +10,7 @@ interface zif_mockup_loader
   constants encoding_utf16 type abap_encoding value '4103'. "#EC NOTEXT
 
   " Dependencies
-  constants c_required_text2tab_ver type string value 'v2.3.2'.
+  constants c_required_text2tab_ver type string value 'v2.4.0'.
 
 **********************************************************************
 * COMMON TYPES
