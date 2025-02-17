@@ -1033,7 +1033,7 @@ class ltcl_test_mockup_loader implementation.
       with key key = 'MIME:ZMOCKUP_LOADER_UNIT_TEST'
       into ls_cache.
     cl_abap_unit_assert=>assert_subrc( ).
-    lv_reuse_count_at_step1 = zcl_mockup_loader=>gv_cache_reuse_count.
+    lv_reuse_count_at_step1 = zcl_mockup_loader=>gs_cache_stats-reuse_count.
 
     zcl_mockup_loader=>create(
       i_type       = 'MIME'
@@ -1050,7 +1050,7 @@ class ltcl_test_mockup_loader implementation.
       into ls_cache.
     cl_abap_unit_assert=>assert_subrc( ).
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader=>gv_cache_reuse_count - lv_reuse_count_at_step1
+      act = zcl_mockup_loader=>gs_cache_stats-reuse_count - lv_reuse_count_at_step1
       exp = 1 ).
 
   endmethod.

@@ -77,11 +77,17 @@ class ZCL_MOCKUP_LOADER definition
         !i_required_version type string
       returning
         value(r_fits) type abap_bool .
+    class-methods flush_cache.
     methods constructor
       raising
         zcx_mockup_loader_error .
 
-    class-data gv_cache_reuse_count type i read-only.
+    class-data:
+      begin of gs_cache_stats read-only,
+        stash_count type i,
+        reuse_count type i,
+        import_count type i,
+      end of gs_cache_stats.
 
   protected section.
   private section.
@@ -101,6 +107,9 @@ class ZCL_MOCKUP_LOADER definition
         key type string,
         zip_blob type xstring,
       end of ty_zip_cache.
+
+    constants gc_zip_cache_ts_mem_id type c length 40 value 'zcl_mockup_loader:zip_cache:ts'.
+    constants gc_zip_cache_mem_id type c length 40 value 'zcl_mockup_loader:zip_cache'.
 
     class-data gt_zip_cache type standard table of ty_zip_cache.
 
@@ -305,35 +314,36 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     data lv_zip_cache_key type string.
     data lv_cache_timestamp type timestamp.
     data lv_now_timestamp type timestamp.
-    constants lc_zip_cache_ts_mem_id type c length 40 value 'zcl_mockup_loader:zip_cache:ts'.
-    constants lc_zip_cache_mem_id type c length 40 value 'zcl_mockup_loader:zip_cache'.
+    data lv_diff type i.
     field-symbols <zip_cache> like line of gt_zip_cache.
 
-    if i_cache_timeout > 0.
+    if i_cache_timeout > 0. " Caching active
       lv_zip_cache_key = l_src_type && ':' && l_src_path.
-      get time stamp field lv_now_timestamp.
+
+      import
+        ts = lv_cache_timestamp
+        cs = gs_cache_stats
+        from memory id gc_zip_cache_ts_mem_id.
 
       if lines( gt_zip_cache ) = 0.
-        import
-          ts = lv_cache_timestamp
-          rc = gv_cache_reuse_count
-          from memory id lc_zip_cache_ts_mem_id.
-        if sy-subrc = 0.
-          data lv_diff type i.
+        if lv_cache_timestamp is not initial. " sy-subrc = 0.
+          get time stamp field lv_now_timestamp.
           lv_diff = cl_abap_tstmp=>subtract(
             tstmp1 = lv_now_timestamp
             tstmp2 = lv_cache_timestamp ).
           if lv_diff < i_cache_timeout.
-            import cache = gt_zip_cache from memory id lc_zip_cache_mem_id.
+            import cache = gt_zip_cache from memory id gc_zip_cache_mem_id.
             if sy-subrc = 0.
               " confirm actuality
+              gs_cache_stats-import_count = gs_cache_stats-import_count + 1.
+              get time stamp field lv_now_timestamp.
               export
                 ts = lv_now_timestamp
-                rc = gv_cache_reuse_count
-                to memory id lc_zip_cache_ts_mem_id.
+                cs = gs_cache_stats
+                to memory id gc_zip_cache_ts_mem_id.
             endif.
           else.
-            clear gv_cache_reuse_count.
+*            clear gv_cache_reuse_count.
           endif.
         endif.
       endif.
@@ -341,11 +351,12 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       read table gt_zip_cache assigning <zip_cache> with key key = lv_zip_cache_key.
       if sy-subrc = 0.
         lv_xdata = <zip_cache>-zip_blob.
-        gv_cache_reuse_count = gv_cache_reuse_count + 1.
+        gs_cache_stats-reuse_count = gs_cache_stats-reuse_count + 1.
+        get time stamp field lv_now_timestamp.
         export
           ts = lv_now_timestamp
-          rc = gv_cache_reuse_count
-          to memory id lc_zip_cache_ts_mem_id.
+          cs = gs_cache_stats
+          to memory id gc_zip_cache_ts_mem_id.
       endif.
     endif.
 
@@ -353,16 +364,21 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       lv_xdata = read_zip_blob(
         i_type = l_src_type
         i_path = l_src_path ).
-      if i_cache_timeout > 0.
+
+      if i_cache_timeout > 0. " Caching active
         append initial line to gt_zip_cache assigning <zip_cache>.
         <zip_cache>-key = lv_zip_cache_key.
         <zip_cache>-zip_blob = lv_xdata.
+
+        gs_cache_stats-stash_count = gs_cache_stats-stash_count + 1.
         get time stamp field lv_now_timestamp.
         export
           ts = lv_now_timestamp
-          rc = gv_cache_reuse_count
-          to memory id lc_zip_cache_ts_mem_id.
-        export cache = gt_zip_cache to memory id lc_zip_cache_mem_id.
+          cs = gs_cache_stats
+          to memory id gc_zip_cache_ts_mem_id.
+        export
+          cache = gt_zip_cache
+          to memory id gc_zip_cache_mem_id.
       endif.
     endif.
 
@@ -452,6 +468,14 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       endif.
       clear rs_file.
     endloop.
+
+  endmethod.
+
+
+  method flush_cache.
+
+    delete from memory id gc_zip_cache_ts_mem_id.
+    delete from memory id gc_zip_cache_mem_id.
 
   endmethod.
 
