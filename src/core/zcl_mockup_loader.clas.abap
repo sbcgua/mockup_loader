@@ -124,13 +124,6 @@ class ZCL_MOCKUP_LOADER definition
     data mr_ref_to_container type ref to data.
     data ms_next_load_params type ty_load_params.
 
-    class-methods create_zip_instance
-      importing
-        !i_zip_blob type xstring
-      returning
-        value(ro_zip) type ref to cl_abap_zip
-      raising
-        zcx_mockup_loader_error .
     class-methods read_zip_blob
       importing
         !i_path type string
@@ -436,23 +429,6 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       i_encoding      = l_settings-codepage
       i_date_format   = l_settings-date_format
       i_begin_comment = l_settings-comment ).
-
-  endmethod.
-
-
-  method create_zip_instance.
-
-    create object ro_zip.
-
-    ro_zip->load(
-      exporting
-        zip    = i_zip_blob
-      exceptions
-        others = 4 ).
-
-    if sy-subrc <> 0 or lines( ro_zip->files ) = 0.
-      zcx_mockup_loader_error=>raise( msg = 'ZIP load failed' code = 'ZE' ).  "#EC NOTEXT
-    endif.
 
   endmethod.
 
