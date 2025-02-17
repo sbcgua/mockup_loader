@@ -655,7 +655,7 @@ class ltcl_test_mockup_loader implementation.
           l_str      type string,
           lo_ex      type ref to zcx_mockup_loader_error.
 
-    cl_abap_unit_assert=>assert_not_initial( act = lines( o->mo_zip->files ) ).
+    cl_abap_unit_assert=>assert_not_initial( act = lines( o->mi_archive->files ) ).
 
     " Positive ***************************************
     try.

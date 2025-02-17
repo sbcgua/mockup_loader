@@ -113,7 +113,7 @@ class ZCL_MOCKUP_LOADER definition
 
     class-data gt_zip_cache type standard table of ty_zip_cache.
 
-    data mo_zip type ref to cl_abap_zip.
+    data mi_archive type ref to lif_archive.
     data mv_amt_format type zif_mockup_loader=>ty_amt_format.
     data mv_encoding type abap_encoding.
     data mv_date_format type zif_mockup_loader=>ty_date_format.
@@ -163,7 +163,7 @@ class ZCL_MOCKUP_LOADER definition
       importing
         i_path type string
       returning
-        value(rs_file) like line of mo_zip->files.
+        value(rv_file) type string.
     class-methods redirect_source
       changing
         c_src_type      type zif_mockup_loader=>ty_src_type
@@ -382,7 +382,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       endif.
     endif.
 
-    ro_instance->mo_zip = create_zip_instance( lv_xdata ).
+    ro_instance->mi_archive = lcl_zip_archive=>new( lv_xdata ).
 
   endmethod.
 
@@ -462,11 +462,11 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     data lv_path like i_path.
     lv_path = to_lower( i_path ).
 
-    loop at mo_zip->files into rs_file.
-      if to_lower( rs_file-name ) = lv_path.
+    loop at mi_archive->files into rv_file.
+      if to_lower( rv_file ) = lv_path.
         exit.
       endif.
-      clear rs_file.
+      clear rv_file.
     endloop.
 
   endmethod.
@@ -751,32 +751,32 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
   method zif_mockup_loader~load_blob.
 
-    data ls_file like line of mo_zip->files.
+    data lv_file type string.
     data lv_path like i_obj_path.
 
     lv_path = normalize_path( i_obj_path ).
 
-    mo_zip->get(
+    mi_archive->get(
       exporting
         name    = lv_path
       importing
         content = r_content
       exceptions
-        zip_index_error = 1 ).
+        others = 1 ).
 
     if sy-subrc <> 0.
-      ls_file = find_file_case_insensitive( lv_path ).
+      lv_file = find_file_case_insensitive( lv_path ).
 
-      if ls_file is initial.
+      if lv_file is initial.
         zcx_mockup_loader_error=>raise( msg = |Cannot read { i_obj_path }| code = 'ZF' ). "#EC NOTEXT
       else.
-        mo_zip->get(
+        mi_archive->get(
           exporting
-            name    = ls_file-name
+            name    = lv_file
           importing
             content = r_content
           exceptions
-            zip_index_error = 1 ).
+            others = 1 ).
         if sy-subrc <> 0.
           zcx_mockup_loader_error=>raise( msg = |Cannot read { i_obj_path }| code = 'ZF' ). "#EC NOTEXT
         endif.
