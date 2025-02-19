@@ -105,6 +105,7 @@ class ZCL_MOCKUP_LOADER definition
     types:
       begin of ty_zip_cache,
         key type string,
+        is_txt type abap_bool,
         zip_blob type xstring,
       end of ty_zip_cache.
 
@@ -128,8 +129,9 @@ class ZCL_MOCKUP_LOADER definition
       importing
         !i_path type string
         !i_type type zif_mockup_loader=>ty_src_type
-      returning
-        value(r_xdata) type xstring
+      exporting
+        e_is_txt type abap_bool
+        e_xdata  type xstring
       raising
         zcx_mockup_loader_error .
 
@@ -308,6 +310,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     data lv_cache_timestamp type timestamp.
     data lv_now_timestamp type timestamp.
     data lv_diff type i.
+    data lv_is_txt_format type abap_bool.
     field-symbols <zip_cache> like line of gt_zip_cache.
 
     if i_cache_timeout > 0. " Caching active
@@ -354,13 +357,18 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     endif.
 
     if <zip_cache> is not assigned. " Cache not found
-      lv_xdata = read_zip_blob(
-        i_type = l_src_type
-        i_path = l_src_path ).
+      read_zip_blob(
+        exporting
+          i_type = l_src_type
+          i_path = l_src_path
+        importing
+          e_xdata  = lv_xdata
+          e_is_txt = lv_is_txt_format ).
 
       if i_cache_timeout > 0. " Caching active
         append initial line to gt_zip_cache assigning <zip_cache>.
-        <zip_cache>-key = lv_zip_cache_key.
+        <zip_cache>-key      = lv_zip_cache_key.
+        <zip_cache>-is_txt   = lv_is_txt_format.
         <zip_cache>-zip_blob = lv_xdata.
 
         gs_cache_stats-stash_count = gs_cache_stats-stash_count + 1.
@@ -375,7 +383,11 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       endif.
     endif.
 
-    ro_instance->mi_archive = lcl_zip_archive=>new( lv_xdata ).
+    if lv_is_txt_format = abap_true.
+      ro_instance->mi_archive = lcl_text_archive=>new( lv_xdata ).
+    else.
+      ro_instance->mi_archive = lcl_zip_archive=>new( lv_xdata ).
+    endif.
 
   endmethod.
 
@@ -574,10 +586,12 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
   method read_zip_blob.
 
-    data: l_key       type wwwdatatab,
-          l_size      type int4,
-          lt_w3mime   type table of w3mime,
-          ls_w3mime   type w3mime.
+    data l_key       type wwwdatatab.
+    data l_size      type int4.
+    data lt_w3mime   type table of w3mime.
+    data ls_w3mime   type w3mime.
+    data lt_params   type table of wwwparams.
+    field-symbols <param> like line of lt_params.
 
     " Load data
     case i_type.
@@ -585,20 +599,46 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         l_key-relid = 'MI'.
         l_key-objid = i_path.
 
+        call function 'WWWPARAMS_READ_ALL'
+          exporting
+            type   = l_key-relid
+            objid  = l_key-objid
+          tables
+            params = lt_params
+          exceptions
+            others = 1.
+
+        if sy-subrc <> 0.
+          zcx_mockup_loader_error=>raise( msg = 'SMW0 data import error' code = 'RE' ).  "#EC NOTEXT
+        endif.
+
+        " 'filesize', 'filename', 'fileextension', 'mimetype', 'version'
+        read table lt_params assigning <param> with key name = 'fileextension'.
+        if sy-subrc <> 0.
+          zcx_mockup_loader_error=>raise( msg = 'SMW0 data import error' code = 'RE' ).  "#EC NOTEXT
+        endif.
+        e_is_txt = boolc( to_lower( <param>-value ) = '.txt' ). " Maybe check mimetype also, default is ZIP !
+
+        read table lt_params assigning <param> with key name = 'filesize'.
+        if sy-subrc <> 0.
+          zcx_mockup_loader_error=>raise( msg = 'SMW0 data import error' code = 'RE' ).  "#EC NOTEXT
+        endif.
+        l_size = <param>-value.
+
         call function 'WWWDATA_IMPORT'
           exporting
             key    = l_key
           tables
-            mime   = lt_w3mime[]
+            mime   = lt_w3mime
           exceptions
             others = 1.
 
-        if sy-subrc is not initial.
+        if sy-subrc <> 0.
           zcx_mockup_loader_error=>raise( msg = 'SMW0 data import error' code = 'RE' ).  "#EC NOTEXT
         endif.
 
-        describe field ls_w3mime length l_size in byte mode.
-        l_size = l_size * lines( lt_w3mime ).
+*        describe field ls_w3mime length l_size in byte mode.
+*        l_size = l_size * lines( lt_w3mime ).
 
       when 'FILE'. " Load from frontend
         call function 'GUI_UPLOAD'
@@ -623,14 +663,14 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
     endcase.
 
-    " Convert to XString
+    " Convert to xstring
     call function 'SCMS_BINARY_TO_XSTRING'
       exporting
         input_length = l_size
       importing
-        buffer       = r_xdata
+        buffer       = e_xdata " FM clears this internally
       tables
-        binary_tab   = lt_w3mime[]
+        binary_tab   = lt_w3mime
       exceptions
         failed       = 1.
 
@@ -732,13 +772,11 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
     lv_path = normalize_path( i_obj_path ).
 
-    mi_archive->get(
-      exporting
-        name    = lv_path
-      importing
-        content = r_content
-      exceptions
-        others = 1 ).
+    try.
+      r_content = mi_archive->get( lv_path ).
+    catch zcx_mockup_loader_error.
+      sy-subrc = 4.
+    endtry.
 
     if sy-subrc <> 0.
       lv_file = find_file_case_insensitive( lv_path ).
@@ -746,13 +784,12 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       if lv_file is initial.
         zcx_mockup_loader_error=>raise( msg = |Cannot read { i_obj_path }| code = 'ZF' ). "#EC NOTEXT
       else.
-        mi_archive->get(
-          exporting
-            name    = lv_file
-          importing
-            content = r_content
-          exceptions
-            others = 1 ).
+        try.
+          r_content = mi_archive->get( lv_file ).
+        catch zcx_mockup_loader_error.
+          sy-subrc = 4.
+        endtry.
+
         if sy-subrc <> 0.
           zcx_mockup_loader_error=>raise( msg = |Cannot read { i_obj_path }| code = 'ZF' ). "#EC NOTEXT
         endif.

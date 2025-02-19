@@ -3,8 +3,8 @@ interface lif_archive.
   methods get
     importing
       name type string
-    exporting
-      content type xstring
-    exceptions
-      read_error.
+    returning
+      value(r_content) type xstring
+    raising
+      zcx_mockup_loader_error.
 endinterface.

@@ -106,6 +106,118 @@ class ltcl_dependencies_version implementation.
   endmethod.
 endclass.
 
+**********************************************************************
+* Text format parser test
+**********************************************************************
+
+class ltcl_text_archive definition for testing
+  duration short
+  risk level harmless.
+
+  private section.
+
+    methods dummy returning value(r_txt) type string_table.
+    methods make importing i_str_tab type string_table optional returning value(r_txt) type xstring.
+
+    methods happy_path for testing raising zcx_mockup_loader_error.
+
+endclass.
+
+class ltcl_text_archive implementation.
+
+  method dummy.
+
+    append '!!MOCKUP-LOADER-FORMAT <1.0>' to r_txt.
+    append 'some comments or future metadata' to r_txt.
+    append '' to r_txt.
+    append '!!FILE /test1/t001.txt text 2' to r_txt.
+    append '!!FILE-EXTRAS some metadata of future format versions' to r_txt.
+    append 'BUKRS NAME1' to r_txt.
+    append '0101 Company1' to r_txt.
+    append '0102 Company2' to r_txt.
+    append '' to r_txt.
+    append '!!FILE /test1/bkpf.txt text 2' to r_txt.
+    append 'BELNR BUKRS' to r_txt.
+    append '1000001 0101' to r_txt.
+    append '1000002 0101' to r_txt.
+
+  endmethod.
+
+  method make.
+
+    data lv_str type string.
+
+    if i_str_tab is initial.
+      lv_str = concat_lines_of( table = dummy( ) sep = |\n| ).
+    else.
+      lv_str = concat_lines_of( table = i_str_tab sep = |\n| ).
+    endif.
+
+    call function 'SCMS_STRING_TO_XSTRING'
+      exporting
+        text     = lv_str
+        encoding = '4110'
+      importing
+        buffer = r_txt
+      exceptions
+        others = 4.
+
+    if sy-subrc <> 0.
+      cl_abap_unit_assert=>fail( ).
+    endif.
+
+  endmethod.
+
+  method happy_path.
+
+    data li type ref to lif_archive.
+
+    li = lcl_text_archive=>new( make( ) ).
+
+    data lt_exp type string_table.
+    append '/test1/t001.txt' to lt_exp.
+    append '/test1/bkpf.txt' to lt_exp.
+
+    cl_abap_unit_assert=>assert_equals(
+      act = li->files
+      exp = lt_exp ).
+
+    clear lt_exp.
+    append 'BUKRS NAME1'   to lt_exp.
+    append '0101 Company1' to lt_exp.
+    append '0102 Company2' to lt_exp.
+
+    cl_abap_unit_assert=>assert_equals(
+      act = li->get( '/test1/t001.txt' )
+      exp = lt_exp ).
+
+    clear lt_exp.
+    append 'BELNR BUKRS'  to lt_exp.
+    append '1000001 0101' to lt_exp.
+    append '1000002 0101' to lt_exp.
+
+    cl_abap_unit_assert=>assert_equals(
+      act = li->get( '/test1/bkpf.txt' )
+      exp = lt_exp ).
+
+    try.
+      li->get( '/test1/bkpf.txt' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error.
+    endtry.
+
+  endmethod.
+
+  " TODO
+*  no header
+*  wrong version
+*  no comment, with comment
+*  Wrong !! command
+*  enters between
+*  wrong FILE structure
+
+endclass.
+
 
 **********************************************************************
 * Test Class definition
