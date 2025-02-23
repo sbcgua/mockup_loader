@@ -347,6 +347,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       read table gt_zip_cache assigning <zip_cache> with key key = lv_zip_cache_key.
       if sy-subrc = 0.
         lv_xdata = <zip_cache>-zip_blob.
+        lv_is_txt_format = <zip_cache>-is_txt.
         gs_cache_stats-reuse_count = gs_cache_stats-reuse_count + 1.
         get time stamp field lv_now_timestamp.
         export
@@ -591,6 +592,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     data lt_w3mime   type table of w3mime.
     data ls_w3mime   type w3mime.
     data lt_params   type table of wwwparams.
+    data lv_file_ext type string.
     field-symbols <param> like line of lt_params.
 
     " Load data
@@ -617,7 +619,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         if sy-subrc <> 0.
           zcx_mockup_loader_error=>raise( msg = 'SMW0 data import error' code = 'RE' ).  "#EC NOTEXT
         endif.
-        e_is_txt = boolc( to_lower( <param>-value ) = '.txt' ). " Maybe check mimetype also, default is ZIP !
+        lv_file_ext = <param>-value. " Maybe check mimetype also? default is ZIP!
 
         read table lt_params assigning <param> with key name = 'filesize'.
         if sy-subrc <> 0.
@@ -652,6 +654,12 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
           exceptions
             others = 1.
 
+        data lv_dot_offs type i.
+        lv_dot_offs = find_end( val = i_path sub = '.' ).
+        if lv_dot_offs > 0.
+          lv_file_ext = substring( val = i_path off = lv_dot_offs - 1 ).
+        endif.
+
         if sy-subrc is not initial.
           zcx_mockup_loader_error=>raise( msg = |Cannot upload file: { i_path }| code = 'RE' ). "#EC NOTEXT
         endif.
@@ -673,6 +681,8 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         binary_tab   = lt_w3mime
       exceptions
         failed       = 1.
+
+    e_is_txt = boolc( to_lower( lv_file_ext ) = '.txt' ).
 
     if sy-subrc is not initial.
       zcx_mockup_loader_error=>raise( 'Binary to string error' ). "#EC NOTEXT
