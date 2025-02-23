@@ -117,9 +117,29 @@ class ltcl_text_archive definition for testing
   private section.
 
     methods dummy returning value(r_txt) type string_table.
-    methods make importing i_str_tab type string_table optional returning value(r_txt) type xstring.
+    methods adj
+      importing
+        loc type string
+        with type string optional
+        skip type abap_bool default abap_false
+      returning
+        value(r_txt) type string_table.
+    methods make
+      importing
+        i_str_tab type string_table optional
+      returning
+        value(r_txt) type xstring
+      raising
+        zcx_mockup_loader_error.
 
     methods happy_path for testing raising zcx_mockup_loader_error.
+    methods no_head for testing raising zcx_mockup_loader_error.
+    methods wrong_ver for testing raising zcx_mockup_loader_error.
+    methods wrong_tag for testing raising zcx_mockup_loader_error.
+    methods wrong_file for testing raising zcx_mockup_loader_error.
+    methods duplicate for testing raising zcx_mockup_loader_error.
+    methods lost_data for testing raising zcx_mockup_loader_error.
+    methods integrity for testing raising zcx_mockup_loader_error.
 
 endclass.
 
@@ -127,19 +147,43 @@ class ltcl_text_archive implementation.
 
   method dummy.
 
-    append '!!MOCKUP-LOADER-FORMAT <1.0>' to r_txt.
+    append '!!MOCKUP-LOADER-FORMAT 1.0' to r_txt.
+    append '!!FILE-COUNT 3' to r_txt.
     append 'some comments or future metadata' to r_txt.
     append '' to r_txt.
-    append '!!FILE /test1/t001.txt text 2' to r_txt.
-    append '!!FILE-EXTRAS some metadata of future format versions' to r_txt.
+    append '!!FILE /test1/t001.txt text 3' to r_txt.
     append 'BUKRS NAME1' to r_txt.
     append '0101 Company1' to r_txt.
     append '0102 Company2' to r_txt.
-    append '' to r_txt.
-    append '!!FILE /test1/bkpf.txt text 2' to r_txt.
-    append 'BELNR BUKRS' to r_txt.
-    append '1000001 0101' to r_txt.
-    append '1000002 0101' to r_txt.
+    append '' to r_txt. " optional gap
+    append '!!FILE /test1/bkpf.txt text 3' to r_txt.
+    append 'BUKRS NAME1' to r_txt.
+    append '0103 Company3' to r_txt.
+    append '0104 Company4' to r_txt.
+    append '!!FILE /test2/bkpf.txt text 2' to r_txt.
+    append 'BUKRS NAME1' to r_txt.
+    append '0105 Company5' to r_txt.
+
+  endmethod.
+
+  method adj.
+
+    data tmp type string_table.
+    field-symbols <i> type string.
+
+    tmp = dummy( ).
+
+    loop at tmp assigning <i>.
+      if <i> cp loc.
+        if with is not initial.
+          append with to r_txt.
+        elseif skip = abap_true.
+          " skip line
+        endif.
+      else.
+        append <i> to r_txt.
+      endif.
+    endloop.
 
   endmethod.
 
@@ -153,18 +197,7 @@ class ltcl_text_archive implementation.
       lv_str = concat_lines_of( table = i_str_tab sep = |\n| ).
     endif.
 
-    call function 'SCMS_STRING_TO_XSTRING'
-      exporting
-        text     = lv_str
-        encoding = '4110'
-      importing
-        buffer = r_txt
-      exceptions
-        others = 4.
-
-    if sy-subrc <> 0.
-      cl_abap_unit_assert=>fail( ).
-    endif.
+    r_txt = lcl_text_archive=>string_to_xstring_utf8( lv_str ).
 
   endmethod.
 
@@ -175,8 +208,10 @@ class ltcl_text_archive implementation.
     li = lcl_text_archive=>new( make( ) ).
 
     data lt_exp type string_table.
-    append '/test1/t001.txt' to lt_exp.
+    data lt_act type string_table.
     append '/test1/bkpf.txt' to lt_exp.
+    append '/test1/t001.txt' to lt_exp. " mt_index is sorted
+    append '/test2/bkpf.txt' to lt_exp.
 
     cl_abap_unit_assert=>assert_equals(
       act = li->files
@@ -186,35 +221,201 @@ class ltcl_text_archive implementation.
     append 'BUKRS NAME1'   to lt_exp.
     append '0101 Company1' to lt_exp.
     append '0102 Company2' to lt_exp.
+    split lcl_text_archive=>xstring_to_string_utf8( li->get( '/test1/t001.txt' ) ) at |\n| into table lt_act.
 
     cl_abap_unit_assert=>assert_equals(
-      act = li->get( '/test1/t001.txt' )
+      act = lt_act
       exp = lt_exp ).
 
     clear lt_exp.
-    append 'BELNR BUKRS'  to lt_exp.
-    append '1000001 0101' to lt_exp.
-    append '1000002 0101' to lt_exp.
+    append 'BUKRS NAME1'   to lt_exp.
+    append '0103 Company3' to lt_exp.
+    append '0104 Company4' to lt_exp.
+    split lcl_text_archive=>xstring_to_string_utf8( li->get( '/test1/bkpf.txt' ) ) at |\n| into table lt_act.
 
     cl_abap_unit_assert=>assert_equals(
-      act = li->get( '/test1/bkpf.txt' )
+      act = lt_act
+      exp = lt_exp ).
+
+    clear lt_exp.
+    append 'BUKRS NAME1'   to lt_exp.
+    append '0105 Company5' to lt_exp.
+    split lcl_text_archive=>xstring_to_string_utf8( li->get( '/test2/bkpf.txt' ) ) at |\n| into table lt_act.
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
       exp = lt_exp ).
 
     try.
-      li->get( '/test1/bkpf.txt' ).
+      li->get( '/test1/missing.txt' ).
       cl_abap_unit_assert=>fail( ).
     catch zcx_mockup_loader_error.
     endtry.
 
   endmethod.
 
-  " TODO
-*  no header
-*  wrong version
-*  no comment, with comment
-*  Wrong !! command
-*  enters between
-*  wrong FILE structure
+  method no_head.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!MOCKUP-LOADER-FORMAT*'
+        with = '' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*MOCKUP-LOADER-FORMAT tag expected*' ).
+    endtry.
+
+  endmethod.
+
+  method wrong_ver.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!MOCKUP-LOADER-FORMAT*'
+        with = '!!MOCKUP-LOADER-FORMAT 99' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*version is not supported*' ).
+    endtry.
+
+  endmethod.
+
+  method wrong_tag.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!FILE /test1/bkpf.txt*'
+        with = '!!WRONGTAG' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*@10*unexpected tag*' ).
+    endtry.
+
+  endmethod.
+
+  method wrong_file.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!FILE /test1/bkpf.txt*'
+        with = '!!FILE' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*@10*file name*' ).
+    endtry.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!FILE /test1/bkpf.txt*'
+        with = '!!FILE /test1/bkpf.txt xxx' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*@10*file size*' ).
+    endtry.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!FILE /test1/bkpf.txt*'
+        with = '!!FILE /test1/bkpf.txt xxx 2' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*@10*file type*' ).
+    endtry.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!FILE /test1/bkpf.txt*'
+        with = '!!FILE /test1/bkpf.txt text A' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*@10*file size*' ).
+    endtry.
+
+  endmethod.
+
+  method duplicate.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!FILE /test1/bkpf.txt*'
+        with = '!!FILE /test1/t001.txt text 3' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*@10*file duplicate*' ).
+    endtry.
+
+  endmethod.
+
+  method lost_data.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '*0105 Company5*'
+        skip = abap_true ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*unexpected end of data*' ).
+    endtry.
+
+  endmethod.
+
+  method integrity.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!FILE-COUNT*'
+        with = '!!FILE-COUNT 5' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*file count (3) <> expected (5)*' ).
+    endtry.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '*0103 Company3*'
+        skip = abap_true ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*@14*unexpected data*' ). " hmmm ...
+    endtry.
+
+  endmethod.
 
 endclass.
 

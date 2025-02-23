@@ -50,6 +50,11 @@
      <LANGU>E</LANGU>
      <DESCRIPT>Raise error</DESCRIPT>
     </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CMPNAME>REMSG</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Adjust message</DESCRIPT>
+    </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>
  </asx:abap>
