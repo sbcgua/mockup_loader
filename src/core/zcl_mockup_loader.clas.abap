@@ -99,7 +99,7 @@ class ZCL_MOCKUP_LOADER definition
         is_corresponding type abap_bool,
         is_deep          type abap_bool,
         filter           type zif_mockup_loader=>tt_filter,
-        rename_map       type zcl_text2tab_utils=>tt_field_name_map,
+        rename_map       type zif_text2tab=>tt_field_name_map,
       end of ty_load_params.
 
     types:

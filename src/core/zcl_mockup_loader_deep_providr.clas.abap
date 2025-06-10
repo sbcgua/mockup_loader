@@ -36,7 +36,7 @@ CLASS ZCL_MOCKUP_LOADER_DEEP_PROVIDR IMPLEMENTATION.
 
   method zif_text2tab_deep_provider~select.
 
-    data ls_address type zcl_text2tab_utils=>ty_deep_address.
+    data ls_address type zif_text2tab=>ty_deep_address.
     data ls_filter type zif_mockup_loader=>ty_filter.
 
     clear e_container.
