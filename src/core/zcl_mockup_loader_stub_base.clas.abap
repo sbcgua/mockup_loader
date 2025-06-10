@@ -1,7 +1,7 @@
-class ZCL_MOCKUP_LOADER_STUB_BASE definition
+class zcl_mockup_loader_stub_base definition
   public
   abstract
-  create public .
+  create public.
 
   public section.
 
@@ -11,7 +11,7 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
       importing
         !it_config type zif_mockup_loader=>tt_mock_config
         !ii_ml type ref to zif_mockup_loader
-        !io_proxy_target type ref to object optional .
+        !io_proxy_target type ref to object optional.
 
   protected section.
 
@@ -20,11 +20,11 @@ class ZCL_MOCKUP_LOADER_STUB_BASE definition
         method_name     type abap_methname,
         is_disabled     type abap_bool,
         call_count      type i,
-      end of ty_control .
+      end of ty_control.
     types:
-      tt_control type standard table of ty_control with key method_name .
+      tt_control type standard table of ty_control with key method_name.
     types:
-      tty_control_by_meth_name type sorted table of ty_control with unique key method_name .
+      tty_control_by_meth_name type sorted table of ty_control with unique key method_name.
 
     methods get_mock_data
       importing

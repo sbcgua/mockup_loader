@@ -1,15 +1,15 @@
-class ZCL_MOCKUP_LOADER_DEEP_PROVIDR definition
+class zcl_mockup_loader_deep_providr definition
   public
   final
-  create public .
+  create public.
 
   public section.
 
-    interfaces zif_text2tab_deep_provider .
+    interfaces zif_text2tab_deep_provider.
 
     methods constructor
       importing
-        !ii_ml_instance type ref to zif_mockup_loader .
+        !ii_ml_instance type ref to zif_mockup_loader.
 
   protected section.
   private section.

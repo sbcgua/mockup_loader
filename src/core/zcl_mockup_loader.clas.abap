@@ -22,20 +22,14 @@
 *| LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  |
 *| OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  |
 *| SOFTWARE.                                                                      |
-*\--------------------------------------------------------------------------------/
-*/--------------------------------------------------------------------------------\
-*| CONTRIBUTORS                                                                   |
-*|--------------------------------------------------------------------------------|
-*| Leading developers : Alexander Tsybulsky (atsybulsky@sbcg.com.ua)              |
-*|                      Svetlana Shlapak    (sshlapak@sbcg.com.ua)                |
-*| Testing and ideas:   Bohdan Petruschak   (b.petrushchak@sbcg.com.ua)           |
 *|--------------------------------------------------------------------------------|
 *| project homepage: https://github.com/sbcgua/mockup_loader                      |
 *\--------------------------------------------------------------------------------/
+
 class ZCL_MOCKUP_LOADER definition
   public
   final
-  create private .
+  create private.
 
   public section.
 
@@ -58,7 +52,7 @@ class ZCL_MOCKUP_LOADER definition
       returning
         value(ro_instance) type ref to zcl_mockup_loader
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     class-methods create_from_sys_settings " OBSOLETE, may be removed in future
       importing
         !i_path type string
@@ -66,21 +60,21 @@ class ZCL_MOCKUP_LOADER definition
       returning
         value(ro_instance) type ref to zcl_mockup_loader
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     class-methods assert_version
       importing
         !i_required_version type string
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     class-methods check_version_fits
       importing
         !i_required_version type string
       returning
-        value(r_fits) type abap_bool .
+        value(r_fits) type abap_bool.
     class-methods flush_cache.
     methods constructor
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 
     class-data:
       begin of gs_cache_stats read-only,
@@ -133,7 +127,7 @@ class ZCL_MOCKUP_LOADER definition
         e_is_txt type abap_bool
         e_xdata  type xstring
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 
     methods parse_data
       importing
@@ -146,14 +140,14 @@ class ZCL_MOCKUP_LOADER definition
       exporting
         !e_container type any
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     methods read_zip
       importing
         !i_name type string
       returning
         value(r_rawdata) type string
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     methods find_file_case_insensitive
       importing
         i_path type string
@@ -172,7 +166,7 @@ class ZCL_MOCKUP_LOADER definition
       returning
         value(ro_table_descr) type ref to cl_abap_tabledescr
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     methods normalize_path
       importing
         i_path type string

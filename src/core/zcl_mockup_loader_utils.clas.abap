@@ -1,7 +1,7 @@
-class ZCL_MOCKUP_LOADER_UTILS definition
+class zcl_mockup_loader_utils definition
   public
   final
-  create public .
+  create public.
 
   public section.
 
@@ -14,7 +14,7 @@ class ZCL_MOCKUP_LOADER_UTILS definition
       exporting
         !e_container type any
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     class-methods build_filter
       importing
         !i_where type any
@@ -22,14 +22,14 @@ class ZCL_MOCKUP_LOADER_UTILS definition
       returning
         value(r_filter) type zif_mockup_loader=>tt_filter
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     class-methods does_line_fit_filter
       importing
         !i_line type any
         !i_filter type zif_mockup_loader=>tt_filter
       returning
-        value(r_yesno) type abap_bool .
-    class-methods class_constructor .
+        value(r_yesno) type abap_bool.
+    class-methods class_constructor.
 
     class-methods conv_tt_where_to_filter
       importing
@@ -37,7 +37,7 @@ class ZCL_MOCKUP_LOADER_UTILS definition
       returning
         value(r_filter) type zif_mockup_loader=>tt_filter
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     class-methods conv_nc_struc_to_filter
       importing
         !i_where  type any
@@ -45,7 +45,7 @@ class ZCL_MOCKUP_LOADER_UTILS definition
       returning
         value(rt_filter) type zif_mockup_loader=>tt_filter
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     class-methods conv_single_val_to_filter
       importing
         !i_where type csequence
@@ -53,7 +53,7 @@ class ZCL_MOCKUP_LOADER_UTILS definition
       returning
         value(r_filter) type zif_mockup_loader=>ty_filter
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     class-methods conv_range_to_filter
       importing
         !i_where type csequence
@@ -61,7 +61,7 @@ class ZCL_MOCKUP_LOADER_UTILS definition
       returning
         value(r_filter) type zif_mockup_loader=>ty_filter
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 
     class-methods conv_string_to_filter
       importing
@@ -69,14 +69,14 @@ class ZCL_MOCKUP_LOADER_UTILS definition
       returning
         value(r_filter) type zif_mockup_loader=>ty_filter
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     class-methods conv_where_to_filter
       importing
         !i_where type zif_mockup_loader=>ty_where
       returning
         value(r_filter) type zif_mockup_loader=>ty_filter
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     class-methods and
       importing
         !i_op1 type any
@@ -108,7 +108,7 @@ class ZCL_MOCKUP_LOADER_UTILS definition
       returning
         value(rd_dst_struc) type ref to cl_abap_structdescr
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 
 ENDCLASS.
 
