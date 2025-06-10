@@ -98,7 +98,7 @@ class ltcl_dependencies_version implementation.
     constants lc_required_ver type string value zif_mockup_loader=>c_required_text2tab_ver.
 
     if abap_false = zcl_text2tab_parser=>check_version_fits( lc_required_ver ).
-      cl_abap_unit_assert=>fail( |data parser version ({
+      cl_abap_unit_assert=>fail( |text2tab version ({
         zif_text2tab=>version }) is lower than required ({
         lc_required_ver })| ). "#EC NOTEXT
     endif.

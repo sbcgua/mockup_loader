@@ -693,13 +693,13 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       l_redirect_file type c length 128.
 
     " Get re-direction settings from session memory
-    get parameter id 'ZMOCKUP_LOADER_STYPE' field l_redirect_type.
+    get parameter id zif_mockup_loader=>c_env_param-type field l_redirect_type.
     if l_redirect_type is initial.
       return.
     endif.
 
-    get parameter id 'ZMOCKUP_LOADER_SMIME' field l_redirect_mime.
-    get parameter id 'ZMOCKUP_LOADER_SPATH' field l_redirect_file.
+    get parameter id zif_mockup_loader=>c_env_param-mime field l_redirect_mime.
+    get parameter id zif_mockup_loader=>c_env_param-path field l_redirect_file.
 
     if l_redirect_type = 'MIME' and l_redirect_mime is not initial.
       " Just redirect always - maybe not good, maybe refactor
