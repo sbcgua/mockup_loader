@@ -324,7 +324,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
                 cs = gs_cache_stats
                 to memory id gc_zip_cache_ts_mem_id.
             endif.
-          else.
+*          else.
 *            clear gv_cache_reuse_count.
           endif.
         endif.

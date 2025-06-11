@@ -231,14 +231,18 @@ class lcl_text_archive implementation.
       case lv_state.
         when c_state-start.
           if not ( lv_is_markup = abap_true and lv_tag = 'MOCKUP-LOADER-FORMAT' ).
-            zcx_mockup_loader_error=>raise( msg = |Text format parser @{ lv_no }: MOCKUP-LOADER-FORMAT tag expected| code = 'TPE' ).
+            zcx_mockup_loader_error=>raise(
+              msg = |Text format parser @{ lv_no }: MOCKUP-LOADER-FORMAT tag expected|
+              code = 'TPE' ).
           endif.
 
           data lv_version type string.
           lv_version = lv_params.
 
           if lv_version <> '1.0'.
-            zcx_mockup_loader_error=>raise( msg = |Text format parser @{ lv_no }: format version is not supported| code = 'TPE' ).
+            zcx_mockup_loader_error=>raise(
+              msg = |Text format parser @{ lv_no }: format version is not supported|
+              code = 'TPE' ).
           endif.
 
           lv_state = c_state-head.
@@ -305,7 +309,9 @@ class lcl_text_archive implementation.
     endif.
 
     if lines( rt_index ) <> lv_expected_file_count.
-      zcx_mockup_loader_error=>raise( msg = |Text format parser: file count ({ lines( rt_index ) }) <> expected ({ lv_expected_file_count })| code = 'TPE' ).
+      zcx_mockup_loader_error=>raise(
+        msg = |Text format parser: file count ({ lines( rt_index ) }) <> expected ({ lv_expected_file_count })|
+        code = 'TPE' ).
     endif.
 
   endmethod.

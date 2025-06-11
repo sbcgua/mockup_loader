@@ -177,7 +177,7 @@ class ltcl_text_archive implementation.
       if <i> cp loc.
         if with is not initial.
           append with to r_txt.
-        elseif skip = abap_true.
+        " elseif skip = abap_true.
           " skip line
         endif.
       else.
