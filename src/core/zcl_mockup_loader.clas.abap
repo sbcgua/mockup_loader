@@ -53,14 +53,6 @@ class ZCL_MOCKUP_LOADER definition
         value(ro_instance) type ref to zcl_mockup_loader
       raising
         zcx_mockup_loader_error.
-    class-methods create_from_sys_settings " OBSOLETE, may be removed in future
-      importing
-        !i_path type string
-        !i_type type zif_mockup_loader=>ty_src_type default 'MIME'
-      returning
-        value(ro_instance) type ref to zcl_mockup_loader
-      raising
-        zcx_mockup_loader_error.
     class-methods assert_version
       importing
         !i_required_version type string
@@ -383,59 +375,6 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     else.
       ro_instance->mi_archive = lcl_zip_archive=>new( lv_xdata ).
     endif.
-
-  endmethod.
-
-
-  method create_from_sys_settings.
-
-    " OBSOLETE, may be removed in future
-
-    types:
-      begin of lty_settings,
-        amt_format  type zif_mockup_loader=>ty_amt_format,
-        codepage    type abap_encoding,
-        date_format type zif_mockup_loader=>ty_date_format,
-        comment     type zif_mockup_loader=>ty_comment_char,
-      end of lty_settings.
-    types:
-      begin of lty_var,
-        name type rvari_vnam,
-        low  type rvari_val_255,
-      end of lty_var.
-
-    data lt_vars type table of lty_var.
-    data l_settings type lty_settings.
-    field-symbols <var> like line of lt_vars.
-
-    select name low
-      into table lt_vars
-      from tvarvc
-      where name in ('ZMOCKUP_LOADER_AMT_FORMAT',
-        'ZMOCKUP_LOADER_CODEPAGE',
-        'ZMOCKUP_LOADER_DATE_FORMAT',
-        'ZMOCKUP_LOADER_COMMENT').
-
-    loop at lt_vars assigning <var>.
-      case <var>-name.
-        when 'ZMOCKUP_LOADER_AMT_FORMAT'.
-          l_settings-amt_format  = <var>-low.
-        when 'ZMOCKUP_LOADER_CODEPAGE'.
-          l_settings-codepage    = <var>-low.
-        when 'ZMOCKUP_LOADER_DATE_FORMAT'.
-          l_settings-date_format = <var>-low.
-        when 'ZMOCKUP_LOADER_COMMENT'.
-          l_settings-comment     = <var>-low.
-      endcase.
-    endloop.
-
-    ro_instance = create(
-      i_path          = i_path
-      i_type          = i_type
-      i_amt_format    = l_settings-amt_format
-      i_encoding      = l_settings-codepage
-      i_date_format   = l_settings-date_format
-      i_begin_comment = l_settings-comment ).
 
   endmethod.
 

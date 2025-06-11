@@ -24,11 +24,6 @@
      <DESCRIPT>Create mockup loader instance</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
-     <CMPNAME>CREATE_FROM_SYS_SETTINGS</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Create mockup loader instance from system settings</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
      <CMPNAME>PARSE_DATA</CMPNAME>
      <LANGU>E</LANGU>
      <DESCRIPT>Parse data structure (temporary)</DESCRIPT>
