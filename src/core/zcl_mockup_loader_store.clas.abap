@@ -1,8 +1,7 @@
 class zcl_mockup_loader_store definition
   public
   final
-  create private
-  global friends zcl_mockup_loader.
+  create private.
 
   public section.
 
@@ -34,7 +33,7 @@ class zcl_mockup_loader_store definition
         zcx_mockup_loader_error.
     class-methods load_and_store
       importing
-        !io_ml type ref to zcl_mockup_loader
+        !io_ml type ref to zif_mockup_loader
         !i_obj type string
         !i_strict type abap_bool default abap_false
         !i_name type ty_store_tag
