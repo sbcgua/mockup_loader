@@ -374,6 +374,18 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       ro_instance->mi_archive = lcl_text_archive=>new( lv_xdata ).
     else.
       ro_instance->mi_archive = lcl_zip_archive=>new( lv_xdata ).
+
+      " check if archive is in text+zip format
+      if lines( ro_instance->mi_archive->files ) = 1.
+        constants lc_bundle_txt_filename type string value 'bundle.txt'.
+        data first_file type string.
+        read table ro_instance->mi_archive->files into first_file index 1.
+        if sy-subrc = 0 and first_file = lc_bundle_txt_filename.
+          " This is a text+zip archive, so we need to read it as text
+          ro_instance->mi_archive = lcl_text_archive=>new( ro_instance->mi_archive->get( lc_bundle_txt_filename ) ).
+        endif.
+      endif.
+
     endif.
 
   endmethod.
@@ -615,11 +627,11 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       exceptions
         failed       = 1.
 
-    e_is_txt = boolc( to_lower( lv_file_ext ) = '.txt' ).
-
     if sy-subrc is not initial.
       zcx_mockup_loader_error=>raise( 'Binary to string error' ). "#EC NOTEXT
     endif.
+
+    e_is_txt = boolc( to_lower( lv_file_ext ) = '.txt' ).
 
   endmethod.
 
