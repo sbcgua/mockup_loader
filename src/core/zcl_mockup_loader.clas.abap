@@ -3,7 +3,7 @@
 *|                                                                                |
 *| The MIT License (MIT)                                                          |
 *|                                                                                |
-*| Copyright (c) 2015 SBCG Team (www.sbcg.com.ua), Alexander Tsybulsky            |
+*| Copyright (c) 2015 Alexander Tsybulsky, SBCG Team (www.sbcg.com.ua)            |
 *|                                                                                |
 *| Permission is hereby granted, free of charge, to any person obtaining a copy   |
 *| of this software and associated documentation files (the "Software"), to deal  |

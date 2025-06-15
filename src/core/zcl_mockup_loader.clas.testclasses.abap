@@ -140,6 +140,7 @@ class ltcl_text_archive definition for testing
     methods duplicate for testing raising zcx_mockup_loader_error.
     methods lost_data for testing raising zcx_mockup_loader_error.
     methods integrity for testing raising zcx_mockup_loader_error.
+    methods no_files for testing raising zcx_mockup_loader_error.
 
 endclass.
 
@@ -148,7 +149,6 @@ class ltcl_text_archive implementation.
   method dummy.
 
     append '!!MOCKUP-LOADER-FORMAT 1.0' to r_txt.
-    append '!!FILE-COUNT 3' to r_txt.
     append 'some comments or future metadata' to r_txt.
     append '' to r_txt.
     append '!!FILE /test1/t001.txt text 3' to r_txt.
@@ -163,6 +163,8 @@ class ltcl_text_archive implementation.
     append '!!FILE /test2/bkpf.txt text 2' to r_txt.
     append 'BUKRS NAME1' to r_txt.
     append '0105 Company5' to r_txt.
+    append '' to r_txt. " optional gap
+    append '!!FILE-COUNT 3' to r_txt.
 
   endmethod.
 
@@ -300,7 +302,7 @@ class ltcl_text_archive implementation.
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_char_cp(
         act = lx->get_text( )
-        exp = '*@10*unexpected tag*' ).
+        exp = '*@9*unexpected tag*' ).
     endtry.
 
   endmethod.
@@ -317,7 +319,7 @@ class ltcl_text_archive implementation.
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_char_cp(
         act = lx->get_text( )
-        exp = '*@10*file name*' ).
+        exp = '*@9*file name*' ).
     endtry.
 
     try.
@@ -328,7 +330,7 @@ class ltcl_text_archive implementation.
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_char_cp(
         act = lx->get_text( )
-        exp = '*@10*file size*' ).
+        exp = '*@9*file size*' ).
     endtry.
 
     try.
@@ -339,7 +341,7 @@ class ltcl_text_archive implementation.
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_char_cp(
         act = lx->get_text( )
-        exp = '*@10*file type*' ).
+        exp = '*@9*file type*' ).
     endtry.
 
     try.
@@ -350,7 +352,7 @@ class ltcl_text_archive implementation.
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_char_cp(
         act = lx->get_text( )
-        exp = '*@10*file size*' ).
+        exp = '*@9*file size*' ).
     endtry.
 
   endmethod.
@@ -367,7 +369,7 @@ class ltcl_text_archive implementation.
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_char_cp(
         act = lx->get_text( )
-        exp = '*@10*file duplicate*' ).
+        exp = '*@9*file duplicate*' ).
     endtry.
 
   endmethod.
@@ -375,11 +377,17 @@ class ltcl_text_archive implementation.
   method lost_data.
 
     data lx type ref to zcx_mockup_loader_error.
+    data txt type string_table.
+    data s type string.
 
     try.
-      lcl_text_archive=>new( make( adj(
-        loc = '*0105 Company5*'
-        skip = abap_true ) ) ).
+      txt = dummy( ).
+      read table txt with key table_line = '0105 Company5' transporting no fields.
+      assert sy-subrc = 0.
+      loop at txt from sy-tabix into s.
+        delete txt index sy-tabix.
+      endloop.
+      lcl_text_archive=>new( make( txt ) ).
       cl_abap_unit_assert=>fail( ).
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_char_cp(
@@ -412,8 +420,14 @@ class ltcl_text_archive implementation.
     catch zcx_mockup_loader_error into lx.
       cl_abap_unit_assert=>assert_char_cp(
         act = lx->get_text( )
-        exp = '*@14*unexpected data*' ). " hmmm ...
+        exp = '*@13*unexpected data*' ). " hmmm ...
     endtry.
+
+  endmethod.
+
+  method no_files.
+
+    lcl_text_archive=>new( lcl_text_archive=>string_to_xstring_utf8( |!!MOCKUP-LOADER-FORMAT 1.0\n!!FILE-COUNT 0| ) ).
 
   endmethod.
 

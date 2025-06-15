@@ -194,7 +194,6 @@ class lcl_text_archive implementation.
 
   endmethod.
 
-
   method parse_structure.
 
     constants:
@@ -204,6 +203,8 @@ class lcl_text_archive implementation.
         file type i value 2,
         data type i value 4,
         end_of_data type i value 5,
+        file_count type i value 6,
+        eof type i value 99,
       end of c_state.
 
     data lv_state type i value c_state-start.
@@ -251,10 +252,7 @@ class lcl_text_archive implementation.
           if lv_is_markup = abap_true and lv_tag = 'FILE'.
             lv_state = c_state-file.
           elseif lv_is_markup = abap_true and lv_tag = 'FILE-COUNT'.
-            if not ( lv_params co '0123456789' ).
-              zcx_mockup_loader_error=>raise( msg = |Text format parser @{ lv_no }: incorrect file count value| code = 'TPE' ).
-            endif.
-            lv_expected_file_count = lv_params.
+            lv_state = c_state-file_count.
           endif.
 
         when c_state-data.
@@ -269,6 +267,8 @@ class lcl_text_archive implementation.
             continue.
           elseif lv_is_markup = abap_true and lv_tag = 'FILE'.
             lv_state = c_state-file.
+          elseif lv_is_markup = abap_true and lv_tag = 'FILE-COUNT'.
+            lv_state = c_state-file_count.
           elseif lv_is_markup = abap_true.
             zcx_mockup_loader_error=>raise( msg = |Text format parser @{ lv_no }: unexpected tag| code = 'TPE' ).
           else.
@@ -278,6 +278,16 @@ class lcl_text_archive implementation.
         when others.
           zcx_mockup_loader_error=>raise( msg = |Text format parser @{ lv_no }: unexpected state { lv_state }| code = 'TPE' ).
       endcase.
+
+      " Process file-count
+      if lv_state = c_state-file_count.
+        if not ( lv_params co '0123456789' ).
+          zcx_mockup_loader_error=>raise( msg = |Text format parser @{ lv_no }: incorrect file count value| code = 'TPE' ).
+        endif.
+        lv_expected_file_count = lv_params.
+        lv_state = c_state-eof.
+        exit. " loop end
+      endif.
 
       " Process start-of-file
       if lv_state = c_state-file.
