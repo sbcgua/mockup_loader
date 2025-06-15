@@ -377,12 +377,12 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
       " check if archive is in text+zip format
       if lines( ro_instance->mi_archive->files ) = 1.
-        constants lc_bundle_txt_filename type string value 'bundle.txt'.
         data first_file type string.
         read table ro_instance->mi_archive->files into first_file index 1.
-        if sy-subrc = 0 and first_file = lc_bundle_txt_filename.
+        if sy-subrc = 0 and first_file = zif_mockup_loader=>c_txt_bundle_filename.
           " This is a text+zip archive, so we need to read it as text
-          ro_instance->mi_archive = lcl_text_archive=>new( ro_instance->mi_archive->get( lc_bundle_txt_filename ) ).
+          ro_instance->mi_archive = lcl_text_archive=>new(
+            ro_instance->mi_archive->get( zif_mockup_loader=>c_txt_bundle_filename ) ).
         endif.
       endif.
 

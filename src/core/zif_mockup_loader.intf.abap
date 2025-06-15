@@ -37,6 +37,8 @@ interface zif_mockup_loader
       mime type ty_env_param value 'ZMOCKUP_LOADER_SMIME',
     end of c_env_param.
 
+  constants c_txt_bundle_filename type string value 'bundle.txt'.
+
 **********************************************************************
 * FILTER RELATED TYPES
 **********************************************************************
