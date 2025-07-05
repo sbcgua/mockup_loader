@@ -47,6 +47,7 @@ class ZCL_MOCKUP_LOADER definition
         !i_encoding type abap_encoding optional
         !i_date_format type zif_mockup_loader=>ty_date_format optional
         !i_begin_comment type zif_mockup_loader=>ty_comment_char optional
+        !i_skip_lines_starting_with type zif_mockup_loader=>ty_comment_char optional
         !it_ignore_conv_exits type zif_mockup_loader=>tty_conv_exits optional
         !i_cache_timeout type i optional " Experimental feature, do not use yet
       returning
@@ -105,6 +106,7 @@ class ZCL_MOCKUP_LOADER definition
     data mv_encoding type abap_encoding.
     data mv_date_format type zif_mockup_loader=>ty_date_format.
     data mv_begin_comment type zif_mockup_loader=>ty_comment_char.
+    data mv_skip_lines_starting_with type zif_mockup_loader=>ty_comment_char.
     data mv_is_redirected type abap_bool.
     data mt_ignore_conv_exits type zif_mockup_loader=>tty_conv_exits.
     data mv_dir type string.
@@ -277,6 +279,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       i_encoding           = i_encoding
       i_date_format        = i_date_format
       i_begin_comment      = i_begin_comment
+      i_skip_lines_starting_with = i_skip_lines_starting_with
       it_ignore_conv_exits = it_ignore_conv_exits ).
 
     data l_src_type type zif_mockup_loader=>ty_src_type.
@@ -469,6 +472,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
         i_amount_format = mv_amt_format
         i_date_format   = mv_date_format
         i_deep_provider = lo_deep_provider
+        i_skip_lines_starting_with = mv_skip_lines_starting_with
         i_begin_comment = mv_begin_comment ).
 
       field-symbols <convexit> like line of mt_ignore_conv_exits.
@@ -817,6 +821,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
 
     me->mv_begin_comment = i_begin_comment.
     me->mt_ignore_conv_exits = it_ignore_conv_exits.
+    me->mv_skip_lines_starting_with = i_skip_lines_starting_with.
 
     ri_ml = me.
 

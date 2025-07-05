@@ -165,6 +165,7 @@ interface zif_mockup_loader
       !i_encoding type abap_encoding optional
       !i_date_format type ty_date_format optional
       !i_begin_comment type ty_comment_char optional
+      !i_skip_lines_starting_with type ty_comment_char optional
       !it_ignore_conv_exits type tty_conv_exits optional
     returning
       value(ri_ml) type ref to zif_mockup_loader.
