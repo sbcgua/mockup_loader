@@ -468,7 +468,9 @@ class lcl_utils implementation.
 
   method detect_zipped_text_bundle.
 
-    check cv_ext = '.zip'.
+    if cv_ext <> '.zip'.
+      return. " No need to extract
+    endif.
 
     data lv_xdata type xstring.
 
