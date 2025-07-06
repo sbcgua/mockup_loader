@@ -26,6 +26,7 @@ Features:
   - [mockup loader toolkit](https://github.com/sbcgua/mockup_loader_toolkit)
   - [mockup compiler JS](https://github.com/sbcgua/mockup-compiler-js)
 - Utilities for table data filtering
+- Starting from v2.4.0 supports text MIME file format, which is diffable and thus suites better for git repositories.
 
 ## Contents
 
@@ -49,7 +50,7 @@ The tool is created to simplify data preparation/loading for SAP ABAP unit tests
 
 Hard-coding all of that data was not an option - too much to code, difficult to maintain and terrible code readability. So we decided to write a tool which would get the data from TAB delimited `.txt` files, which, in turn, would be prepared in Excel in a convenient way. Certain objectives were set:
 
-- all the test data should be combined together in one file (zip)
+- all the test data should be combined together in one file (zip or text bundle)
 - ... and uploaded to SAP - test data should be a part of the dev package (W3MI binary object would fit)
 - loading routine should identify the file structure (fields) automatically and verify its compatibility with a target container (structure or table)
 - it should also be able to safely skip fields, missing in `.txt` file, if required (*non strict* mode) e.g. when processing structures (like FI document) with too many fields, most of which are irrelevant to a specific test.
@@ -93,7 +94,7 @@ BUKRS BELNR GJAHR BUZEI BSCHL KOART ...
 
 On-the-fly data filtering is supported. For more information see [REFERENCE.md](docs/REFERENCE.md).
 
-### Alternative invocation (Experimental)
+### Alternative invocation
 
 Calls with `importing`/`exporting` are less readable, especially when stack together. In search of more readable options there are several experimental forms to achieve the same result. Use with care yet, they might be changed. Feedback via github issues is appreaciated.
 
@@ -200,7 +201,7 @@ The above `connect_method/proxy` configuration can be also done with a single st
   lo_factory->connect( 'tab_return -> ./sflight [connid = i_connid, fldate = i_fldate]' ). " AND
   lo_factory->connect( 'tab_return -> ./sflight [connid = i_connid & fldate = i_fldate]' ). " AND
   lo_factory->connect( 'tab_return -> ./sflight [connid = i_connid | fldate = i_fldate]' ). " OR
-  lo_factory->connect( 'tab_return_2conn -> ./sflight [connid = i_connid | connid = i_connid2 ]' ). " Same field multi-filtert
+  lo_factory->connect( 'tab_return_2conn -> ./sflight [connid = i_connid | connid = i_connid2 ]' ). " Same field multi-filter
 
   " Multiple connection for exporting params of the same method is supported
   lo_factory->connect( 'read_sales_invoice(e_vbrk) -> ./vbrk [vbeln = i_vbeln]' ).
@@ -386,7 +387,13 @@ You may have a lot of data prepared in Excel files. Many files, many sheets in e
 
   ![compile zip slug](docs/compiler.png)
 
-- [mockup compiler JS](https://github.com/sbcgua/mockup-compiler-js) - java script implementation, requires nodejs environment at the developer's machine. This tool also make it possible to compile the target zip **via continuous integration flows** - so the test data in excel can be a part of source repository. (I'm planning a dedicated publication on this subject).
+- [mockup compiler JS](https://github.com/sbcgua/mockup-compiler-js) - java script implementation [RECOMMENDED], requires nodejs environment at the developer's machine. This tool also make it possible to compile the target zip **via continuous integration flows** - so the test data in excel can be a part of source repository.
+  - the JS compiler is **recommenended** because:
+    - it is faster (in particular with `ZMOCKUP_LOADER_SWSRC`),
+    - it allows designing UT data without uploads to ABAP repository (via `ZMOCKUP_LOADER_SWSRC`), it may be convenient in case of multiple developers who work with the code base (yet with the same Excel UT data sorce)
+  - the JS compiler support [new text bundle format](https://github.com/sbcgua/mockup-compiler-js/blob/master/doc/text-bundle-format.md) which is diffable and thus suites better for git repositories
+  - the JS compiler also supports zipping the above text bundle - which increase reactivity for changes watching (as smaller data package must travel from the frontend). The MIME object is still updated with the unzipped text bundle in this case.
+  - the JS compiler can run without nodejs installation (see its [Installation](https://github.com/sbcgua/mockup-compiler-js/blob/master/README.md#installation) section)
 
 See [EXCEL2TXT.md](docs/EXCEL2TXT.md) for more info.
 

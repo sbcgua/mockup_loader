@@ -1,7 +1,7 @@
 interface zif_mockup_loader
   public.
 
-  constants version type string value 'v2.3.0'. "#EC NOTEXT
+  constants version type string value 'v2.4.0'. "#EC NOTEXT
   constants origin type string value 'https://github.com/sbcgua/mockup_loader'. "#EC NOTEXT
   constants license type string value 'MIT'. "#EC NOTEXT
 
@@ -10,7 +10,7 @@ interface zif_mockup_loader
   constants encoding_utf16 type abap_encoding value '4103'. "#EC NOTEXT
 
   " Dependencies
-  constants c_required_text2tab_ver type string value 'v2.4.0'.
+  constants c_required_text2tab_ver type string value 'v2.5.0'.
 
 **********************************************************************
 * COMMON TYPES
@@ -36,6 +36,8 @@ interface zif_mockup_loader
       path type ty_env_param value 'ZMOCKUP_LOADER_SPATH',
       mime type ty_env_param value 'ZMOCKUP_LOADER_SMIME',
     end of c_env_param.
+
+  constants c_txt_bundle_filename type string value 'bundle.txt'.
 
 **********************************************************************
 * FILTER RELATED TYPES
@@ -163,6 +165,7 @@ interface zif_mockup_loader
       !i_encoding type abap_encoding optional
       !i_date_format type ty_date_format optional
       !i_begin_comment type ty_comment_char optional
+      !i_skip_lines_starting_with type ty_comment_char optional
       !it_ignore_conv_exits type tty_conv_exits optional
     returning
       value(ri_ml) type ref to zif_mockup_loader.

@@ -8,6 +8,12 @@ Legend
 + : added
 - : removed
 
+v2.4.0, 2025-07-06
+------------------
++ [MAJOR] New text file format for the resulting artifact (as an diffable alternative to zip) - see more in https://github.com/sbcgua/mockup-compiler-js/blob/master/doc/text-bundle-format.md
++ new parameter skip_lines_starting_with to allow skipping "commented" lines
+- remove obsolete create_from_sys_settings
+
 v2.3.0, 2025-03-22
 ------------------
 ! reworks in unit tests

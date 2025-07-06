@@ -19,7 +19,7 @@ types:
   tt_variants type standard table of ty_variant with default key.
 
 *&---------------------------------------------------------------------*
-*& Class lib (part of w3mime poller)
+*& Class lib (part of w3mime poller, but MODIFIED !)
 *&---------------------------------------------------------------------*
 
 class lcx_error definition
@@ -70,6 +70,9 @@ class lcl_mime_storage definition
         !iv_type type wwwdata-relid default 'MI'
         !it_data type lvc_t_mime
         !iv_size type i
+        !iv_ext   type string
+        !iv_mtype type string
+        !iv_fname type string
       raising
         lcx_error.
     class-methods get_object_info
@@ -163,8 +166,35 @@ class lcl_mime_storage implementation.
       iv_param = 'filesize'
       iv_value = lv_temp ).
 
+    if iv_ext is not initial.
+      lv_temp = iv_ext.
+      update_object_single_meta(
+        iv_type  = iv_type
+        iv_key   = iv_key
+        iv_param = 'fileextension'
+        iv_value = lv_temp ).
+    endif.
+
+    if iv_fname is not initial.
+      lv_temp = iv_fname.
+      update_object_single_meta(
+        iv_type  = iv_type
+        iv_key   = iv_key
+        iv_param = 'filename'
+        iv_value = lv_temp ).
+    endif.
+
+    if iv_mtype is not initial.
+      lv_temp = iv_mtype.
+      update_object_single_meta(
+        iv_type  = iv_type
+        iv_key   = iv_key
+        iv_param = 'mimetype'
+        iv_value = lv_temp ).
+    endif.
+
     " update version
-    try .
+    try.
       lv_temp = read_object_single_meta(
         iv_type  = iv_type
         iv_key   = iv_key
@@ -241,22 +271,42 @@ class lcl_fs definition
   create public.
 
   public section.
+    class-data gc_sep type c length 1 read-only.
+    class-methods class_constructor.
+
     class-methods read_file
       importing
-        !iv_filename type string
+        iv_filename type string
       exporting
-        !et_data type lvc_t_mime
-        !ev_size type i
+        et_data type lvc_t_mime
+        ev_size type i
       raising
-        lcx_error .
+        lcx_error.
 
     class-methods choose_file_dialog
       returning
-        value(rv_path) type char255 .
+        value(rv_path) type char255.
+
+    class-methods parse_path
+      importing
+        iv_path type string
+      exporting
+        ev_directory type string
+        ev_filename type string
+        ev_extension type string.
 
 endclass.
 
 class lcl_fs implementation.
+
+  method class_constructor.
+
+    cl_gui_frontend_services=>get_file_separator( changing file_separator = gc_sep exceptions others = 4 ).
+    if sy-subrc is not initial.
+      gc_sep = '\'. " Assume windows (eclipse ???)
+    endif.
+
+  endmethod.
 
   method read_file.
     clear: et_data, ev_size.
@@ -304,6 +354,35 @@ class lcl_fs implementation.
 
   endmethod.
 
+  method parse_path.
+
+    data lv_offs type i.
+
+    clear: ev_filename, ev_extension, ev_directory.
+
+    if strlen( iv_path ) = 0.
+      return.
+    endif.
+
+    find first occurrence of gc_sep in reverse( iv_path ) match offset lv_offs.
+
+    if sy-subrc = 0.
+      lv_offs      = strlen( iv_path ) - lv_offs.
+      ev_directory = substring( val = iv_path len = lv_offs ).
+      ev_filename  = substring( val = iv_path off = lv_offs ).
+    else.
+      ev_filename  = iv_path.
+    endif.
+
+    find first occurrence of '.' in reverse( ev_filename ) match offset lv_offs.
+
+    if sy-subrc = 0.
+      lv_offs      = strlen( ev_filename ) - lv_offs - 1.
+      ev_extension = substring( val = ev_filename off = lv_offs ).
+      ev_filename  = substring( val = ev_filename len = lv_offs ).
+    endif.
+
+  endmethod.
 
 endclass.
 
@@ -319,15 +398,29 @@ class lcl_utils definition
         iv_filename type string
         iv_key  type wwwdata-objid
         iv_type type wwwdata-relid default 'MI'
-      raising lcx_error.
+      raising
+        lcx_error.
+
+  private section.
+
+    class-methods detect_zipped_text_bundle
+      changing
+        cv_ext  type string
+        cv_size type i
+        ct_data type lvc_t_mime
+      raising
+        lcx_error.
 
 endclass.
 
 class lcl_utils implementation.
   method upload.
 
-    data: lt_data type lvc_t_mime,
-          lv_size type i.
+    data: lt_data  type lvc_t_mime,
+          lv_mtype type string,
+          lv_ext   type string,
+          lv_fname type string,
+          lv_size  type i.
 
     if abap_false = lcl_mime_storage=>check_obj_exists( iv_type = iv_type iv_key = iv_key ).
       lcx_error=>raise( 'MIME object does not exist' ). "#EC NOTEXT
@@ -340,13 +433,103 @@ class lcl_utils implementation.
         et_data     = lt_data
         ev_size     = lv_size ).
 
+    lcl_fs=>parse_path(
+      exporting
+        iv_path = iv_filename
+      importing
+        ev_extension = lv_ext ).
+    lv_ext = to_lower( lv_ext ).
+
+    " identify zipped text bundle - upload as text
+    detect_zipped_text_bundle(
+      changing
+        cv_ext  = lv_ext
+        cv_size = lv_size
+        ct_data = lt_data ).
+
+    if lv_ext = '.txt'.
+      lv_mtype = 'text/plain'.
+      lv_fname = 'mockup-compiler-build.txt'.
+    else. " Assume zip by default
+      lv_mtype = 'application/zip'.
+      lv_fname = 'mockup-compiler-build.zip'.
+    endif.
+
     lcl_mime_storage=>update_object(
       iv_type  = iv_type
       iv_key   = iv_key
       it_data  = lt_data
+      iv_ext   = lv_ext
+      iv_mtype = lv_mtype
+      iv_fname = lv_fname
       iv_size  = lv_size ).
 
   endmethod.
+
+  method detect_zipped_text_bundle.
+
+    if cv_ext <> '.zip'.
+      return. " No need to extract
+    endif.
+
+    data lv_xdata type xstring.
+
+    call function 'SCMS_BINARY_TO_XSTRING'
+      exporting
+        input_length = cv_size
+      importing
+        buffer       = lv_xdata
+      tables
+        binary_tab   = ct_data
+      exceptions
+        failed       = 1.
+
+    if sy-subrc <> 0.
+      lcx_error=>raise( 'Binary to string error' ). "#EC NOTEXT
+    endif.
+
+    data lo_zip type ref to cl_abap_zip.
+    create object lo_zip.
+
+    lo_zip->load(
+      exporting
+        zip    = lv_xdata
+      exceptions
+        others = 4 ).
+
+    if sy-subrc <> 0.
+      lcx_error=>raise( msg = 'ZIP load failed (txt bundle detection)' ).  "#EC NOTEXT
+    endif.
+
+    if lines( lo_zip->files ) <> 1.
+      return. " Not a text+zip bundle
+    endif.
+
+    lo_zip->get(
+      exporting
+        name = zif_mockup_loader=>c_txt_bundle_filename
+      importing
+        content = lv_xdata
+      exceptions
+        others = 4 ).
+
+    if sy-subrc <> 0.
+      return. " Not a text+zip bundle
+    endif.
+
+    cv_ext  = '.txt'.
+    cv_size = xstrlen( lv_xdata ).
+
+    call function 'SCMS_XSTRING_TO_BINARY'
+      exporting
+        buffer        = lv_xdata
+      importing
+        output_length = cv_size
+      tables
+        binary_tab    = ct_data.
+
+  endmethod.
+
 endclass.
 
 **********************************************************************

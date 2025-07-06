@@ -1,8 +1,7 @@
-class ZCL_MOCKUP_LOADER_STORE definition
+class zcl_mockup_loader_store definition
   public
   final
-  create private
-  global friends zcl_mockup_loader .
+  create private.
 
   public section.
 
@@ -11,11 +10,11 @@ class ZCL_MOCKUP_LOADER_STORE definition
 
     class-methods get_instance
       returning
-        value(ro_instance) type ref to zcl_mockup_loader_store .
-    class-methods free_instance .
+        value(ro_instance) type ref to zcl_mockup_loader_store.
+    class-methods free_instance.
     methods purge
       importing
-        !i_name type ty_store_tag .
+        !i_name type ty_store_tag.
     class-methods retrieve
       importing
         !i_name type ty_store_tag
@@ -24,17 +23,17 @@ class ZCL_MOCKUP_LOADER_STORE definition
       exporting
         !e_data type any
       exceptions
-        retrieve_error .
+        retrieve_error.
     methods store
       importing
         !i_name type ty_store_tag
         !i_data type any
         !i_tabkey type abap_compname optional
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     class-methods load_and_store
       importing
-        !io_ml type ref to zcl_mockup_loader
+        !io_ml type ref to zif_mockup_loader
         !i_obj type string
         !i_strict type abap_bool default abap_false
         !i_name type ty_store_tag
@@ -42,7 +41,7 @@ class ZCL_MOCKUP_LOADER_STORE definition
         !i_tabkey type abap_compname optional
         !i_type_desc type ref to cl_abap_typedescr optional
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 
   protected section.
   private section.
@@ -52,22 +51,21 @@ class ZCL_MOCKUP_LOADER_STORE definition
         name    type ty_store_tag,
         tabkey  type abap_compname,
         data    type ref to data,
-      end of ty_store .
+      end of ty_store.
     types:
-      tt_store type standard table of ty_store with key name .
+      tt_store type standard table of ty_store with key name.
 
 
-    class-data go_instance type ref to zcl_mockup_loader_store .
-    data mt_store type tt_store .
+    class-data go_instance type ref to zcl_mockup_loader_store.
+    data mt_store type tt_store.
 
-    type-pools abap .
     methods _store
       importing
         !i_name type ty_store_tag
         !i_data_ref type ref to data
         !i_tabkey type abap_compname optional
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     methods _retrieve
       importing
         !i_name type ty_store_tag
@@ -76,7 +74,7 @@ class ZCL_MOCKUP_LOADER_STORE definition
       exporting
         !e_data type any
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 ENDCLASS.
 
 

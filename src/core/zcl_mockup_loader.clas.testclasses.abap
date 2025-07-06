@@ -98,12 +98,339 @@ class ltcl_dependencies_version implementation.
     constants lc_required_ver type string value zif_mockup_loader=>c_required_text2tab_ver.
 
     if abap_false = zcl_text2tab_parser=>check_version_fits( lc_required_ver ).
-      cl_abap_unit_assert=>fail( |data parser version ({
+      cl_abap_unit_assert=>fail( |text2tab version ({
         zif_text2tab=>version }) is lower than required ({
         lc_required_ver })| ). "#EC NOTEXT
     endif.
 
   endmethod.
+endclass.
+
+**********************************************************************
+* Text format parser test
+**********************************************************************
+
+class ltcl_text_archive definition for testing
+  duration short
+  risk level harmless.
+
+  private section.
+
+    methods dummy returning value(r_txt) type string_table.
+    methods adj
+      importing
+        loc type string
+        with type string optional
+        skip type abap_bool default abap_false
+      returning
+        value(r_txt) type string_table.
+    methods make
+      importing
+        i_str_tab type string_table optional
+      returning
+        value(r_txt) type xstring
+      raising
+        zcx_mockup_loader_error.
+
+    methods happy_path for testing raising zcx_mockup_loader_error.
+    methods no_head for testing raising zcx_mockup_loader_error.
+    methods wrong_ver for testing raising zcx_mockup_loader_error.
+    methods wrong_tag for testing raising zcx_mockup_loader_error.
+    methods wrong_file for testing raising zcx_mockup_loader_error.
+    methods duplicate for testing raising zcx_mockup_loader_error.
+    methods lost_data for testing raising zcx_mockup_loader_error.
+    methods integrity for testing raising zcx_mockup_loader_error.
+    methods no_files for testing raising zcx_mockup_loader_error.
+
+endclass.
+
+class ltcl_text_archive implementation.
+
+  method dummy.
+
+    append '!!MOCKUP-LOADER-FORMAT 1.0' to r_txt.
+    append 'some comments or future metadata' to r_txt.
+    append '' to r_txt.
+    append '!!FILE /test1/t001.txt text 3' to r_txt.
+    append 'BUKRS NAME1' to r_txt.
+    append '0101 Company1' to r_txt.
+    append '0102 Company2' to r_txt.
+    append '' to r_txt. " optional gap
+    append '!!FILE /test1/bkpf.txt text 3' to r_txt.
+    append 'BUKRS NAME1' to r_txt.
+    append '0103 Company3' to r_txt.
+    append '0104 Company4' to r_txt.
+    append '!!FILE /test2/bkpf.txt text 2' to r_txt.
+    append 'BUKRS NAME1' to r_txt.
+    append '0105 Company5' to r_txt.
+    append '' to r_txt. " optional gap
+    append '!!FILE-COUNT 3' to r_txt.
+
+  endmethod.
+
+  method adj.
+
+    data tmp type string_table.
+    field-symbols <i> type string.
+
+    tmp = dummy( ).
+
+    loop at tmp assigning <i>.
+      if <i> cp loc.
+        if with is not initial.
+          append with to r_txt.
+        " elseif skip = abap_true.
+          " skip line
+        endif.
+      else.
+        append <i> to r_txt.
+      endif.
+    endloop.
+
+  endmethod.
+
+  method make.
+
+    data lv_str type string.
+
+    if i_str_tab is initial.
+      lv_str = concat_lines_of( table = dummy( ) sep = |\n| ).
+    else.
+      lv_str = concat_lines_of( table = i_str_tab sep = |\n| ).
+    endif.
+
+    r_txt = lcl_text_archive=>string_to_xstring_utf8( lv_str ).
+
+  endmethod.
+
+  method happy_path.
+
+    data li type ref to lif_archive.
+
+    li = lcl_text_archive=>new( make( ) ).
+
+    data lt_exp type string_table.
+    data lt_act type string_table.
+    append '/test1/bkpf.txt' to lt_exp.
+    append '/test1/t001.txt' to lt_exp. " mt_index is sorted
+    append '/test2/bkpf.txt' to lt_exp.
+
+    cl_abap_unit_assert=>assert_equals(
+      act = li->files
+      exp = lt_exp ).
+
+    clear lt_exp.
+    append 'BUKRS NAME1'   to lt_exp.
+    append '0101 Company1' to lt_exp.
+    append '0102 Company2' to lt_exp.
+    split lcl_text_archive=>xstring_to_string_utf8( li->get( '/test1/t001.txt' ) ) at |\n| into table lt_act.
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
+      exp = lt_exp ).
+
+    clear lt_exp.
+    append 'BUKRS NAME1'   to lt_exp.
+    append '0103 Company3' to lt_exp.
+    append '0104 Company4' to lt_exp.
+    split lcl_text_archive=>xstring_to_string_utf8( li->get( '/test1/bkpf.txt' ) ) at |\n| into table lt_act.
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
+      exp = lt_exp ).
+
+    clear lt_exp.
+    append 'BUKRS NAME1'   to lt_exp.
+    append '0105 Company5' to lt_exp.
+    split lcl_text_archive=>xstring_to_string_utf8( li->get( '/test2/bkpf.txt' ) ) at |\n| into table lt_act.
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lt_act
+      exp = lt_exp ).
+
+    try.
+      li->get( '/test1/missing.txt' ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error.
+    endtry.
+
+  endmethod.
+
+  method no_head.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!MOCKUP-LOADER-FORMAT*'
+        with = '' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*MOCKUP-LOADER-FORMAT tag expected*' ).
+    endtry.
+
+  endmethod.
+
+  method wrong_ver.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!MOCKUP-LOADER-FORMAT*'
+        with = '!!MOCKUP-LOADER-FORMAT 99' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*version is not supported*' ).
+    endtry.
+
+  endmethod.
+
+  method wrong_tag.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!FILE /test1/bkpf.txt*'
+        with = '!!WRONGTAG' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*@9*unexpected tag*' ).
+    endtry.
+
+  endmethod.
+
+  method wrong_file.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!FILE /test1/bkpf.txt*'
+        with = '!!FILE' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*@9*file name*' ).
+    endtry.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!FILE /test1/bkpf.txt*'
+        with = '!!FILE /test1/bkpf.txt xxx' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*@9*file size*' ).
+    endtry.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!FILE /test1/bkpf.txt*'
+        with = '!!FILE /test1/bkpf.txt xxx 2' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*@9*file type*' ).
+    endtry.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!FILE /test1/bkpf.txt*'
+        with = '!!FILE /test1/bkpf.txt text A' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*@9*file size*' ).
+    endtry.
+
+  endmethod.
+
+  method duplicate.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!FILE /test1/bkpf.txt*'
+        with = '!!FILE /test1/t001.txt text 3' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*@9*file duplicate*' ).
+    endtry.
+
+  endmethod.
+
+  method lost_data.
+
+    data lx type ref to zcx_mockup_loader_error.
+    data txt type string_table.
+    data s type string.
+
+    try.
+      txt = dummy( ).
+      read table txt with key table_line = '0105 Company5' transporting no fields.
+      assert sy-subrc = 0.
+      loop at txt from sy-tabix into s.
+        delete txt index sy-tabix.
+      endloop.
+      lcl_text_archive=>new( make( txt ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*unexpected end of data*' ).
+    endtry.
+
+  endmethod.
+
+  method integrity.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '!!FILE-COUNT*'
+        with = '!!FILE-COUNT 5' ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*file count (3) <> expected (5)*' ).
+    endtry.
+
+    try.
+      lcl_text_archive=>new( make( adj(
+        loc = '*0103 Company3*'
+        skip = abap_true ) ) ).
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_char_cp(
+        act = lx->get_text( )
+        exp = '*@13*unexpected data*' ). " hmmm ...
+    endtry.
+
+  endmethod.
+
+  method no_files.
+
+    lcl_text_archive=>new( lcl_text_archive=>string_to_xstring_utf8( |!!MOCKUP-LOADER-FORMAT 1.0\n!!FILE-COUNT 0| ) ).
+
+  endmethod.
+
 endclass.
 
 
@@ -655,7 +982,7 @@ class ltcl_test_mockup_loader implementation.
           l_str      type string,
           lo_ex      type ref to zcx_mockup_loader_error.
 
-    cl_abap_unit_assert=>assert_not_initial( act = lines( o->mo_zip->files ) ).
+    cl_abap_unit_assert=>assert_not_initial( act = lines( o->mi_archive->files ) ).
 
     " Positive ***************************************
     try.
@@ -1033,7 +1360,7 @@ class ltcl_test_mockup_loader implementation.
       with key key = 'MIME:ZMOCKUP_LOADER_UNIT_TEST'
       into ls_cache.
     cl_abap_unit_assert=>assert_subrc( ).
-    lv_reuse_count_at_step1 = zcl_mockup_loader=>gv_cache_reuse_count.
+    lv_reuse_count_at_step1 = zcl_mockup_loader=>gs_cache_stats-reuse_count.
 
     zcl_mockup_loader=>create(
       i_type       = 'MIME'
@@ -1050,7 +1377,7 @@ class ltcl_test_mockup_loader implementation.
       into ls_cache.
     cl_abap_unit_assert=>assert_subrc( ).
     cl_abap_unit_assert=>assert_equals(
-      act = zcl_mockup_loader=>gv_cache_reuse_count - lv_reuse_count_at_step1
+      act = zcl_mockup_loader=>gs_cache_stats-reuse_count - lv_reuse_count_at_step1
       exp = 1 ).
 
   endmethod.

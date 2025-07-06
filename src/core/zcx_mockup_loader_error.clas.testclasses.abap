@@ -5,9 +5,29 @@ class ltcl_ml_cx_test definition for testing
   private section.
 
     methods raise_error for testing.
+    methods remsg for testing.
 endclass.
 
 class ltcl_ml_cx_test implementation.
+
+  method remsg.
+
+    data lx type ref to zcx_mockup_loader_error.
+
+    try.
+      try.
+        raise exception type zcx_mockup_loader_error exporting msg = 'A'.
+      catch zcx_mockup_loader_error into lx.
+        lx->remsg( 'B' ).
+        raise exception lx.
+      endtry.
+      cl_abap_unit_assert=>fail( ).
+    catch zcx_mockup_loader_error into lx.
+      cl_abap_unit_assert=>assert_equals( act = lx->get_text( ) exp = 'B' ).
+    endtry.
+
+  endmethod.
+
 
   method raise_error.
     data lcx type ref to zcx_mockup_loader_error.

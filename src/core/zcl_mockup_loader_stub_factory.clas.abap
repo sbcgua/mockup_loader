@@ -1,7 +1,7 @@
-class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
+class zcl_mockup_loader_stub_factory definition
   public
   final
-  create public .
+  create public.
 
   public section.
 
@@ -12,7 +12,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         !io_proxy_target type ref to object optional
         !i_allow_overrides type abap_bool default abap_false
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     methods connect_method
       importing
         !i_method_name type abap_methname
@@ -30,24 +30,24 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       returning
         value(r_instance) type ref to zcl_mockup_loader_stub_factory
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     methods forward_method
       importing
         !i_method_name type abap_methname
       returning
         value(r_instance) type ref to zcl_mockup_loader_stub_factory
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     methods connect
       importing
         i_connect_string type string
       returning
         value(r_instance) type ref to zcl_mockup_loader_stub_factory
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
     methods generate_stub
       returning
-        value(r_stub) type ref to object .
+        value(r_stub) type ref to object.
     methods set_default_mock
       importing
         iv_path type csequence.
@@ -64,11 +64,11 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
 
     data mv_default_mock_root type string.
     data mt_src type string_table.
-    data mv_interface_name type seoclsname .
-    data mt_config type zif_mockup_loader=>tt_mock_config .
-    data mi_ml type ref to zif_mockup_loader .
-    data md_if_desc type ref to cl_abap_objectdescr .
-    data mo_proxy_target type ref to object .
+    data mv_interface_name type seoclsname.
+    data mt_config type zif_mockup_loader=>tt_mock_config.
+    data mi_ml type ref to zif_mockup_loader.
+    data md_if_desc type ref to cl_abap_objectdescr.
+    data mo_proxy_target type ref to object.
     data mv_allow_overrides type abap_bool.
 
     class-methods build_config
@@ -78,7 +78,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       returning
         value(r_config) type zif_mockup_loader=>ty_mock_config
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 
     methods build_stub_source_code.
     methods _src
@@ -89,7 +89,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       importing
         is_config like line of mt_config
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 
     class-methods validate_sift_and_get_type
       importing
@@ -99,7 +99,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       returning
         value(rd_sift_type) type ref to cl_abap_typedescr
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 
     class-methods validate_connect_and_get_types
       importing
@@ -110,7 +110,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         ed_output_type type ref to cl_abap_typedescr
         es_output_param type abap_parmdescr
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 
     class-methods validate_method_and_get_otype
       importing
@@ -121,7 +121,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
         ed_output_type type ref to cl_abap_typedescr
         es_output_param type abap_parmdescr
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 
     class-methods validate_filter_and_get_ftype
       importing
@@ -130,7 +130,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       returning
         value(rt_sift_types) type tty_filter_types
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 
     class-methods build_field_only_struc_type
       importing
@@ -140,7 +140,7 @@ class ZCL_MOCKUP_LOADER_STUB_FACTORY definition
       returning
         value(rd_type) type ref to cl_abap_structdescr
       raising
-        zcx_mockup_loader_error .
+        zcx_mockup_loader_error.
 
 ENDCLASS.
 

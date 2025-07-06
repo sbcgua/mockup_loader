@@ -45,6 +45,9 @@ public section.
       !CODE type TY_RC optional
     raising
       ZCX_MOCKUP_LOADER_ERROR .
+  methods REMSG
+    importing
+      !MSG type STRING .
 protected section.
 private section.
 ENDCLASS.
@@ -112,5 +115,23 @@ method raise.
       a3       = ls_split-a3
       a4       = ls_split-a4.
 
+endmethod.
+
+
+method remsg.
+  data:
+    begin of ls_split,
+      a1 like a1,
+      a2 like a1,
+      a3 like a1,
+      a4 like a1,
+    end of ls_split.
+
+  me->msg  = msg.
+  ls_split = msg.
+  me->a1   = ls_split-a1.
+  me->a2   = ls_split-a2.
+  me->a3   = ls_split-a3.
+  me->a4   = ls_split-a4.
 endmethod.
 ENDCLASS.

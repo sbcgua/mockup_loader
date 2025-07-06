@@ -11,6 +11,9 @@ importing
   I_AMT_FORMAT  type CHAR2
   I_ENCODING    type ABAP_ENCODING
   I_DATE_FORMAT type CHAR4
+  I_BEGIN_COMMENT type abap_bool
+  I_SKIP_LINES_STARTING_WITH type abap_bool
+  IT_IGNORE_CONV_EXITS type table of abap_editmask
 ```
 
 Creates an instance of mockup loader and read the zip file (from FILE or for MIME storage).
@@ -22,6 +25,9 @@ Creates an instance of mockup loader and read the zip file (from FILE or for MIM
 - **I_AMT_FORMAT** - amount separators. First character defines thousand separator, the second one defines decimal separator. E.g. `'.,'` would suppose amounts like `123.000,12`. Empty parameter resets to default - `' ,'`. The second character cannot be empty - this also resets the format to defaults.
 - **I_ENCODING** - encoding of text files in zip. Default is 4110 which is UTF8. See table `TCP00` for list of ABAP encodings.
 - **I_DATE_FORMAT** - hint how to parse the date. Contains `DMY` in needed order plus separator char. E.g. `'DMY.'` expects `31.12.2017`, `'YMD-'` expects `2017-12-31`.
+- **I_BEGIN_COMMENT** - ignores the line at the beginning of text file starting with this char. Useful for human-friendly descriptions at the beginning. E.g. starting with `#`. There is also special `zif_text2tab=>c_auto_detect_by_space` which allows auto detection of such a line, based on present spaces in the filenames (abap field name cannot have spaces but descriptions usually do)
+- **I_SKIP_LINES_STARTING_WITH** - ignores data lines starting with this symbol. Can be potentially useful for human-friently groupiung in the origin files.
+- **IT_IGNORE_CONV_EXITS** - do not apply given con exits as they might be missing in the target system. Most typical (in our case) is unit of measurement. E.g. 'Piece' can be defined as 'PC' or 'ST' or 'EA' ... which makes usage of it in UT unreliable. Prefer `KG`s ;) But you can also use this param to workaround this issue.
 
 Also reads GET/SET parameters `ZMOCKUP_LOADER_STYPE`, `ZMOCKUP_LOADER_SPATH` and `ZMOCKUP_LOADER_SMIME`. If `ZMOCKUP_LOADER_STYPE` is not empty it **overrides**  the parameters (`i_type` and `i_path`) used for the call. This is a feature to use during unit test creation or active development, not to upload unit test mockup each time. Parameters can be set via transaction `SU3` or via `ZMOCKUP_LOADER_SWITCH_SOURCE` program.
 

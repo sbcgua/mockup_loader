@@ -28,7 +28,10 @@
       "statics": true,
       "defaultKey": false,
       "break": true,
-      "describeLines": true
+      "describeLines": true,
+      "testSeams": true,
+      "exportToDatabase": true,
+      "exportToMemory": false
     },
     "begin_end_names": true,
     "chain_mainly_declarations": true,
@@ -36,7 +39,6 @@
     "check_comments": false,
     "check_ddic": true,
     "check_include": true,
-    "check_no_handler_pragma": true,
     // "check_syntax": true,
     "check_text_elements": true,
     "check_transformation_exists": true,
@@ -86,7 +88,9 @@
       "case": true,
       "select": true,
       "do": true,
-      "at": true
+      "at": true,
+      "when": true,
+      "loopAllowIfSubrc": true
     },
     "exit_or_check": true,
     "exporting": true,
@@ -145,7 +149,7 @@
     "line_break_multiple_parameters": false,
     "line_length": {
       "exclude": [],
-      "length": 125
+      "length": 130
     },
     "line_only_punc": {
       "exclude": [],
@@ -161,7 +165,6 @@
       "exception": "^LCX_.+$",
       "test": "^LTCL_.+$"
     },
-    "local_testclass_location": true,
     "local_variable_names": {
       "exclude": [],
       "patternKind": "required",
@@ -183,7 +186,9 @@
     },
     "method_parameter_names": {
       "exclude": [
-        "zif_mockup_loader.intf.abap"
+        "zif_mockup_loader.intf.abap",
+        "zcl_mockup_loader.clas.locals_def.abap",
+        "testclasses.abap$"
       ],
       "patternKind": "required",
       "ignoreNames": [],
@@ -207,8 +212,9 @@
     },
     "no_public_attributes": {
       "exclude": [
-        "testclasses.abap$"
+        "zcl_mockup_loader.clas.locals_def.abap"
       ],
+      "ignoreTestClasses": true,
       "allowReadOnly": true
     },
     "object_naming": {
@@ -260,7 +266,11 @@
       "ranges": true,
       "regex": false,
       "selectWithoutInto": true,
-      "sortByFS": true
+      "sortByFS": true,
+      "clientSpecified": true,
+      "formDefinition": true,
+      "formImplementation": true,
+      "occurences": true
     },
     "parser_error": true,
     "prefer_inline": true,
@@ -295,7 +305,8 @@
       "ignoreNames": [],
       "ignorePatterns": [],
       "parameter": "^P_.+$",
-      "selectOption": "^S_.+$"
+      "selectOption": "^S_.+$",
+      "screenElement": "^(S|TXT)_.+$"
     },
     "sequential_blank": {
       "exclude": [],
