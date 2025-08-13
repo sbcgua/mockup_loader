@@ -1,7 +1,7 @@
 <!-- markdownlint-disable first-line-heading -->
 ![abaplint](https://github.com/sbcgua/mockup_loader/workflows/abaplint/badge.svg)
 ![Version](https://img.shields.io/github/v/tag/sbcgua/mockup_loader.svg)
-![Abap package version](https://img.shields.io/endpoint?url=https://abap-version-shield.sbcg.com.ua/version-shield-json/github/sbcgua/mockup_loader/src/zif_mockup_loader.intf.abap/version)
+![Abap package version](https://img.shields.io/endpoint?url=https://abap-version-shield.sbcg.com.ua/version-shield-json/github/sbcgua/mockup_loader/src/core/zif_mockup_loader.intf.abap/version)
 
 # Mockup Loader for ABAP unit testing
 
