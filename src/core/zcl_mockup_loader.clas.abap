@@ -678,6 +678,14 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   endmethod.
 
 
+  method zif_mockup_loader~info.
+    e_format = mi_archive->type( ).
+    if e_files is requested.
+      e_files = mi_archive->files.
+    endif.
+  endmethod.
+
+
   method zif_mockup_loader~into.
 
     load_data(

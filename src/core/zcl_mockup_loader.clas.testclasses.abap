@@ -496,6 +496,7 @@ class ltcl_test_mockup_loader definition for testing
     methods source_redirect_test     for testing.
     methods utf16_encoding           for testing.
 
+    methods info                     for testing.
     methods parse_data               for testing.
     methods load_blob                for testing raising zcx_mockup_loader_error.
     methods load_data_to_ref         for testing.
@@ -1506,6 +1507,29 @@ class ltcl_test_mockup_loader implementation.
     cl_abap_unit_assert=>assert_equals(
       act = ls_act_renamed-ychar
       exp = 'Trololo1' ).
+
+  endmethod.
+
+  method info.
+
+    data li type ref to zif_mockup_loader.
+    data lv_format type string.
+    data lt_list type string_table.
+
+    li = o.
+
+    li->info(
+      importing
+        e_format = lv_format
+        e_files = lt_list ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lv_format
+      exp = 'zip' ).
+
+    cl_abap_unit_assert=>assert_not_initial( lt_list ).
+    read table lt_list with key table_line = `.meta/src_files` transporting no fields.
+    cl_abap_unit_assert=>assert_subrc( ).
 
   endmethod.
 

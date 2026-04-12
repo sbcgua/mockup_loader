@@ -62,6 +62,10 @@ class lcl_zip_archive implementation.
 
   endmethod.
 
+  method lif_archive~type.
+    r_type = 'zip'.
+  endmethod.
+
 endclass.
 
 **********************************************************************
@@ -396,6 +400,10 @@ class lcl_text_archive implementation.
       zcx_mockup_loader_error=>raise( msg = |Error in convertion of file { <index>-name }| code = 'SXCO' ).
     endif.
 
+  endmethod.
+
+  method lif_archive~type.
+    r_type = 'text'.
   endmethod.
 
 endclass.
