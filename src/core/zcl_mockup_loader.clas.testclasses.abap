@@ -1513,6 +1513,8 @@ class ltcl_test_mockup_loader implementation.
   method info.
 
     data li type ref to zif_mockup_loader.
+    data lv_type type zif_mockup_loader=>ty_src_type.
+    data lv_path type string.
     data lv_format type string.
     data lt_list type string_table.
 
@@ -1520,8 +1522,14 @@ class ltcl_test_mockup_loader implementation.
 
     li->info(
       importing
-        e_format = lv_format
-        e_files = lt_list ).
+        e_src_type   = lv_type
+        e_src_path   = lv_path
+        e_src_format = lv_format
+        e_files      = lt_list ).
+
+    cl_abap_unit_assert=>assert_equals(
+      act = lv_type
+      exp = 'MIME' ).
 
     cl_abap_unit_assert=>assert_equals(
       act = lv_format

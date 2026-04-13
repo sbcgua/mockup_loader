@@ -134,8 +134,10 @@ interface zif_mockup_loader
 
   methods info
     exporting
-      e_format type string
-      e_files type string_table.
+      e_src_type   type ty_src_type
+      e_src_path   type string
+      e_src_format type string
+      e_files      type string_table.
 
   methods load_blob
     importing
