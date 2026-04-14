@@ -681,7 +681,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     e_src_type = mv_src_type.
     e_src_path = mv_src_path.
     e_src_format = mi_archive->type( ).
-    if e_files is requested.
+    if e_files is supplied.
       e_files = mi_archive->files.
     endif.
   endmethod.
