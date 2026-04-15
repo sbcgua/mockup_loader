@@ -400,7 +400,7 @@ See [EXCEL2TXT.md](docs/EXCEL2TXT.md) for more info.
 ## Examples and Reference
 
 - Complete reference of classes and methods can be found in [REFERENCE.md](docs/REFERENCE.md).
-- A simple example can be found in [/src/zmockup_loader_example.prog.abap](/src/zmockup_loader_example.prog.abap).
+- A simple example can be found in [/src/examples/zmockup_loader_example.prog.abap](/src/examples/zmockup_loader_example.prog.abap).
 - Also see unit tests - these are the most up-to-date examples
 - Have a look at the how-to section in the project [Wiki](../../wiki).
 - [Gitlab CI example](https://gitlab.com/atsybulsky/ut-monitor-example) - idea is to commit UTs sources as well as SMW0 object to repo and see the **text-based diffs** (which is not possible for binary objects obviously)
