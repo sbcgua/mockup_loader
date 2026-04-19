@@ -8,6 +8,10 @@ Legend
 + : added
 - : removed
 
+v2.??,
+------------------
++ added info method, listing the files and some meta information (#56)
+
 v2.4.0, 2025-07-06
 ------------------
 + [MAJOR] New text file format for the resulting artifact (as an diffable alternative to zip) - see more in https://github.com/sbcgua/mockup-compiler-js/blob/master/doc/text-bundle-format.md

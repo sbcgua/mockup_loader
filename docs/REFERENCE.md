@@ -398,6 +398,18 @@ Checks id the mockup loader instance is redirected by `ZMOCKUP_LOADER_SWSRC` tra
   endif.
 ```
 
+### INFO
+
+Returns useful meta infomration about the archive: list of files, format of mock, current path and type of the mock.
+
+```abap
+exporting
+  e_src_type   type ty_src_type   " source type - FILE or MIME
+  e_src_path   type string        " source path (to the file or MIME object name)
+  e_src_format type string        " source format: zip or text
+  e_files      type string_table. " list of files in the archive
+```
+
 ## ZCL_MOCKUP_LOADER_STORE
 
 ### GET_INSTANCE (static)
