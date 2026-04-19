@@ -1,5 +1,8 @@
 interface lif_archive.
   data files type string_table.
+  methods type
+    returning
+      value(r_type) type string.
   methods get
     importing
       name type string

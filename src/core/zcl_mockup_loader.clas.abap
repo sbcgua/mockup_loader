@@ -112,6 +112,8 @@ class ZCL_MOCKUP_LOADER definition
     data mv_dir type string.
     data mr_ref_to_container type ref to data.
     data ms_next_load_params type ty_load_params.
+    data mv_src_type type zif_mockup_loader=>ty_src_type.
+    data mv_src_path type string.
 
     class-methods read_zip_blob
       importing
@@ -282,17 +284,14 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
       i_skip_lines_starting_with = i_skip_lines_starting_with
       it_ignore_conv_exits = it_ignore_conv_exits ).
 
-    data l_src_type type zif_mockup_loader=>ty_src_type.
-    data l_src_path type string.
-
-    l_src_type = i_type.
-    l_src_path = i_path.
+    ro_instance->mv_src_type = i_type.
+    ro_instance->mv_src_path = i_path.
 
     redirect_source(
       changing
         c_is_redirected = ro_instance->mv_is_redirected
-        c_src_type = l_src_type
-        c_src_path = l_src_path ).
+        c_src_type = ro_instance->mv_src_type
+        c_src_path = ro_instance->mv_src_path ).
 
     data lv_xdata type xstring.
     data lv_zip_cache_key type string.
@@ -303,7 +302,7 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     field-symbols <zip_cache> like line of gt_zip_cache.
 
     if i_cache_timeout > 0. " Caching active
-      lv_zip_cache_key = l_src_type && ':' && l_src_path.
+      lv_zip_cache_key = ro_instance->mv_src_type && ':' && ro_instance->mv_src_path.
 
       import
         ts = lv_cache_timestamp
@@ -349,8 +348,8 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
     if <zip_cache> is not assigned. " Cache not found
       read_zip_blob(
         exporting
-          i_type = l_src_type
-          i_path = l_src_path
+          i_type = ro_instance->mv_src_type
+          i_path = ro_instance->mv_src_path
         importing
           e_xdata  = lv_xdata
           e_is_txt = lv_is_txt_format ).
@@ -675,6 +674,16 @@ CLASS ZCL_MOCKUP_LOADER IMPLEMENTATION.
   method zif_mockup_loader~cd.
     mv_dir = i_path.
     ri_ml  = me.
+  endmethod.
+
+
+  method zif_mockup_loader~info.
+    e_src_type = mv_src_type.
+    e_src_path = mv_src_path.
+    e_src_format = mi_archive->type( ).
+    if e_files is supplied.
+      e_files = mi_archive->files.
+    endif.
   endmethod.
 
 

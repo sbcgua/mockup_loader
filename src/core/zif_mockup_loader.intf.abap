@@ -67,16 +67,16 @@ interface zif_mockup_loader
       valref type ref to data,
       type   type ty_filter_type,
       operation type ty_filter_operation, " Internal usage for the moment
-    end of ty_filter .
+    end of ty_filter.
   types:
-    tt_filter type standard table of ty_filter with key name .
+    tt_filter type standard table of ty_filter with key name.
   types:
     begin of ty_where,
       name  type string,
       range type ref to data,
-    end of ty_where .
+    end of ty_where.
   types:
-    tt_where type standard table of ty_where with key name .
+    tt_where type standard table of ty_where with key name.
 
   types:
     tty_conv_exits type standard table of abap_editmask with default key.
@@ -132,13 +132,20 @@ interface zif_mockup_loader
 * METHODS
 **********************************************************************
 
+  methods info
+    exporting
+      e_src_type   type ty_src_type
+      e_src_path   type string
+      e_src_format type string
+      e_files      type string_table.
+
   methods load_blob
     importing
       !i_obj_path type string
     returning
       value(r_content) type xstring
     raising
-      zcx_mockup_loader_error .
+      zcx_mockup_loader_error.
 
   methods load_data
     importing
@@ -151,7 +158,7 @@ interface zif_mockup_loader
     exporting
       !e_container type any
     raising
-      zcx_mockup_loader_error .
+      zcx_mockup_loader_error.
 
   methods to
     importing
@@ -179,8 +186,6 @@ interface zif_mockup_loader
       !i_path type string
     returning
       value(ri_ml) type ref to zif_mockup_loader.
-
-*** EXPERIMENTAL ***
 
   methods load
     importing
